@@ -1,8 +1,0 @@
-name: output info
-on: workflow_dispatch
-jobs:
-  info:
-    runs-on: 'ubuntu-latest'
-    steps:
-      - name: output github context
-        run: echo "${{ toJSON(github) }}" # github is reserved word
