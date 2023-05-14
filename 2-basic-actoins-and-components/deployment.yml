@@ -1,4 +1,4 @@
-name: test project
+name: Deploy project
 on: push
 jobs:
   test:
@@ -15,3 +15,18 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm test
+  deploy:
+    runs-on: 'ubuntu-latest' # so every job has its runner
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      - name: Install Nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install Dependency
+        run: npm ci
+      - name: Build project
+        run: npm run build
+      - name: Deploy # a silly simulate
+        run: echo "deploying..."
