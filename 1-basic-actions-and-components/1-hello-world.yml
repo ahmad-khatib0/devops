@@ -1,0 +1,10 @@
+name: first workflow
+on: workflow_dispatch # make sure we can manually trigger this action
+jobs:
+  first-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print greeting
+        run: echo "hello github actions!" #this is related to the shell
+      - name: print goodbye
+        run: echo "nice to see you"
