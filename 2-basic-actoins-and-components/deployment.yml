@@ -16,6 +16,7 @@ jobs:
       - name: Run tests
         run: npm test
   deploy:
+    needs: test # wait for testing
     runs-on: 'ubuntu-latest' # so every job has its runner
     steps:
       - name: Get code
