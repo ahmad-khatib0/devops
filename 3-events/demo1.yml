@@ -1,9 +1,20 @@
 name: Events Demo 1
-on:
+on: 
   pull_request:
     types:
       - opened
+    branches:
+      - main
+      - "div-*" # any character ater v 
+      - 'feat/**' # any sub slashes
   workflow_dispatch:
+  push: 
+    branches:
+      - main
+      - "div-*" # any character ater v 
+      - 'feat/**' # any sub slashes
+    paths-ignore:
+      - '.github/workflow/*' # don't run workflow if workflow folder changed
 jobs:
   deploy:
     runs-on: ubuntu-latest
