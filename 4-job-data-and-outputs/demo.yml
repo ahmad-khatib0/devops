@@ -53,5 +53,7 @@ jobs:
           name: dist-files # this will be unpacked automatically
       - name: Outputs content
         run: ls
+      - name: Output filename
+        run: echo "${{ needs.build.outputs.script-file }}" # build is the identifier of the need name
       - name: Deploy
         run: echo "Deploying..."
