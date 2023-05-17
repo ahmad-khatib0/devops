@@ -18,6 +18,9 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      script-fil: ${{ steps.publish.outputs.script-file }}
+      #script-file is a up to you.. and steps is a context (like github)
     steps:
       - name: Get code
         uses: actions/checkout@v3
@@ -25,6 +28,12 @@ jobs:
         run: npm ci
       - name: Build website
         run: npm run build
+      - name: Publish Js filename
+        id: publish # and identifier to access this step output
+        # run: find dist/assets/*.js f -execdir echo '{}' ';' the original, (outputs js file names)
+        run: find dist/assets/*.js f -execdir echo 'script-file={}' >> $GITHUB_OUTPUT ';'
+        # >> $GITHUB_OUTPUT this outputs some data to a storing file managed by github
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
