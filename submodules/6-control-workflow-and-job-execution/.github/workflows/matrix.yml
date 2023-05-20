@@ -1,0 +1,21 @@
+name: matrix demo
+on: push
+jobs:
+  build:
+    strategy:
+      matrix:
+        node-version: [12, 14, 16]
+        operating-system: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.operating-system }} # it will tell GitHub Actions to run
+    # this build job multiple times, once per value, in that operating system array
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      - name: install nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }} # install node 12,14,16 foreach build job
+      - name: install deps
+        run: npm ci
+      - name: build project
+        run: npm run build
