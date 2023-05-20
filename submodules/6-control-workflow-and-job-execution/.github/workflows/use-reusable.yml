@@ -73,6 +73,13 @@ jobs:
       artifact-name: dist-files # this will be handed to the reusable.yml in inputs
     # secrets:
     #   some-secret: ${{ secrets.some-secret }} # providing secrets to reusable.yml
+  print-deploy-result:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: print deploy output
+        run: echo ${{ needs.deploy.outputs.result }} # result is the name of one of the outputs in reusable.yml
+
   report:
     needs: [lint, deploy]
     if: failure()
