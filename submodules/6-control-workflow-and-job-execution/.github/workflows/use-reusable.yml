@@ -71,6 +71,8 @@ jobs:
     uses: ./.github/workflows/reusable.yml
     with:
       artifact-name: dist-files # this will be handed to the reusable.yml in inputs
+    # secrets:
+    #   some-secret: ${{ secrets.some-secret }} # providing secrets to reusable.yml
   report:
     needs: [lint, deploy]
     if: failure()
