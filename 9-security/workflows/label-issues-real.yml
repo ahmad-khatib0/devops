@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Assign label
         if: contains(github.event.issue.title, 'bug')
+        # secrets.GITHUB_TOKEN is assigned by github, and it will be valid just for the workflow
         run: |
           curl -X POST \
           --url https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels \
