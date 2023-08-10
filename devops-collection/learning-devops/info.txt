@@ -1,0 +1,13 @@
+-- Once continuous integration has been completed, the next step is to deploy the application automatically in 
+   one or more non-production environments, which is called staging. This process is called continuous delivery (CD).
+
+-- CD often starts with an application package being prepared by CI, which will be installed 
+   based on a list of automated tasks. These tasks can be of any type: unzip, stop and restart 
+   service, copy files, replace configuration, and so on. The execution of functional and
+   acceptance tests can also be performed during the CD process.
+
+-- Provisioning is the act of instantiating the resources that make up the infrastructure. They
+    can be of the Platform-as-a-Service (PaaS) and serverless resource types, such as a web
+    app, Azure function, or Event Hub, but also the entire network part that is managed, such
+    as VNet, subnets, routing tables, or Azure Firewall. For virtual machine resources, the
+    provisioning step only creates or updates the VM cloud resource, but not its content.

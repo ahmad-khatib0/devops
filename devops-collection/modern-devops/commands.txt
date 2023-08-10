@@ -1,0 +1,11 @@
+sudo journalctl CONTAINER_NAME=nginx-journald
+# look at the journald logs to see the logs of the nginx-journald docker container
+
+# cAdvisor is a metrics collector that will scrape metrics from our containers
+docker run -d --restart always --name cadvisor -p 8080:8080 \
+  -v "/:/rootfs:ro" -v "/var/run:/var/run:rw" -v "/sys:/sys:ro" \
+  -v "/var/lib/docker/:/var/lib/docker:ro" google/cadvisor:latest
+
+# Configuring Prometheus to scrape metrics
+ sudo vim /etc/prometheus/prometheus.yml
+
