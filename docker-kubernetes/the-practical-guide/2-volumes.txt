@@ -1,0 +1,48 @@
+docker volume ls / prune / inspect / rm
+
+//named volumes will not be deleted once the container removed as anonymous volumes
+docker run -d -p 8000:80 --rm --name feedback-app -v feedback:/app/feedback node-apps:latest 
+//this is a named volume 
+
+docker run -p 8000:80 -d --name feedback-app --rm 
+-v feedback:/app/feedback 
+-v "/mnt/c/Users/Ahmad/Downloads/Programming/Programming/Docker/docker/3-data-volumes:/app"
+feedback-node:latest
+//this will bind mount the 3-data-volumes into the workDir of the container  
+(as shortcut, -v "%cd%":/app)//instead of writhing the full path 
+
+docker run -p 8000:80 -d --name feedback-app --rm 
+-v feedback:/app/feedback 
+-v "/mnt/c/Users/Ahmad/Downloads/Programming/Programming/Docker/docker/3-data-volumes:/app"
+-v /app/node_modules 
+feedback-node:latest
+//we added this last anonymous volume, because the second bind mount does not has the 
+//node_modules folder, so because the second volume overwrite the first one 
+//in this way the container will not have the node_modules, so by adding the last 
+//anonymous one, its will be evaluated, and it will survey the node packages 
+
+-v "/mnt/c/Users/Ahmad/Downloads/Programming/Programming/Docker/docker/
+3-data-volumes:/app:ro"
+//add this ro attribute,because bind mount are read-write by default , so this 
+//way you prevented docker from writing to the files on your hard drive, here we need to have 
+//the feedback folder to be writable from the container to the feedback on our hard drive ,
+//so the named volume it has more specific path, so it will overwrite the :or  
+
+docker run -p 8000:80 -d --rm --name feedback-app 
+-v feedback:/app/feedback
+-v "/mnt/c/Users/Ahmad/Downloads/Programming/Programming/Docker/docker/3-data-volumes:/app:ro"
+-v /app/node_modules
+-v /app/temp feedback-node:1
+
+//its a good idea to use anonymous volumes to with temp folder, although it will not survey on 
+//container removing but it will be efficient 
+
+docker run -p 8000:8000 -d --name feedback-app --rm --env PORT=8000 -v ....
+// with --env option , we reassigned the ENV PORT 80 to be 8000 instead , this
+ will save us from rebuilding the entire image to reflect this changes , 
+docker run -p 8000:8000 -d --name feedback-app --rm --env-file  ./.env
+//(--env-file  ./.env) point to a .env file , instead of typing it in docker run  
+
+docker build -t node-image:latest --build-arg A_SPECIFIED_ARG_IN_THE_DOCKERFILE=something_else
+// ie reassign the DEFAULT_PORT ARG in the Dockerfile from 80 to 8000 on building 
+//another snapshoot from this image ,without changing the Dockerfile  

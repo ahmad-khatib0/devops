@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+        - name: users
+          image: ahmadkh007/kub-demo-users:latest
+          env:
+            - name: AUTH_ADDRESS
+              # value: localhost   # for communication inside the same pod
+              # value: '10.100.138.42' # the ip of the container, for communication between Pods
+              value: 'auth-service.default' # CoreDns

@@ -1,0 +1,18 @@
+# PV in the file name stands for persistence volume
+# here in this kind , we define how this PersistentVolume should looks like only,
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem # or Block, this not related to kubernetes
+  storageClassName: standard # this is related to permissions to access this storage
+  accessModes:
+    - ReadWriteOnce
+    # - ReadOnlyMany  # not for minikube  (not for single node )
+    # - ReadWriteMany # not for minikube  (not for single node )
+  hostPath:
+    path: /data
+    type: DirectoryOrCreate

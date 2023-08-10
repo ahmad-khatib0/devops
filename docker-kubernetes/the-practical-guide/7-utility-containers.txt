@@ -1,0 +1,47 @@
+docker run -it -d node 
+# container will not shout down immediately,will keep listening for inputs 
+docker exec -it peaceful_chatelet npm init
+docker run -it -v $(pwd):/app node-utiltiy npm init 
+docker run -it -v $(pwd):/app mynpm install express --save
+
+docker-compose run containerName command 
+docker-compose run node-react init 
+docker-compose run --rm node-react init # remove it  
+docker-compose up -d server1 server2 ... # run only specified services
+docker-compose up -d server # if this server has depends_on, it'll run them automatically
+docker-compose run --rm  compsoer create-project --prefer-dist laravel/laravel .
+#this dot specify where to create this project(in this case root => /etc/www/html)
+docker-compose up -d --build server #rebuild image if something changed
+
+# if we have a command after (ie docker run .... npm init), it'll override the CMD 
+# inside the Dockerfile, but with ie ENTRYPOINT ["npm"] , it will first restrict the commands
+# that you can to run with this container for just npm + .... , for example you'll not be allowed 
+# to execute node + ..... , and second it will prefix (npm ) to your specified commands 
+# when running containers based on this Dockerfile (ie npm install => just install )
+
+# we can to override the instruction specified in Dockerfile in docker-compose 
+
+#volumes: 
+  - ./src:/var/www/html:delegated
+# delegated its optional, means if there's need to write data into the container, it will not 
+# be instance, for optimization just
+
+#build: 
+  context: .
+  dockerfile: dockerfiles/nginx.Dockerfile
+# we used dot as context , because in the image we're copying nginx & src folder,so if we
+# specified the context to dockerfiles folder,, these folders will not be reachable 
+
+# fastcgi_pass php:9000;  in the nginx file, php here is the container name, it could 
+# be an address(ie http), but because we're working in a compose env, they will(services)
+# be able to talk to each other by the containerName
+# another note: php:9000 means the php service will talk to nginx on port 9000
+
+# ENTRYPOINT [ "composer" , "--ignore-platform-reqs" ]
+#this will ignore if you have a lack in your dependencies
+
+docker bulid -f Dockerfile.prod -t ...... 
+# -f to specify a file rather than Dockerfile
+
+docker build --target build -f  Dockerfile.prod  .....
+# specify just a named stage to be build in the dockerfile  

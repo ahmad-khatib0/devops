@@ -1,0 +1,39 @@
+@url =  http://192.168.39.242:30632/tasks
+
+###
+post {{ url }}
+Authorization: Bearer abc
+Content-Type: application/json
+
+{ 
+    "title": "this is a title to the tasks api", 
+    "text": "this is the actual text"     
+}
+
+###
+get {{  url  }}
+Authorization: Bearer abc
+Content-Type: application/json
+
+###
+post http://a58e28fdae95c4e74a7977acb23c106a-1912220609.us-east-1.elb.amazonaws.com/signup
+Accept-Language: en
+Content-Type: application/json
+
+{
+   "email" : "ahmad2@test.com",
+   "password" : "12345678"
+}
+
+###
+post http://a58e28fdae95c4e74a7977acb23c106a-1912220609.us-east-1.elb.amazonaws.com/login
+Accept-Language: en
+Content-Type: application/json
+
+{
+   "email" : "ahmad2@test.com",
+   "password" : "12345678"
+}
+
+###
+get http://a58e28fdae95c4e74a7977acb23c106a-1912220609.us-east-1.elb.amazonaws.com/logs

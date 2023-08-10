@@ -1,0 +1,15 @@
+# PVC in the file name stands for persistence volume claim
+# here in this kind , we define how the host-pv.yaml PersistentVolume will be claimed ,
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: host-pvc
+spec:
+  volumeName: host-pv # which volume to be claimed, this type is claiming by name, there is a type of
+  # which you can to claim by resource, (e,g claim a volume with specific space or config)
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi

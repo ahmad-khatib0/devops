@@ -1,0 +1,20 @@
+# services help us to reach out deployment pods easily
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    group: example #this is also here is optional, (as in deployment.yaml, for same purpose)
+spec:
+  selector:
+    # matchLabels is not needed in services, because you can only match labels here
+    app: second-app # notice here we have the ability to select which pods we need
+    # to be controlled be this service, so rather than matching all the pods in deployment file
+  ports: # where to expose this service
+    - protocol: 'TCP'
+      port: 80
+      targetPort: 8080 # inside the container
+    # - protocol: 'TCP'
+    #   port: 403
+    #   targetPort: 443
+  type: LoadBalancer # how to expose this service

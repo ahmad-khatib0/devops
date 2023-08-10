@@ -1,0 +1,1 @@
+this is an example for coping from or into containers with docker cp command

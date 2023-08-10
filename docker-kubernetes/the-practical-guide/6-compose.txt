@@ -1,0 +1,53 @@
+# when you bring your services down in compose, containers will be removed by default
+version: ""
+# version is to let docker know which file specification to use, in order to 
+# excrete your commands correctly, because this version refers compose tool 
+#(ie react js 15 is not like the react 17)
+# the children of the services are the containers them self
+
+#if you have key: value , you don't need - (dashes), in this case (- ./env/mongo.env) you need
+
+# when using compose, you don't need --network, all children of services will 
+# be shipped with network automatically out of the box, you could to add: networks: if 
+# you have your own network 
+
+# even though the services created by compose have another name (ie mongodb => 6-compose-backend-1)
+# but this still works:  
+`mongodb://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@mongodb:27017/course-goals?authSource=admin`, 
+# @mongodb still as the name of the service, not (ie 6-compose-backend-1)
+
+MONGO_INITDB_ROOT_USERNAME=ahmad or as same:  
+MONGO_INITDB_ROOT_USERNAME: max  
+
+environment: 
+  MONGO_INITDB_ROOT_USERNAME: max
+  MONGO_INITDB_ROOT_PASSWORD: secret #this way, or: 
+  env_file:
+      - ./env/mongo.env
+
+build: ./backend #or 
+build: 
+  context: ./backend  # refers to COPY . .
+  dockerfile: Dockerfile-dev
+  args:
+    password: 12345678
+
+depends_on: 
+  - mongodb
+# if you're in react service(container),that means this service should to be run 
+# after running the mongodb service first(note: it can depends_on multiple)
+
+stdin_open: true
+tty: true 
+#these tow instructions refers to -it (interactive)
+
+container_name: mongodb # force the name to container
+
+docker-compose up -d 
+docker-compose down 
+docker-compose down -v # to delete the volumes also
+docker-compose up --build 
+# force the Dockerfile to be build, because if you  started
+# with (up) again, it will use the old image, even though the Dockerfile maybe changed
+docker-compose build 
+# just lookup for any missing build images,build them if they're not build yet  

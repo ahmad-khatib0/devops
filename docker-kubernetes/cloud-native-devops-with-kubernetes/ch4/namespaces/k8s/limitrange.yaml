@@ -1,0 +1,17 @@
+#  set default requests and limits for all containers in a namespace using a LimitRange resource:
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: demo-limitrange
+spec:
+  limits:
+    - default:
+        cpu: '500m'
+        memory: '256Mi'
+      defaultRequest:
+        cpu: '200m'
+        memory: '128Mi'
+      type: Container
+# Use LimitRanges in each namespace to set default resource requests and
+# limits for containers, but don’t rely on them; treat them as a backstop.
+# Always specify explicit requests and limits in the container spec itself.

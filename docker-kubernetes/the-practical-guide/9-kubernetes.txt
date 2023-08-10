@@ -1,0 +1,114 @@
+kubectl get pods | services | deployments | all ..........
+kubectl delete deployment first-app  # or service or ..........
+
+# first 
+kubectl create deployment first-app --image=remote-docker-hub/first-app
+# --image=image1,image2,imageN,  create multiple containers based on this images
+
+# second 
+kubectl expose deployment first-app  --type=LoadBalancer --port=8080
+LoadBalancer will generate a unique address, and distribute incoming traffic across pods in this service 
+this type is only available is the host machine support this, (in minikube it does)
+also --type=ClusterIP  is reachable internally only,  
+also --type=NodePort   which actually means this deployment should be exposed
+with help off the IP address of the worker node on which it's running.
+
+# third
+# minikube service first-app     # to get the externally exposed ip 
+
+# forth 
+kubectl scale deployment/first-app --replicas=3   
+# so with the help of LoadBalancer, traffic to these pods is distributed, so if a pod crushed, 
+# will not affect the access to the deployment (application)
+# to scale it down, run the same with --replicas=1, this will terminate the other pods
+
+# sixth 
+docker push remote-docker-hub 
+kubectl set image deployment/first-app kub-first-app=ahmadkh007/kub-first-app
+# to update an image if you change something to be redeployed,,   
+# kub-first-app is the name of the image is used before, second parameter is the new image 
+# but nothing will happen, why, because it won't pull the new image if it dose not have a different tag
+docker push remote-docker-hub:2        as an example, than repeate set command with the desired tag  
+kubectl rollout status deployment/first-app   # to see the status of the previous set command
+
+# seventh 
+# you deployed again and you e.g 
+kubectl set image deployment/first-app kub-first-app=ahmadkh007/kub-first-app:notExistingTag
+kubectl rollout undo deployment/first-app                  # undo last set (update)
+kubectl rollout history deployment/first-app               # to see rollout history of this deployment
+kubectl rollout history deployment/first-app  --revision=3 # see a specific rollout 
+and most important command 
+kubectl rollout undo deployment/first-app --to-revision=1  # restore deployment to this point 
+and now this undoing process will be numbered as the latest(highest) in history 
+for example to restore to point before this undoing process, pick the penultimate number e.g: 
+highest is 5 ? so maybe penultimate is 3, so:    --to-revision=3
+
+
+# pods internal ip is not reachable, and this ip does change on each pod replacing
+# so services is the solution, its groups multiple pods, and its ip does not change
+# and for sure its reachable externally 
+# instead of kubectl create service , we have more continent command: expose 
+
+# a replica is an instance of a pod/container,  eg 3 replicas means that the same  pod/container is running 3 times 
+
+########################### declarative approach #####################################
+kubectl apply -f=deployment.yaml    # or -f=file -f=another-file 
+# to update in declarative approach, just adjust the files, change tag, 
+# increase or decrease replicas .... and than re apply -f  
+kubectl delete -f=deployment.yaml,service.yaml,x.yaml 
+# delete resources related to these files , of by -f for each file  
+kubectl delete  deployment,services -l group=example  
+# delete deployments and services which have this label/labels (deployment,services to range deleting)
+# with imagePullPolicy: Always  you can apply -f the file only, even though for example you did a change
+# to you code, and didn't increase the tag number in you deployment file image section, it will 
+# still pull the newly pushed  repo
+
+# emptyDir simply creates a new empty directory whenever the pod starts.And it keeps 
+# this directory alive and filled with data as long as the pod is alive.Containers can then 
+# write to this directory.  And if containers restart or are removed, the data survives.
+# But if the pod should be removed, this directory is removed. And when the pod is recreated,
+# a new empty directory is created. That's the idea here.
+
+# with minikube we only have a one WORKER NODE, so with hostPath volume type even though the data 
+# does survives the pods removals, but it limited to our machine with minikube only, or its restricted
+# to the same node, and its a SINGLE node, so these stored data can NOT be a reached outside this node
+# persistentVolumeClaim is the solution, its not just for a single node, its for multiple nodes
+# so its also independent from the node and the pods inside it  
+
+- ReadWriteOnce 
+# means that this volume can be mounted as a read-write volume by a  single node.
+# So by multiple pods, but they all have to be on the same node.
+- ReadOnlyMany
+# means that it's read-only but it can be claimed by multiple nodes.So multiple pods on different nodes
+# can claim this same persistent volume.for example, for the host path type this is simply not
+# in available option because host path by definition is defined on one node and they offer another node
+# and another pod running on another node won't be able to claim it.
+- ReadWriteMany
+# as the ReadOnlyMany behavior, so also hostPath it not an available option
+
+kubectl get configmap  # for environment variables 
+kubectl get pv   # get persistent volumes 
+kubectl get pvc  # get persistent volumes claims
+kubectl get sc   # storage class 
+# The storage class is a another of concept, which you have in Kubernetes to give administrators 
+# fine gain control over how storage is managed and how volumes can be configured.
+
+# after configuring the persistent volume , apply pv then pvc then deployment yaml files respectively
+
+# localhost is the name to that is used between containers to talk between each other inside a pod 
+
+# Kubernetes will give you automatically generated environment variables.  In your 
+# programs, with information about all the services, which are running in your cluster
+# e.g you service is named story-service, so inside your program (nodeJs for example) the name will 
+# be process.evn.STORY_SERVICE_SERVICE_HOST, or another example USERS_SERVICE_SERVICE_HOST
+# if your service called users-service sure, so in this case you don't need to set: 
+env:
+  - name: AUTH_ADDRESS
+    value: localhost
+    value: '10.100.138.42'
+# this is unnecessarily, because process.env.USERS_SERVICE_SERVICE_HOST will hold the ip address of this pod
+# so this is the way to communication between POD to POD
+# the second way to communicate between pods( which is more convenient) is by using the CoreDns, which is 
+# added by default to the services, so e,g your service name is auth-service, it will be: auth-service.default
+# and you have other namespaces rather that default, the so idea is like .com or .net or ...... 
+kubectl get namespaces 

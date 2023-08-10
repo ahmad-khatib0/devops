@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment # jop | service
+metadata:
+  name: second-app-deployment # like first-app
+  labels: # this label add optionally, in order to have an example of how to delete resources
+    # imperatively, like the idea of selector matchExpressions declaratively
+    group: example
+spec: # this spec is for the overall deployment
+  replicas: 1
+  selector:
+    matchLabels: # we tell: all pods which has these labels should be controlled by second-app-deployment
+      # you have to specify the Pods that ARE ONLY CREATED by this Deployment
+      app: second-app
+      tier: backend
+    # same result with matchExpressions, but with more flexibility
+    # matchExpressions:
+    #   - { key: app , operator: In, values: ['second-app' , 'first-app'] }
+    #  Valid operators include In, NotIn, Exists, and DoesNotExist.
+  template: # its like the --image,
+    # here we define the PODS that should to be created as a part of this deployment
+    # kind: Pod, this is unnecessarily, because template is always describe a pod object
+    metadata: # we add metadata for each OBJECT, Deployment is an Object, PODS also are
+      labels:
+        app: second-app # key name is up to you
+        tier: backend # so you can have multiple labels
+    spec: # this spec is for each Pod related to this deployment
+      containers:
+        - name: second-node
+          image: ahmadkh007/kub-first-app:3
+          imagePullPolicy: Always # always pull image that is :latest
+          # - name: container-name
+          #   image: image-name
+          livenessProbe: # this to help determining if the container is healthy or not
+            httpGet: # it can be also exec, or other ways
+              path: /
+              port: 8080
+              # httpHeaders: ....
+            periodSeconds: 10
+            initialDelaySeconds: 30

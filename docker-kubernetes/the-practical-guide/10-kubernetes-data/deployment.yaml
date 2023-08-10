@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stroy-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: story
+  template:
+    metadata:
+      labels:
+        app: story
+    spec:
+      containers:
+        - name: story
+          image: ahmadkh007/kub-data-demo:2
+          env:
+            - name: STORY_FOLDER
+              # value: 'story' # directly, or from a file :
+              valueFrom:
+                configMapKeyRef:
+                  name: data-store-env
+                  key: folder
+          volumeMounts:
+            - mountPath: /app/story # inside the container
+              name: story-volume
+      volumes:
+        - name: story-volume
+          # emptyDir: {} # 1- means that you don't have any config for this storage(see list of volume types)
+          # hostPath: # 2- inside the host machine
+          #   path: /data # don't share reserved linux path
+          #   type: DirectoryOrCreate
+          persistentVolumeClaim: # 3- this volume now is for the entire cluster,
+            claimName: host-pvc

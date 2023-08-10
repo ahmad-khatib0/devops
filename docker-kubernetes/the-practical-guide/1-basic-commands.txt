@@ -1,0 +1,33 @@
+docker run -it node // execute it with interactive  
+docker run -p 3000:80 [image] //3000 external,80 internal
+docker run -p 8000:80 --rm [image] //--rm to removes this container after stopping
+docker run -p 8000:80 -d [image] // run it in detached mode 
+docker run -p 8000:80 -d --rm --name marketApp [image/image:tag]//name a container
+
+docker start [name] //use it if a container didn't change
+docker start -a -i  [name]//start in attach mode with interactive
+docker attach [name] //reattach to detached container 
+
+docker logs [name] // or with -f to keep listening on logs 
+docker ps -a //show all containers
+docker ps  //show all running containers
+docker images // show all images(a container based on this image should be removed first)
+
+docker build . //build a new custom image based on a docker file(dot is where docker file )
+docker build -t name:latest . //tag a name to an image
+docker stop [containerId] 
+
+docker rm [name name ,,,]//remove containers
+docker container prune //remove all stopped containers at once 
+
+docker rmi [image image] //remove images
+docker image prune //remove all images at once 
+docker image prune -a //remove all images with tagged ones 
+
+docker image inspect [image]// show all info of this image 
+docker cp source-folder/. containerName:/destination-folder // copes files or folders 
+// from container or into container if you changed the order (destination-folder will be created 
+inside the container if it didn't exist) 
+
+docker tag localImage:latest  ahmadkh007/remote-repository//rename existing image to push it 
+(rename the existing image persist the old one)
