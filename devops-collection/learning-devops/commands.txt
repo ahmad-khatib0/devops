@@ -1,0 +1,6 @@
+
+terraform init => terraform plan => terraform apply
+terraform fmt
+terraform destroy 
+terraform validate
+

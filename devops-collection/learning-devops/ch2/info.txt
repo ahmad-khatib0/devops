@@ -1,0 +1,27 @@
+Configuring Terraform for Azure
+  Before writing the Terraform code in which to provision a cloud infrastructure such as Azure, 
+  we must configure Terraform to allow the manipulation of resources in an Azure subscription.
+  To do this, first, we will create a new Azure Service Principal (SP) in Azure Active
+  Directory (AD), which, in Azure, is an application user who has permission to manage Azure resources.
+  For this Azure SP, we have to assign to it the contributing permissions on the subscription
+  in which we will create resources.
+
+
+The following is a template az cli script that you have to run to create an SP. Here, you
+have to enter your SP name, role, and scope:
+ ╒══════════════════════════════════════════════════════════════════╕
+   az ad sp create-for-rbac --name="<ServicePrincipal name>"        
+   --role="Contributor" --scopes="/subscriptions/<subscription Id>" 
+ ╘══════════════════════════════════════════════════════════════════╛
+ 
+Take a look at the following example:
+╒═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╕
+  az ad sp create-for-rbac --name="SPForTerraform" --role="Contributor" --scopes="/subscriptions/8921-1444-..." 
+╘═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╛
+This sample script creates a new SP, named SPForTerraform, and gives it the
+  contributor permission on the subscription ID, that is, 8921....
+
+The creation of this Azure SP returns three pieces of identification information:
+  • The application ID, which is also called the client ID
+  • The client secret
+  • The tenant ID

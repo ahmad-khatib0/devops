@@ -1,0 +1,24 @@
+def imageName = 'example'
+
+pipeline() { 
+
+   agent {
+        label 'workers'
+   }
+
+   stages {
+        stage('Checkout'){
+            steps {
+                checkout scm
+            }        
+        }
+
+        stage('Build'){
+            docker.build(imageName)
+        }
+
+        stage('Deploy'){
+            echo "Deploying ..."
+        }
+    }
+}

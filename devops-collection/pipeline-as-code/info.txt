@@ -1,0 +1,325 @@
+
+Microservices architecture is an extension of service-oriented architecture (SOA). Both architectures 
+  rely on services as the main component, but they vary greatly in terms of service characteristics:
+
+  Granularity—Service components within a microservices architecture are generally 
+      single-purpose services that do one thing. In SOA, service components can
+      range in size, anywhere from small application services to very large enterprise services.
+  
+  Sharing—SOA enhances component sharing, whereas microservices architecture tries to minimize 
+      sharing through bounded context (loosely coupled services or modules) with minimal dependencies.
+
+  Communication— Microservices rely on lightweight protocols such as HTTP/
+      REST and simple messaging, while SOA architectures rely on enterprise service bus (ESB) for communication;
+      early versions of SOA used object-oriented protocols to communicate with each other, such as 
+      Distributed Component Object Model (DCOM) and object request brokers (ORBs). Later versions used 
+      messaging services such as Java Message Service (JMS) or Advanced Message Queuing Protocol (AMQP).
+
+  Deployment—SOA services are deployed to application servers (IBM WebSphere Application Server, 
+      WildFly, Apache Tomcat) and virtual machines. On the other hand, microservices are deployed in
+      containers. This makes microservices more flexible and lighter than SOA.
+
+
+microservices architecture comes with the following benefits:
+
+ Scalability—Applications built as microservices can be broken into multiple components so that each 
+  component can be deployed and scaled independently without service interruption. Also, for stateless 
+  microservices, usage of Docker or Kubernetes can offer horizontal scaling within seconds.
+  
+ Fault tolerance—If one microservice fails, the others will continue to work because of loosely coupled 
+  components. A single microservice can be easily replaced by a new one without affecting the whole 
+  system. As a result, modernization in microservices architecture can be incremental, while 
+  modernization in monolithic architecture can cause service outages.
+  
+ Development velocity—Microservices can be written in different languages (polyglot programming) and use 
+  different databases or OS environments. If one microservice is, for example, CPU intensive, it could be 
+  implemented in highly productive languages such as Golang or C++, while other components could be implemented 
+  in lightweight programming languages such as JavaScript or Python. So companies can easily hire more 
+  developers and scale development. Also, because microservices are autonomous, developers have the freedom to
+  independently develop and deploy services without bumping into each other’s code (avoiding synchronization 
+  hell within the organization) and having to wait for one team to finish a chunk of work before starting 
+  theirs. As a result, team productivity increases, and vendor or technology stack lock-in reduces.
+  
+ Continuous everything—Microservices architecture combined with Agile software development enable continuous 
+  delivery. The software release cycle in microservice applications becomes much smaller, and many features 
+  can be released per day through CI/CD pipelines with open source CI tools like Jenkins.
+
+Some of the potential pain areas associated with microservices designs:
+
+ Complexity—Increased complexity over a monolithic application due to the
+  number of services involved. As a result, enormous effort, synchronization, and automation 
+  are required to handle interservice communication, monitoring, testing, and deployment.
+  
+ Operational overhead—Deploying a microservice-based application can be complex. It needs a lot of 
+  coordination among multiple services. Each service must be isolated with its own runtime environment 
+  and resources. Hence, traditional deployment solutions like virtualization can’t be used and 
+  must be replaced with containerization solutions like Docker.
+  
+ Synchronization—Microservices require cultural changes in organizations seeking to adopt them. Having 
+  multiple development teams working on different services requires a huge effort to ensure that 
+  communication, coordination, and automated processes are in place. Cultures like Agile and DevOps 
+  practices are mandatory to take on microservice-based applications.
+
+
+
+Cloud native is a paradigm for building applications as microservices and running
+  them on containerized and dynamically orchestrated platforms that fully exploit the advantage of 
+  the cloud computing model. These applications are developed using the language and framework best 
+  suited for the functionality. They’re designed as loosely coupled systems, optimized for cloud scale 
+  and performance, use managed services, and take advantage of continuous delivery to 
+  achieve reliability and faster time to market.
+
+To summarize, cloud-native architecture allows you to dynamically scale and support
+  large numbers of users, events, and requests on distributed applications. A real-world
+  example of the adoption of cloud-native architecture is the serverless model.
+
+
+Serverless
+  The serverless computing model was kicked off with AWS Lambda in 2014. In this architecture, developers 
+  can write cost-efficient applications without provisioning or maintaining a complex infrastructure.
+  Cloud providers deploy customers’ code to fully managed, ephemeral, time-boxed containers that live 
+  only during the invocation of the functions. Therefore, businesses can grow without customers having 
+  to worry about horizontal scaling or maintaining complex infrastructure.
+ 
+Instead of maintaining a dedicated container or instance to host your static web application, you can 
+  combine an Amazon Simple Storage Service (S3) bucket to benefit from scalability at a cheaper cost. 
+  The HTTP requests coming from the website go through Amazon API Gateway HTTP endpoints that trigger 
+  the right AWS Lambda function to handle the application logic and persist data to a fully managed 
+  database service such as DynamoDB. For particular use cases, 
+
+Going serverless can make sense for several reasons:
+
+  Less operational overhead—The infrastructure is managed by the cloud provider, and this reduces the 
+     overhead and increases developer velocity. OS updates are taken care of, and patching is done by the 
+     function-as-a-service (FaaS) provider. This results in decreased time to market and faster 
+     software releases and eliminates the need for a system administrator.
+     
+ Horizontal autoscaling—Function becomes the unit of scale that leads to small, loosely coupled, 
+    stateless components that, in the long run, lead to scalable applications. Plus, the scaling mechanism 
+    is shifted to the cloud provider, which decides how to use its infrastructure effectively to serve the 
+    client’s requests. Cost optimization—You pay for only the compute time and resources that you
+    consume. As a result, you don’t pay for idle resources, which significantly reduces infrastructure costs.
+    
+ Polyglot—Another benefit is the ability to choose a different language runtime
+    depending on the use case. One part of the application can be written in Java,
+    while another in Python; it doesn’t really matter as long as the job gets done
+
+
+
+Defining continuous integration
+  Continuous integration (CI) is the practice of having a shared and centralized code repository, 
+  and directing all changes and features through a complex pipeline before integrating them into 
+  the central repository (such as GitHub, Bitbucket, or GitLab). A classic CI pipeline is as follows:
+
+  1 - Triggers a build whenever a code commit occurs
+  2 - Runs the unit tests and all pre-integration tests (quality and security tests)
+  3 - Builds the artifact (for example, Docker image, zip file, machine learning training model)
+  4 - Runs acceptance tests and pushes the result to an artifact-management repository 
+      (such as a Docker Registry, Amazon S3 bucket, Sonatype’s Nexus, or JFrog Artifactory)
+
+
+
+
+Here are the most famous types of testing: 
+
+  Unit tests—These test each piece of the source code. They consist of testing individual functions and methods. 
+   You could also output your test coverage and validate that you’re meeting your code coverage requirements.
+
+  Quality tests—Check that the code is well formatted, follows best practices, and
+   has no serious coding errors. This is also called static code analysis, as it helps to
+   produce high-quality code by looking for patterns in code that might generate bugs.
+
+  Security tests—Inspect source code to uncover common security vulnerabilities
+   and common security flaws (for example, leaked usernames and passwords).
+
+  UI tests—Simulate user behavior through the system to ensure that the application works correctly 
+   in all supported browsers (including Google Chrome, Mozilla Firefox, and Microsoft Internet Explorer) and 
+   platforms (such as Win- dows, Linux, and macOS) and that it delivers the functionality promised in user stories.
+
+  Integration tests—Check that services or components used by the application work well together and no 
+   defects exist. For example, an integration test might test an application’s interaction with the database.
+
+
+
+Defining continuous delivery
+  Continuous delivery (CD) is similar to continuous deployment but requires human
+  intervention or a business decision before deploying the release to production. 
+
+
+CI tools can be divided into the following three main categories:
+
+  Cloud-managed solutions like AWS CodePipeline (https://aws.amazon.com/codepipeline/), Google Cloud Build 
+   (https://cloud.google.com/build), and Microsoft Azure Pipelines. 
+
+  Open source solutions such as Jenkins (www.jenkins.io), Spinnaker (https://spinnaker.io/), or GoCD (www.gocd.org).
+
+  Software-as-a-service (SaaS) solutions like Travis CI (https://travis-ci.org/),
+   CircleCI (https://circleci.com/), and TeamCity (www.jetbrains.com/teamcity/).
+
+
+
+
+Declarative pipeline
+  A declarative pipeline is a relatively new feature (introduced in Pipeline 2.5, 
+  https://plugins.jenkins.io/workflow-aggregator) that supports the PaC approach. It makes the pipeline code 
+  easier to read and write for new Jenkins users. This code is written in a Jenkinsfile that can be checked 
+  into a version-control system (VCS) such as SVN or an SCM system such as GitHub, GitLab, Bitbucket, or others.
+
+  In declarative syntax, you cannot use Groovy code such as variables, loops, or conditions. You are 
+  restricted to the structured sections/blocks and the DSL (Jenkins domain-specific language) steps.
+
+Declarative pipelines provide a more restrictive syntax, as each pipeline must use
+ these predefined block attributes or sections:
+  agent
+  environment
+  post
+  stages
+  steps
+
+
+When using a Jenkinsfile, your pipeline definition lives with the code
+  source of the application going through the pipeline. Jenkins will automatically scan
+  through each branch in the application code repository and check whether the
+  branch has a Jenkinsfile. If it does, Jenkins will automatically create and configure a
+  subproject within the multibranch pipeline project to run the pipeline for that
+  branch. This eliminates the need for manual pipeline creation and management.
+
+Exploring the GitFlow branch model
+
+A couple of Git branching strategies exist. The most interesting and used one is
+Git-Flow. It consists of the following essential branches:
+
+  Master— A branch that corresponds to the current production code. You can’t commit directly except for 
+   hotfixes. Git tags can be used to tag all commits in the master branch with a version number 
+   (for instance, you can use the seman- tic versioning convention detailed at https://semver.org/).
+
+  Preprod — A release branch, a mirror of production. It can be used to test all new
+   features developed on the develop branch before merging them to the master branch.
+
+  Develop — A development integration branch containing the latest integrated development code.
+
+  Feature/X — An individual feature branch being developed. Each new feature
+   resides in its own branch, and it’s generally created from the latest develop branch.
+
+  Hotfix/X — When you need to solve something in production code, you can use the hotfix branch and open 
+   a pull request for the master branch. This branch is based on the master branch.
+
+
+The overall flow of GitFlow within Jenkins can be summarized as follows:
+
+  A develop branch is created from the master branch.
+
+  A preprod branch is created from the develop branch. 
+
+  A developer creates a new feature branch based on the development branch.
+   When a feature is completed, a pull request is created.
+
+  Jenkins automatically runs pre-integration tests in this individual feature. If the tests are successful,
+   Jenkins marks the commits as successful. The development team will then review the changes and merge the 
+   pull request of the new feature branch to the develop branch and delete the feature branch.
+
+  A build will be triggered on the develop branch, and the changes will be
+   deployed to the sandbox/development environment.
+
+  A pull request is created to merge the develop branch into the preprod branch.  
+
+  When the develop branch is merged to the preprod branch, the pipeline will be triggered to deploy 
+   the new features to the staging environment upon the completion of the pipeline.
+
+  Once the release is being validated, the preprod branch will be merged to master,
+   and changes will be deployed to the production environment after user approval.
+
+  If an issue in production is detected, a hot branch is created from the master branch.
+   Once the hotfix is complete, it will be merged to both the develop and master branches. 
+
+
+GitFlow does not solve all problems with branching. But it offers you a more logical
+  branch structure and a great workflow organization model when working within a big
+  team. In addition, many feature branches are developed concurrently, which makes
+  parallel development easy. For smaller projects (and smaller teams), GitFlow can be overkill. 
+
+For small projects: 
+  Master branch, to store the official release history and the source code of an
+   application running in a production environment
+   
+  Preprod branch, to store new integrated features running in the staging environ-
+   ment and ready to be merged to the master branch
+   
+  Develop branch, for the latest delivered development changes and mirror of the
+   application running in a sandbox environment
+
+
+Test-driven development with Jenkins
+  Using Jenkinsfiles has one potential downside: it can be more challenging to discover
+  problems up-front when you are working in the external file and not in the environment of 
+  the Jenkins server. One approach to dealing with this is developing the code within the 
+  Jenkins server as a pipeline project first. Then, you can convert it to a Jenkinsfile afterward.
+
+
+
+The Replay button feature allows for quick modifications and execution of an
+  existing pipeline without changing the pipeline configuration or creating a new commit. 
+  It’s ideal for rapid iteration and prototyping of a pipeline.
+
+
+Command-line pipeline linter
+  For advanced users, you can use the Jenkins RESTful API to validate the Jenkinsfile
+  syntax by issuing an HTTP/HTTPS POST request with the parameters 
+  
+NOTE
+  To get the API endpoint working on a Jenkins server with cross-site
+  request forgery (CSRF) protection enabled, you need to request a crumb issuer and include it in the 
+  Authorization header in the issued HTTP request. To generate this crumb, you need to request the 
+  following URL: JENKINS_URL/jenkins/crumbIssuer/api/json.
+
+Another way of validating the Jenkinsfile is to run the following command from the terminal session:
+
+╒═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╕
+  curl -X POST -L --user USERNAME:TOKEN JENKINS_URL/pipeline-model-converter/validate -F "jenkinsfile=<Jenkinsfile" 
+╘═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╛
+
+The Jenkins command-line interface (CLI), www.jenkins.io/doc/book/managing/cli/, can also be used with 
+  the declarative-lint option to lint a declarative pipeline from the command line before actually 
+  running it. You can issue this command to lint a Jenkinsfile via the CLI with SSH:
+  
+╒══════════════════════════════════════════════════════════════════════════════╕
+  ssh -p $JENKINS_SSHD_PORT $JENKINS_HOSTNAME declarative-linter < Jenkinsfile 
+╘══════════════════════════════════════════════════════════════════════════════╛
+
+
+
+
+
+
+Jenkins distributed builds: 
+  In a distributed microservices architecture, you may have multiple services to build,
+  test, and deploy regularly. Hence, having multiple build machines makes sense.
+  While you can always run Jenkins in a standalone mode, running all builds on a
+  central machine may not be the best option and will result in having a single point
+  of failure (a single Jenkins server cannot handle the entire load for larger and
+  heavier projects). Fortunately, Jenkins can also be configured to run distributed
+  builds across a fleet of machines/nodes by setting up a master/worker cluster,
+
+
+Jenkins uses a master-worker architecture to manage distributed builds. Each component has a specific role:
+  Jenkins master — Responsible for scheduling build jobs and distributing builds to
+   the workers for the actual execution. It also monitors the workers’ states, and
+   collects and aggregates the build results in the web dashboard.
+
+  Jenkins worker — Also known as a slave or build agent, this is a Java executable that runs on a remote machine,
+   listens for requests coming from the Jenkins master, and executes build jobs. You can have as many workers 
+   as you want (up to 100+ nodes). Workers can be added and removed on the fly. Therefore, the workload
+   will be distributed to them automatically, and the workers will take the load off the master Jenkins server.
+
+SSH
+  If you are working in a UNIX environment, the most convenient way to start a Jenkins
+  worker is undoubtedly to use Secure Shell (SSH). Jenkins has its own built-in SSH client, 
+
+
+
+
+
+
+
+
+

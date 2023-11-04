@@ -1,0 +1,78 @@
+pipeline { 
+  agent { 
+    node { 
+      label 'workers'
+    }
+
+    dockerfile {
+      filename 'Dockerfile'
+      label 'workers' 
+    }
+    
+    kubernetes {
+      label 'workers'
+      yaml """
+      kind: Pod
+      metadata:
+      name: jenkins-worker
+      spec:
+      containers:
+      - name: nodejs
+        image: node:lts
+        tty: true
+        restartPolicy: Never
+      """
+      }
+      
+  }
+
+// The variables can be defined as sequences of key-value pairs. These will
+// be available for all steps if the environment block is defined at the pipeline top level;
+// otherwise, the variables can be stage-specific. You can also reference credential vari-
+// ables by using a helper method credentials(), which takes as a parameter the ID of
+// the target credential
+
+  environment {
+      REGISTRY_CREDENTIALS= credentials('DOCKER_REGISTRY')
+      REGISTRY_URL = 'https://registry.domain.com'
+  }
+
+  stages { 
+    stage('Test') { 
+      steps { 
+        sh 'npm run test'
+        sh 'npm run coverage'
+      }
+    }
+
+    stage('Build'){}
+    
+    stage('Push'){
+        steps {
+            sh 'docker login $REGISTRY_URL --username $REGISTRY_CREDENTIALS_USR --password $REGISTRY_CREDENTIALS_PSW'
+        }
+    }
+  }
+
+  
+  // The post section contains commands or scripts that will be run upon the completion of
+  // a pipeline or stage run, depending on the location of this section within the
+  // pipeline. However, conventionally the post section should be placed at the end of the pipeline
+  
+  post {
+    // the always directive will run no matter the status of the build 
+    // and will not interfere with the final status.
+     always {
+          echo 'Cleaning up workspace'
+      }
+
+      success {
+          slackSend (color: 'GREEN', message: "${env.JOB_NAME} Successful build")
+      }
+
+      failure {
+          slackSend (color: 'RED', message: "${env.JOB_NAME} Failed build")
+      }
+  }
+
+}
