@@ -1,4 +1,3 @@
-
 terraform init => terraform plan => terraform apply
 terraform fmt
 terraform destroy 
@@ -6,5 +5,13 @@ terraform validate
 
 # when executing the init command, we can specify the backend. tfvars file to use:
 terraform init -backend-config="backend.tfvars"
+
+
+# The -i argument is the path of the inventory file, the -u argument corresponds to the remote 
+# username that's used to connect to the remote machine, and -m is the command to execute. Here
+ansible -i inventory all -u demobook -m ping
+
+# a particular group 
+ansible -i inventory webserver -u demobook -m ping
 
 
