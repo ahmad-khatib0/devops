@@ -4,3 +4,7 @@ terraform fmt
 terraform destroy 
 terraform validate
 
+# when executing the init command, we can specify the backend. tfvars file to use:
+terraform init -backend-config="backend.tfvars"
+
+

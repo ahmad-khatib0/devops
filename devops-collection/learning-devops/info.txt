@@ -95,4 +95,17 @@ Protecting the state file with a remote backend
   even to archive it in an SCM. To solve this problem, Terraform allows this state 
   file to be stored in a shared and secure storage called the remote backend.
 
+  In our case, we will use an azurerm remote backend to store our state files with a storage account and a blob 
+  for the state file. Therefore, we will implement and use a remote backend in three steps:
+ 1. The creation of the storage account
+ 2. The Terraform configuration for the remote backend
+ 3. The execution of Terraform with the use of this remote backend
 
+if multiple Terraform states are used to manage multiple environments,
+it's possible to create several remote backend configurations with the simplified code in the .tf file:
+╒══════════════════════╕
+  terraform {          
+     backend "azurerm" {} 
+  }                    
+╘══════════════════════╛
+ 
