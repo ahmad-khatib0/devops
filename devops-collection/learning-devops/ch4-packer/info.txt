@@ -9,3 +9,17 @@ To generate our VM image in Azure, follow these steps:
 2- packer validate azure_linux.json
 3- packer build azure_linux.json
 
+
+
+
+To execute Packer using an HCL template, 
+1- we execute the following command to download plugins:
+   packer init .pkr.hcl
+2- Then we check the template syntax by running the validate command:
+   packer validate .pkr.hcl
+3- Finally, we build the desired image by running this following command:
+   packer build .pkr.hcl
+
+
+
+
