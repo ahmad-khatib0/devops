@@ -1,0 +1,9 @@
+---
+- hosts: webserver # install it on only a particular group
+  become: true
+  roles:
+    - nginx
+- hosts: database
+  become: true
+  roles:
+    - mysql

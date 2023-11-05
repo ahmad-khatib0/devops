@@ -1,0 +1,51 @@
+Using a dynamic inventory for an Azure infrastructure
+
+1- The first step is to configure Ansible to be able to access Azure resources. 
+   For this, we will create an Azure Service Principal in Azure AD, in exactly 
+   the same way as we did for Terraform, Then, we must export the information 
+   of the four service principal IDs to the following environment variables:
+
+  export AZURE_SUBSCRIPTION_ID=<subscription_id>
+  export AZURE_CLIENT_ID=<client ID>
+  export AZURE_SECRET=<client Secret>
+  export AZURE_TENANT=<tenant ID>
+
+2- Then, to be able to generate an inventory with groups and to filter VMs, it is better
+   to add tags to the VMs. Tags can be added using Terraform, an az cli command
+   line, or an Azure PowerShell script.
+
+az resource tag --tags role=webserver -n VM01 -g demoAnsible 
+  --resource-type "Microsoft.Compute/virtualMachines"
+  
+az resource tag --tags role=webserver -n VM02 -g demoAnsible 
+  --resource-type "Microsoft.Compute/virtualMachines"
+
+Now, we must add to our VM the tag that contains the database with this script:
+az resource tag --tags role=database -n VM04 -g demoAnsible 
+  --resource-type "Microsoft.Compute/virtualMachines"
+This script adds a role tag to VM04, which has a value of database.
+
+
+3- To use a dynamic inventory in Azure, we need to do the following actions:
+  . Install the Ansible Azure module on the machine with the following script
+
+wget -q https://raw.githubusercontent.com/ansible-collections/azure/dev/requirements-azure.txt;
+pip3 install -r requirements-azure.txt;
+
+We can also install the Azure module using Ansible Galaxy by executing the following command:
+ansible-galaxy collection install azure.azcollection
+
+
+4- ansible-inventory -i inv.azure_rm.yml --list
+
+5- Once we have tested our dynamic inventory in Azure, we just have to run Ansible on it, using 
+   the tags we applied to the VMs. For this, we must run our playbook with the following command:
+   
+ansible-playbook playbook.yaml -i inv.azurerm.yml -u demobook –ask-pass
+
+
+From now on, each time a VM on our Azure infrastructure has a role=webserver
+tag, it will be automatically taken into account by the dynamic inventory, so no code
+modifications will be necessary.
+
+

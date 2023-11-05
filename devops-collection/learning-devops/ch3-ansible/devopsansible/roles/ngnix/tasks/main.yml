@@ -1,0 +1,13 @@
+# Improving your playbooks with roles
+# Within an enterprise, when configuring a VM, we notice a certain repetition of tasks for
+# each application. For example, several applications require the identical installation of
+# NGINX, which must be performed in the same way.
+# With Ansible, this repetition will require duplicating the playbook code, as seen in our
+# playbook example in the Executing a basic playbook section, between several playbooks
+# (because each application contains a playbook). To avoid this duplication and, hence,
+# save time, avoid errors, and homogenize installation and configuration actions, we can
+# encapsulate the playbook code in a directory called role that can be used by several playbooks.
+- name: install and check nginx latest version
+  apt: name=nginx state=latest
+- name: start nginx
+  service: name=nginx state=started

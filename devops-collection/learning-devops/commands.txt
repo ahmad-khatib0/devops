@@ -14,4 +14,38 @@ ansible -i inventory all -u demobook -m ping
 # a particular group 
 ansible -i inventory webserver -u demobook -m ping
 
+# run playbook
+ansible-playbook -i inventory playbook.yml
+
+# check the execution of a playbook on hosts without applying them 
+ansible-playbook -i inventory playbook.yml --check
+
+# or -vvv or -vvvv  (log level) 
+ansible-playbook -i inventory playbook.yml -v
+
+# encrypt a file using ansible-vault
+ansible-vault encrypt group_vars/database/main.yml
+
+# decrypt it 
+ansible-vault decrypt group_vars/database/main.yml
+
+
+ ╒═════════════════════════════════════════════════════════════════════════════════════════════╕
+   In an Ansible usage automation process, it is preferable to store the password in a file in 
+   a protected location; for example, in the ~/.vault_pass.txt file.                           
+   Then, to encrypt the variable file with this file, we must execute the ansible-vault        
+   command and add the --vault-password-file option:                                           
+ ╘═════════════════════════════════════════════════════════════════════════════════════════════╛
+ 
+ansible-vault encrypt group_vars/database/main.yml --vault-password-file ~/.vault_pass.txt
+
+# Ansible asks the user to enter the password
+ansible-playbook -i inventory playbook.yml --ask-vault-pass
+
+# or provide the password from file
+ansible-playbook -i inventory playbook.yml --vault-password-file ~/.vault_pass.txt
+
+
+
+
 
