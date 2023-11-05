@@ -180,8 +180,23 @@ Among the Infrastructure as Code (IaC) tools, there is Packer from the HashiCorp
 In Packer The provisioners section, which is optional, contains a list of scripts that will be executed 
 by Packer on a temporary VM base image in order to build our custom VM image according to our needs.
 
+As a reminder, to generate this image, Packer will, from our JSON template, create a
+  temporary VM, on which it will perform all of the configuration actions described in this
+  template, and then it will generate an image from this image. Finally, at the end of its
+  execution, it removes the temporary VM and all of its dependencies.
 
 
+in packer variables, eg:
+╒════════════════════════════════════════╕
+   "variables": {                         
+      "clientid": "{{env `ARM_CLIENT_ID`}}", 
+       ....                                   
+    },
+    "builders": {
+      "client_id": "{{user `clientid`}}",
+     }
+╘════════════════════════════════════════╛
+the clientid will take its value from the ARM_CLIENT_ID environment variable
 
 
 

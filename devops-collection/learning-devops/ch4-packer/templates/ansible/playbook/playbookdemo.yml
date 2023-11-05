@@ -1,0 +1,19 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  connection: local
+  tasks:
+    - name: installing latest version of Ngnix
+      apt:
+        name: nginx
+        state: latest
+    - name: start nginx service
+      service:
+        name: nginx
+        state: started
+#
+#
+#
+# • There is no inventory because it is Packer that manages the remote host,
+#     which is the temporary VM that will be used to create the image.
+# • The value of hosts is, therefore, the local IP address.

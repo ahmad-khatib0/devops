@@ -51,3 +51,13 @@ ansible-playbook -i inventory playbook.yml --vault-password-file ~/.vault_pass.t
 
 
 
+# validate a packer file
+ packer validate azure_linux.json
+
+# Executing Packer
+ packer build azure_linux.json
+
+# override the variables of our template 
+ packer build -var 'image_version=0.0.2' azure_linux.json
+
+

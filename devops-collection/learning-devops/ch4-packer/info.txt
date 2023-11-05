@@ -1,0 +1,11 @@
+Executing Packer
+
+To generate our VM image in Azure, follow these steps:
+  1. Configure Packer to authenticate to Azure.
+  2. Check our Packer template.
+  3. Run Packer to generate our image.
+
+1- export the variables values 
+2- packer validate azure_linux.json
+3- packer build azure_linux.json
+
