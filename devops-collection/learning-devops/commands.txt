@@ -61,3 +61,15 @@ ansible-playbook -i inventory playbook.yml --vault-password-file ~/.vault_pass.t
  packer build -var 'image_version=0.0.2' azure_linux.json
 
 
+
+
+
+
+# init vagrant box
+vagrant init ubuntu/bionic64
+
+vagrant validate
+
+vagrant up
+
+vagrant ssh
