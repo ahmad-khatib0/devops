@@ -172,6 +172,17 @@ There are two types of inventories:
 
 
 
+Among the Infrastructure as Code (IaC) tools, there is Packer from the HashiCorp tools,
+  which allows us to create VM images from a file (or template). It's an open source 
+  command-line tool that allows us to create custom VM images of any OS 
+  (these images are also called templates) on several platforms from a JSON file.
+
+In Packer The provisioners section, which is optional, contains a list of scripts that will be executed 
+by Packer on a temporary VM base image in order to build our custom VM image according to our needs.
+
+
+
+
 
 
 

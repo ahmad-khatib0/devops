@@ -46,6 +46,8 @@ ansible-playbook -i inventory playbook.yml --ask-vault-pass
 ansible-playbook -i inventory playbook.yml --vault-password-file ~/.vault_pass.txt
 
 
+# delete the user information that was used to install everything on the temporary VM
+"/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
 
 
 
