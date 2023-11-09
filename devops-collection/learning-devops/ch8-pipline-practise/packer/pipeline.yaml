@@ -1,0 +1,20 @@
+trigger:
+  - master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - script: packer init $(Build.SourcesDirectory)/CHAP08/packer/.pkr.hcl
+    displayName: Packer init
+
+  - script: packer validate $(Build.SourcesDirectory)/CHAP08/packer/.pkr.hcl
+    displayName: Packer validate template
+
+  - script: packer build $(Build.SourcesDirectory)/CHAP08/packer/.pkr.hcl
+    displayName: Packer build template
+    env:
+      PKR_VAR_clientid: $(PKR_VAR_clientid)
+      PKR_VAR_clientsecret: $(PKR_VAR_clientsecret)
+      PKR_VAR_subscriptionid: $(PKR_VAR_subscriptionid)
+      PKR_VAR_tenantid: $(PKR_VAR_tenantid)
