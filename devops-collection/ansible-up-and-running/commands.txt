@@ -1,0 +1,25 @@
+You should be able to log in to your new x virtual machine by running the following:
+$ vagrant ssh
+
+Tell Vagrant to output its SSH configuration by typing the following:
+$ vagrant ssh-config
+
+Confirm that you can start an SSH session from the command line by using this information. 
+The SSH command also works with a relative path from the playbooks directory:
+$ ssh vagrant@127.0.0.1 -p 2222 -i .vagrant/machines/default/virtualbox/private_key
+
+# tell Ansible to connect to the server named testserver
+$ ansible testserver -i inventory/vagrant.ini -m ping
+
+# use the command module to run the uptime command (you can ommit:  -m command)
+$ ansible testserver -m command -a uptime
+
+# If you need privileged access, pass in the -b or --become flag to tell Ansible to become the root user.
+$ ansible testserver -b -a "tail /var/log/syslog"
+
+# You are not restricted to the ping and command modules when using the ansible command-line tool:
+# For example, you can install NGINX on Ubuntu by using the following command
+$ ansible testserver -b -m package -a name=nginx
+
+
+

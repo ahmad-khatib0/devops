@@ -1,0 +1,22 @@
+Reorganize the Ansible content into three parts:
+  • Core components, created by the Ansible team
+  • Certified content, created by Red Hat’s business partners
+  • Community content, created by thousands of enthusiasts worldwide
+
+
+Where Should I Put My ansible.cfg File?
+Ansible looks for an ansible.cfg file in the following places, in this order:
+  • File specified by the ANSIBLE_CONFIG environment variable
+  • ./ansible.cfg (ansible.cfg in the current directory)
+  • ~/.ansible.cfg (.ansible.cfg in your home directory)
+  • /etc/ansible/ansible.cfg (Linux) or /usr/local/etc/ansible/ansi‐ble.cfg (*BSD)
+
+
+Ansible uses /etc/ansible/hosts as the default location for the inventory file. 
+Keeping the inventory in the same directory as the play‐ books and so on gives you 
+the possibility of a specific inventory per project instead of just a global one.
+
+
+
+
+
