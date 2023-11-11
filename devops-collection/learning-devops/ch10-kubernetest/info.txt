@@ -1,0 +1,10 @@
+
+1- install the kubernetes dashboard
+
+# Then To create a new user authentication token, we will execute the following script in a PowerShell Terminal:
+
+  $TOKEN=((kubectl -n kube-system describe secret default |
+  Select-String "token:") -split " +")[1]
+  kubectl config set-credentials docker-for-desktop--token="${TOKEN}"
+
+# The execution of this script creates a new token inside the local config file.
