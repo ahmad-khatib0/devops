@@ -22,4 +22,20 @@ $ ansible testserver -b -a "tail /var/log/syslog"
 $ ansible testserver -b -m package -a name=nginx
 
 
+You can force Vagrant to run the provisioner against a running virtual machine as follows:
+$ vagrant provision
+
+You can also reboot a virtual machine and run the provisioner after reboot:
+$ vagrant reload --provision
+
+Similarly, you can start up a halted virtual machine and have Vagrant run the provisioner:
+$ vagrant up --provision
+
+In the Vagrantfile, we have a couple of constructs to create one guest by name when we enter:
+$ vagrant up focal
+
+
+
+
+
 

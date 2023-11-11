@@ -17,6 +17,13 @@ Keeping the inventory in the same directory as the play‐ books and so on gives
 the possibility of a specific inventory per project instead of just a global one.
 
 
+You don’t need to install Ansible on your machine to use it when you have config.vm.provision "ansible_local" 
+in your Vagrantfile; it will be installed and run in the virtual machine. When you use 
+config.vm.provision "ansible" in the Vagrantfile, the provisioner does use Ansible on your machine.
+
+-- The vagrant-hostmanager plug-in helps in addressing multiple virtual machines by hostname.
+-- The vagrant-vbguest plug-in works on VirtualBox and can automatically install or
+   update Guest Additions in your guest virtual machines
 
 
 
