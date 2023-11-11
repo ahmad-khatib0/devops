@@ -1,0 +1,27 @@
+# The az cli script that creates a resource group and an ACR resource is shown here:
+
+az group create --name RG-ACR --location eastus
+az acr create --resource-group RG-ACR --name acrdemo --sku Basic
+
+az login
+az acr login --name demobookacr
+
+
+# For pushing a Docker image into this ACR resource, we will execute a couple of commands.
+# The first command is to create a tag to the local image:
+docker tag demobook:v1 demobookacr.azurecr.io/demobook:v1
+
+# The second command is to push the image into the ACR resource:
+docker push demobookacr.azurecr.io/demobook:v1
+
+# to pull this image: 
+docker pull demobookacr.azurecr.io/demobook:v1
+
+
+
+
+ACI is a managed service by Azure that allows you to deploy containers very easily,
+without having to worry about the hardware architecture.
+
+
+
