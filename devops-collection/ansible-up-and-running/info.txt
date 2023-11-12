@@ -16,6 +16,20 @@ Ansible uses /etc/ansible/hosts as the default location for the inventory file.
 Keeping the inventory in the same directory as the play‐ books and so on gives you 
 the possibility of a specific inventory per project instead of just a global one.
 
+We use the .j2 extension to indicate that the file is a Jinja2 template. However, you can
+use a different extension if you like; Ansible doesn’t care.
+
+In ch3/playbooks/templates/nginx.conf.j2 file 
+server_name
+  The hostname of the web server (such as www.example.com)
+cert_file
+  The filename of the TLS certificate
+key_file
+  The filename of the TLS private key
+tls_dir
+  The directory with the above files
+
+
 
 You don’t need to install Ansible on your machine to use it when you have config.vm.provision "ansible_local" 
 in your Vagrantfile; it will be installed and run in the virtual machine. When you use 
@@ -56,6 +70,15 @@ config.vm.provision "ansible" in the Vagrantfile, the provisioner does use Ansib
   city: College Park
   state: Maryland
 
+-- If you reference a variable right after specifying the module, the YAML parser will misinterpret the 
+   variable reference as the beginning of an inline dictionary. Consider the following example:
+- name: Perform some task
+   command: {{ myapp }} -a foo
+Ansible will try to parse the first part of {{ myapp }} -a foo as a dictionary instead
+of a string, and will return an error. In this case, you must quote the arguments:
+- name: Perform some task
+    command: "{{ myapp }} -a foo"
+
 
 
 
@@ -79,6 +102,36 @@ service
 template
   Generates a file from a template and copies it to the hosts
 
+When you want to run a task with each item from a list, you can use loop. A loop executes the task 
+  multiple times, each time replacing item with different values from the specified list:
+loop:
+  - "{{ key_file }}"
+  - "{{ cert_file }}"
+notify: Restart nginx
+
+
+Handlers are one of the conditional forms that Ansible supports. A handler is similar to a task, but it 
+  runs only if it has been notified by a task. A task will fire the notification if Ansible recognizes 
+  that the task has changed the state of the system. If a play contains multiple handlers, the handlers 
+  always run in the order that they are defined in the handlers section, not the notification order. 
+  They run only once, even if they are notified multiple times. The official Ansible documentation mentions 
+  that the only common uses for han‐ dlers are reboots and restarting services. Lorin uses them only for 
+  restarting serv‐ ices—he thinks it’s a pretty small optimization to restart only once on change, since
+  we can always just unconditionally restart the service at the end of the playbook, and
+  restarting a service doesn’t usually take very long. But when you restart NGINX, you
+  might affect user sessions; notifying handlers help avoid unnecessary restarts. Bas
+  likes to validate the configuration before restarting, especially if it’s a critical service
+  like sshd. He has handlers notifying handlers.
+  
+Testing
+One pitfall with handlers is that they can be troublesome when debugging a play‐
+book. The problem usually unfolds something like this:
+• You run a playbook.
+• One of the tasks with a notify on it changes state.
+• An error occurs on a subsequent task, stopping Ansible.
+• You fix the error in your playbook.
+• You run Ansible again.
+• None of the tasks reports a state change the second time around, so Ansible doesn’t run the handler.
 
 
 

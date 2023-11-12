@@ -1,0 +1,87 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Configure webserver with nginx
+  hosts: webservers
+  become: true
+  gather_facts: false
+  vars:
+    tls_dir: /etc/nginx/ssl/
+    key_file: nginx.key
+    cert_file: nginx.crt
+    conf_file: /etc/nginx/sites-available/default
+    server_name: localhost
+
+  #   A task notifies a handler by passing the handler’s name as the argument.
+  #   In the preceding example, the handler’s name is Restart nginx For an
+  #   NGINX server, we’d need to restart it if any of the following happens:
+  # • The TLS key changes.
+  # • The TLS certificate changes.
+  # • The configuration file changes.
+  # • The contents of the sites-enabled directory change.
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+  tasks:
+    - name: Ensure nginx is installed
+      package:
+        name: nginx
+        update_cache: true
+
+    - name: Manage nginx config file
+      copy:
+        src: nginx.conf
+        dest: '{{ conf_file }}'
+        mode: 0644
+
+    - name: Create directories for TLS certificates
+      file:
+        path: '{{ tls_dir }}'
+        state: directory
+        mode: 0750
+      notify: Restart nginx
+
+    - name: Copy TLS files
+      copy:
+        # item will be key_file in the 1th iteration, and cert_file in the 2th
+        src: '{{ item }}'
+        dest: '{{ tls_dir }}'
+        mode: 0600
+      loop:
+        - '{{ key_file }}'
+        - '{{ cert_file }}'
+      notify: Restart nginx
+
+    - name: Manage nginx config template
+      template:
+        src: nginx.conf.j2
+        dest: '{{ conf_file }}'
+        mode: 0644
+      notify: Restart nginx
+
+    - name: Copy home page template
+      template:
+        src: index.html.j2
+        dest: /usr/share/nginx/html/index.html
+        mode: 0644
+
+    # Handlers usually run at the end of the play after all of the tasks have
+    # been run. To force a notified handler in the middle of a play, we use
+    # these two lines of code:
+    - name: Restart nginx
+      meta: flush_handlers
+
+    - name: 'Test it! https://localhost:8443/index.html'
+      delegate_to: localhost
+      become: false
+      uri:
+        url: 'https://localhost:8443/index.html'
+        validate_certs: false
+        return_content: true
+      register: this
+      failed_when: "'Running on ' not in this.content"
+      tags:
+        - test

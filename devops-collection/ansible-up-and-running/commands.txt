@@ -22,22 +22,28 @@ $ ansible testserver -b -a "tail /var/log/syslog"
 $ ansible testserver -b -m package -a name=nginx
 
 
-You can force Vagrant to run the provisioner against a running virtual machine as follows:
+# You can force Vagrant to run the provisioner against a running virtual machine as follows:
 $ vagrant provision
 
-You can also reboot a virtual machine and run the provisioner after reboot:
+# You can also reboot a virtual machine and run the provisioner after reboot:
 $ vagrant reload --provision
 
 Similarly, you can start up a halted virtual machine and have Vagrant run the provisioner:
 $ vagrant up --provision
 
-In the Vagrantfile, we have a couple of constructs to create one guest by name when we enter:
+# In the Vagrantfile, we have a couple of constructs to create one guest by name when we enter:
 $ vagrant up focal
 
 
-To show the documentation for the service module, run this:
+# To show the documentation for the service module, run this:
 $ ansible-doc service     OR          ansible-doc -l | grep ^apt
 
+# You should also check the Ansible syntax of your playbook before running it: 
+$ ansible-playbook --syntax-check webservers-tls.yml
+$ ansible-lint webservers-tls.yml
+$ yamllint webservers-tls.yml
+$ ansible-inventory --host testserver -i inventory/vagrant.ini
+$ vagrant validate
 
 
 
