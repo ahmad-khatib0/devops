@@ -135,3 +135,98 @@ book. The problem usually unfolds something like this:
 
 
 
+The Ansible inventory is a very flexible object: it can be a file (in several formats), a directory, or an 
+  executable, and some executables are bundled as plug-ins. Inventory plug-ins allow us to point at data 
+  sources, like your cloud provider, to compile the inventory. An inventory can be stored separately 
+  from your playbooks. This means that you can create one inventory directory to use with Ansible on 
+  the command line, with hosts running in Vagrant, Amazon EC2, Google Cloud Platform, or Microsoft
+  Azure, or wherever you like!
+
+Ansible automatically adds one host to the inventory by default: localhost. It understands that localhost 
+refers to your local machine, with which it will interact directly rather than connecting by SSH.
+
+ansible_connection
+  Ansible supports multiple transports, which are mechanisms that Ansible uses
+  to connect to the host. The default transport, smart, will check whether the
+  locally installed SSH client supports a feature called ControlPersist. If the SSH
+  client supports ControlPersist, Ansible will use the local SSH client. If not, the
+  smart transport will fall back to using a Python-based SSH client library called Paramiko.
+  
+ansible_shell_type
+  Ansible works by making SSH connections to remote machines and then invoking scripts. By default, 
+  Ansible assumes that the remote shell is the Bourne shell located at /bin/sh, and will generate 
+  the appropriate command-line parameters that work with that. It creates temporary directories to 
+  store these scripts. Ansible also accepts csh, fish, and (on Windows) powershell as valid values for
+  this parameter. Ansible doesn’t work with restricted shells.
+  
+ansible_python_interpreter
+  Ansible needs to know the location of the Python interpreter on the remote
+  machine. You might want to change this to choose a version that works for you.
+  The easiest way to run Ansible under Python 3 is to install it with pip3 and set this:
+  ansible_python_interpreter="/usr/bin/env python3"
+  
+ansible_*_interpreter
+  If you are using a custom module that is not written in Python, you can use this
+  parameter to specify the location of the interpreter (such as /usr/bin/ruby)
+
+Behavioral inventory parameter        ansible.cfg option
+ansible_port                          remote_port
+ansible_user                          remote_user
+ansible_ssh_private_key_file          ssh_private_key_file
+ansible_shell_type                    executable (see the following paragraph)
+
+The ansible.cfg executable config option is not exactly the same as the ansi
+  ble_shell_type behavioral inventory parameter. The executable specifies the full path of the shell 
+  to use on the remote machine (for example, /usr/local/bin/fish). Ansible will look at the base name 
+  of this path (in this case fish) and use that as the default value for ansible_shell_type.
+
+
+
+Ansible also supports using <hostname>:<port> syntax when specifying hosts, so we
+could replace the line that contains vagrant1 with 127.0.0.1:2222
+[vagrant]
+127.0.0.1:2222
+127.0.0.1:2200
+127.0.0.1:2201
+
+However, we can’t actually run what you see in above, The reason is that Ansible’s inventory can associate 
+only a single host with 127.0.0.1, so the Vagrant group would contain only one host instead of three.
+
+The “cattle” approach to servers is much more scalable, and Ansible supports it well by supporting numeric 
+  patterns. For example, if your 20 servers are named web1.example.com, web2.example.com, and so on, 
+  then you can specify them in the inventory file like this:
+[web]
+web[1:20].example.com
+
+If you prefer to have a leading zero (such as web01.example.com), specify that in the range, like this:
+[web]
+web[01:20].example.com
+
+Ansible also supports using alphabetic characters to specify ranges. If you want to use the convention 
+  web-a.example.com, web-b.example.com, and so on, for your 20 servers, then you can do this:
+[web]
+web-[a:t].example.com
+
+We could define a variable named color and set it to a value for each server:
+  amsterdam.example.com color=red
+  seoul.example.com color=green
+  sydney.example.com color=blue
+  toronto.example.com color=purple
+
+For example, if Lorin has a directory containing his playbooks at /home/lorin/playbooks/ with 
+  an inventory directory and hosts file at /home/lorin/inventory/hosts, he
+  should put variables for the amsterdam.example.com host in the file /home/lorin/
+  inventory/host_vars/amsterdam.example.com and variables for the production group
+  in the file /home/lorin/inventory/group_vars/production
+If we want to break things out even further, Ansible lets us define group_vars/produc‐
+  tion as a directory instead of a file. We can place multiple YAML files into it that
+  contain variable definitions. For example, we could put database-related variables in
+  one file and the RabbitMQ-related variables in another file
+
+If the inventory file is marked executable, Ansible will assume it is a dynamic 
+  inventory script and will execute the file instead of reading it.
+
+
+
+
+

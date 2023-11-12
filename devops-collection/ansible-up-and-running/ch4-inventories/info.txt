@@ -1,0 +1,27 @@
+Imagine you’re responsible for deploying a Django-based web application that processes long-running 
+   jobs. The app needs to support the following services:
+• The actual Django web app itself, run by a Gunicorn HTTP server
+• A NGINX web server, which will sit in front of Gunicorn and serve static assets
+• A Celery task queue that will execute long-running jobs on behalf of the web app
+• A RabbitMQ message queue that serves as the backend for Celery
+• A Postgres database that serves as the persistent store
+
+When we deploy to production, we want the entire system to respond quickly and
+reliably, so we do the following:
+• Run the web application on multiple hosts for better performance and put a load balancer in front of them
+• Run task queue servers on multiple hosts for better performance
+• Put Gunicorn, Celery, RabbitMQ, and Postgres all on separate servers
+• Use two Postgres hosts: a primary and a replica
+
+Assuming we have one load balancer, three web servers, three task queues, one
+RabbitMQ server, and two database servers, that’s 10 hosts we need to deal with
+
+For our staging environment, we want to use fewer hosts than we do in production
+to save costs, since it’s going to see a lot less activity than production will. Let’s say we
+decide to use only two hosts for staging; we’ll put the web server and task queue on
+one staging host, and RabbitMQ and Postgres on the other.
+For our local Vagrant environment, we decide to use three servers: one for the web
+app, one for a task queue, and one that will contain RabbitMQ and Postgres.
+
+
+

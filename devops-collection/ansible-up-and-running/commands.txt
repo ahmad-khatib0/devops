@@ -46,5 +46,10 @@ $ ansible-inventory --host testserver -i inventory/vagrant.ini
 $ vagrant validate
 
 
+# The simplest inventory is a comma-separated list of hostnames, which you can do even without a server:
+$ ansible all -i 'localhost,' -a date
+
+# we can check whether the clocks on the machines are roughly synchronized: 
+$ ansible all -a "date"           OR               $ ansible '*' -a "date"
 
 
