@@ -230,5 +230,8 @@ An Ansible dynamic inventory script must support two command-line flags:
   • --host=<hostname> for showing host details
   • --list for listing groups
 
+Ansible’s group_by module allows you to create new groups while a playbook is
+  executing. Any group you create will be based on the value of a variable that has been
+  set on each host, which Ansible refers to as a fact
 
 

@@ -1,0 +1,37 @@
+---
+- name: Group hosts by distribution
+  hosts: all
+  # If Ansible fact gathering is enabled, Ansible will associate a set of
+  # variables with a host. For example, the ansible_machine variable will be
+  # i386 for 32-bit x86 machines and x86_64 for 64-bit x86 machines. If Ansible
+  # is interacting with a mix of such hosts, we can create i386 and x86_64
+  # groups with the task.
+  gather_facts: true
+  tasks:
+    - name: Create groups based on distro
+      group_by:
+        key: '{{ ansible_distribution }}'
+        # If we’d rather group our hosts by Linux distribution
+        # (for example, Ubuntu or CentOS), we can use
+        # key: "{{ ansible_facts.distribution }}"
+
+- name: Do something to Ubuntu hosts
+  hosts: Ubuntu
+  become: true
+  tasks:
+    - name: Install jdk and jre
+      apt:
+        update_cache: true
+        name:
+          - openjdk-11-jdk-headless
+          - openjdk-11-jre-headless
+
+- name: Do something else to CentOS hosts
+  hosts: CentOS
+  become: true
+  tasks:
+    - name: Install jdk
+      yum:
+        name:
+          - java-11-openjdk-headless
+          - java-11-openjdk-devel
