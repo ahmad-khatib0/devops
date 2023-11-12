@@ -1,0 +1,45 @@
+---
+# Here’s the add_host command in action, bringing up a new Vagrant machine and
+# then configuring the machine:
+#
+# Why Do I Need add_host if I’m Using Dynamic Inventory?
+# Even if you’re using dynamic inventory scripts, the add_host module is useful
+# for scenarios where you start up new virtual machine instances and configure
+# those instances in the same playbook. If a new host comes online while a
+# playbook is executing, the dynamic inventory script will not pick up this new
+# host. This is because the dynamic inventory script is executed at the
+# beginning of the playbook: if any new hosts are added while the playbook
+# is executing, Ansible won’t see them.
+#
+- name: Provision a Vagrant machine
+  hosts: localhost
+  vars:
+    box: 'centos/stream8'
+  tasks:
+    # This tells Ansible that if the Vagrantfile file is present,
+    # there is no need to run the command again.
+    - name: Create a Vagrantfile
+      command: 'vagrant init {{ box }}'
+      args:
+        creates: Vagrantfile
+
+    - name: Bring up the vagrant machine
+      command: vagrant up
+      args:
+        creates: .vagrant/machines/default/virtualbox/box_meta
+
+    - name: Add the vagrant machine to the inventory
+      add_host:
+        name: default
+        ansible_host: 127.0.0.1
+        ansible_port: 2222
+        ansible_user: vagrant
+        ansible_private_key_file: >-
+          .vagrant/machines/default/virtualbox/private_key
+
+- name: Do something to the vagrant machine
+  hosts: default
+  tasks:
+    # The list of tasks would go here
+    - name: Ping
+      ping:

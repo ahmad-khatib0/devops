@@ -52,4 +52,13 @@ $ ansible all -i 'localhost,' -a date
 # we can check whether the clocks on the machines are roughly synchronized: 
 $ ansible all -a "date"           OR               $ ansible '*' -a "date"
 
+# To get the details of the individual host: 
+$ ansible-inventory -i inventory/hosts --host=vagrant2
 
+# get a list of all of the groups in dynamic inventory: 
+$ ./inventory/vagrant.py --list  
+
+# which machines are currently running
+$ vagrant status
+
+ 

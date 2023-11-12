@@ -226,7 +226,9 @@ If we want to break things out even further, Ansible lets us define group_vars/p
 If the inventory file is marked executable, Ansible will assume it is a dynamic 
   inventory script and will execute the file instead of reading it.
 
-
+An Ansible dynamic inventory script must support two command-line flags:
+  • --host=<hostname> for showing host details
+  • --list for listing groups
 
 
 
