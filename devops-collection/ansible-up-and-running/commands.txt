@@ -35,6 +35,9 @@ In the Vagrantfile, we have a couple of constructs to create one guest by name w
 $ vagrant up focal
 
 
+To show the documentation for the service module, run this:
+$ ansible-doc service     OR          ansible-doc -l | grep ^apt
+
 
 
 

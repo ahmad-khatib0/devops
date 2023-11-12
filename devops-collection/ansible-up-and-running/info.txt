@@ -25,5 +25,60 @@ config.vm.provision "ansible" in the Vagrantfile, the provisioner does use Ansib
 -- The vagrant-vbguest plug-in works on VirtualBox and can automatically install or
    update Guest Additions in your guest virtual machines
 
+-- An Ansible convention is to copy files from a subdirectory named files, and to source Jinja2 
+   templates from a subdirectory named templates. Ansible searches these directories automatically.
+
+-- End of File:  YAML files may end with three dots, which can be useful to 
+   prove completeness. But quite often this practice is skipped.
+
+-- Booleans:  YAML has a native Boolean type and provides you with a variety of values that
+   evaluate to true or false. For example, these are all Boolean true values in YAML:
+   true, True, TRUE, yes, Yes, YES, on, On, ON
+   These are all Boolean false values in YAML:
+   false, False, FALSE, no, No, NO, off, Off, OFF
+
+--  YAML also supports an inline format for lists, with comma-separated values in square brackets:
+    shows: [ My Fair Lady , Oklahoma , The Pirates of Penzance ]
+    
+-- YAML also supports an inline format for dictionaries, with comma-separated tuples in braces:
+    address: { street: Main Street, appt: '742', city: Logan, state: Ohio}
+
+-- Multiline Strings
+    You can format multiline strings with YAML by combining a block style indicator
+    (| or >), a block chomping indicator (+ or –), and even an indentation indicator
+    (1 to 9). For example, when we need a preformatted block, we use the pipe character with a plus sign (|+),
+    So The YAML parser will keep all line breaks as you enter them:
+  ---
+  visiting_address: |+
+    Department of Computer Science
+    A.V. Williams Building
+    University of Maryland
+  city: College Park
+  state: Maryland
+
+
+
+
+
+
+become:
+  If this Boolean variable is true, Ansible will become the become_user to run tasks. This is useful when 
+  managing Linux servers, since by default you should not log in as the root user. become can be specified 
+  per task, or per play, as needed, and become_user can be used to specify root (the default if omitted) or
+  another user, yet become is subject to your system’s policies. 
+  A sudoers file might need to be adjusted to be able to become root.
+
+package
+  Installs or removes packages by using the host’s package manager
+copy
+  Copies a file from the machine where you run Ansible to the web servers
+file
+  Sets the attribute of a file, symlink, or directory
+service
+  Starts, stops, or restarts a service
+template
+  Generates a file from a template and copies it to the hosts
+
+
 
 
