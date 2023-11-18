@@ -90,6 +90,41 @@ $ ansible web -a "ssh-add -L"
 # Another useful check is to verify that you can reach GitHub’s SSH server:
 $ ansible web -a "ssh -T git@github.com"
 
+# checks that your playbook’s syntax is valid.
+$ ansible-playbook --syntax-check playbook.yml
+
+# outputs the hosts against which the playbook will run.
+$ ansible-playbook --list-hosts playbook.yml
+
+# outputs the tasks against which the playbook will run.
+$ ansible-playbook --list-tasks playbook.yml
+
+
+Diff (Show File Changes)
+#   The -D and -diff flags output differences for any files that are changed on the
+#   remote machine. It’s a helpful option to use in conjunction with --check to show how
+#   Ansible would change the file if it were run normally:
+$ ansible-playbook -D --check playbook.yml
+$ ansible-playbook --diff --check playbook.yml
+#   If Ansible would modify any files (e.g., using modules such as copy, file, template,
+#   and lineinfile), it will show the changes in .diff format,
+
+
+Running or skipping tags
+  Use the -t tagnames or --tags tagnames flag to tell Ansible to run only plays and
+  tasks that have certain tags. Use the --skip-tags tagnames flag to tell Ansible to skip
+  plays and tasks that have certain tags
+$ ansible-playbook -tnxinx playbook.yml
+$ ansible-playbook --tags=xinx,database playbook.yml
+$ ansible-playbook --skip-tags=mezzanine playbook.yml
+
+
+Limits
+  Ansible allows you to restrict the set of hosts targeted for a playbook with a --limit
+  flag to ansible-playbook. You can do a canary release this way, but be sure to set it
+  up with an audit trail. The limit flag reduces the run of the playbook to a set of hosts
+  defined by an expression. In the simplest example, it can be a single hostname:
+$ ansible-playbook -vv --limit db playbook.yml
 
 
 

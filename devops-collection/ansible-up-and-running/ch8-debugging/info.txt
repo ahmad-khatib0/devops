@@ -1,0 +1,93 @@
+Debugging SSH Issues
+
+When this happens, there might be several causes:
+  • The SSH server is not running at all.
+  • The SSH server is running on a nonstandard port.
+  • Something else is running on the port you expect.
+  • The port might be filtered by the firewall on the host.
+  • The port might be filtered by another firewall.
+  • Tcpwrappers is configured, check /etc/hosts.allow and /etc/hosts.deny.
+  • The host runs in a hypervisor with micro-segmetation.
+
+Once you verified on the system console that the SSH server is running on the host,
+you can try to connect remotely with nc, or even the telnet client to check the banner:
+
+$ nc hostname 2222
+=>>> SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.4
+
+Then you can try to connect remotely with the SSH client using the verbose flag for debugging:
+$ ssh -v user@hostname
+
+You can see exactly what arguments Ansible is passing to the underlying SSH client so
+you can reproduce the problem manually on the command line. It can be handy for
+debugging to see the exact SSH commands that Ansible invokes:
+$ ansible web -vvv -m ping
+
+
+
+PasswordAuthentication no
+  PasswordAuthentication no greatly improves the security of your servers. By
+  default, Ansible assumes you are using SSH keys to connect to remote machines.
+  Having a SSH key pair is one thing, but the public key needs to be distributed to
+  the machines you want to manage. This is traditionally done with ssh-copy-id, but
+  when PasswordAuthentication is disabled, an administrator needs to use an account with public 
+  keys in place to copy your public key to the servers, preferably with the authorized_key module:
+  - name: Install authorized_keys taken from file
+    authorized_key:
+    user: "{{ the_user }}"
+    state: present
+    key: "{{ lookup('file',the_pub_key) }}"
+    key_options: 'no-port-forwarding,from="93.184.216.34"'
+    exclusive: true
+  Note that ed25519 public keys are short enough to type in a console if necessary.
+
+
+SSH as a Different User
+  You can connect to different hosts with different users. Restrict users from logging in
+  as the root user as much as possible. If you need a particular user per machine, then
+  you can set ansible_user in the inventory:
+    [mezzanine]
+    web ansible_host=192.168.33.10 ansible_user=webmaster
+    db ansible_host=192.168.33.11 ansible_user=dba
+  Note that you cannot override that user on the command line, but you can specify a user if it’s different:
+  $ ansible-playbook --user vagrant -i inventory/hosts mezzanine.yml
+  You can also use the SSH config file to define the user for each host. Finally, you can
+  set remote_user: in the header of a play or on a per task basis.
+
+
+
+Host Key Verification Failed
+  When you try to connect to a machine, you may get an error, such as:
+  $ ansible -m ping web
+╒════════════════════════════════════════════════╕
+ web | UNREACHABLE! => {                        
+  "changed": false,                              
+  "msg": "Failed to connect to the host via ssh: 
+  .....                                          
+  .....                                          
+ }                                              
+╘════════════════════════════════════════════════╛
+
+If that happens, don’t disable StrictHostKeyChecking in the SSH config. Instead,
+remove the old host key and add the new key:
+ssh-keygen -R 192.168.33.10
+ssh-keyscan 192.168.33.10 >> ~/.ssh/known_hosts
+
+
+Private Networks
+  Since Ansible uses the OpenSSH client by default, you can easily use a bastion host: a
+  central access point in a DMZ for other hosts in a private network. Here, all hosts in
+  the domain private.cloud are accessible through the ProxyJump bastion setting in the
+  file ~/.ssh/config:
+    Host bastion
+      Hostname 100.123.123.123
+      User bas
+      PasswordAuthentication no
+    Host *.private.cloud
+      User bas
+      CheckHostIP no
+      StrictHostKeyChecking no
+      ProxyJump bastion
+
+
+
