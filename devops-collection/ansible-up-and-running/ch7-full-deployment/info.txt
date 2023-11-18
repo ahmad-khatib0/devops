@@ -1,0 +1,29 @@
+Troubleshooting
+  You might hit a few speed bumps when trying to run this playbook on your local machine. This 
+  section describes how to overcome some common obstacles. 
+  
+Cannot Check Out Git Repository
+  You may see the task named “check out the repository on the host” fail with this error:
+  fatal: Could not read from remote repository.
+  A likely fix is to remove a preexisting entry for 192.168.33.10 in your ~/.ssh/known_hosts file.
+
+Cannot Reach 192.168.33.10.nip.io
+  Some WiFi routers ship with DNS servers that won’t resolve the hostname 192.168.33.10.nip.io. 
+  You can check whether yours does by typing the following on the command line:
+  $ dig +short 192.168.33.10.nip.io
+  The output should be as follows: 192.168.33.10
+  If the output is blank, your DNS server is refusing to resolve nip.io hostnames. If this
+  is the case, a workaround is to add the following to your /etc/hosts file:
+  192.168.33.10 192.168.33.10.nip.io
+
+Bad Request (400)
+  If your browser returns the error “Bad Request (400),” it is likely that you are trying
+  to reach the Mezzanine site by using a hostname or IP address that is not in the
+  ALLOWED_HOSTS list in the Mezzanine configuration file. This list is populated using
+  the domains Ansible variable in the playbook:
+  domains:
+  - 192.168.33.10.nip.io
+  - www.192.168.33.10.nip.io
+
+
+

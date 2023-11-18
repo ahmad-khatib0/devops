@@ -81,5 +81,17 @@ $ ansible-playbook greet.yml -e @5-14-greetvars.yml
 # debug a variable 
 $ ansible-playbook debug-variable.yml -e variable=ansible_python
 
+# prints out the names of all the tasks in a playbook.
+$ ansible-playbook --list-tasks mezzanine.yml
+
+# You can verify that agent forwarding is working by using Ansible to list the known keys:
+$ ansible web -a "ssh-add -L"
+
+# Another useful check is to verify that you can reach GitHub’s SSH server:
+$ ansible web -a "ssh -T git@github.com"
+
+
+
+
 
 

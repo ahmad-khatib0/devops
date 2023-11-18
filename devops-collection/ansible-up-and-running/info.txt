@@ -242,4 +242,47 @@ When Ansible gathers facts, it connects to the hosts and queries it for all kind
   behavior using the INJECT_FACTS_AS_VARS setting.
 
 
+Because updating the cache takes additional time, and because we might be running
+  a playbook multiple times in quick succession to debug it, we can avoid paying the
+  cache update penalty by using the cache_valid_time argument to the module. This
+  instructs to update the cache only if it’s older than a certain threshold. 
+
+SSH agent forwarding allows you to use your private, local SSH key remotely without worrying about leaving 
+confidential data on the server you're working with. It's built into ssh, and is easy to set up and use.
+
+What’s nip.io?
+  You might have noticed that the domains we are using look a little strange:
+  192.168.33.10.nip.io and www.192.168.33.10.nip.io. They are domain names, but they
+  have the IP address embedded within them.
+  When you access a website, you pretty much always point your browser to a domain
+  name, such as http://www.ansiblebook.com, instead of an IP address, such as http://
+  151.101.192.133. When we write our playbook to deploy Mezzanine to Vagrant, we
+  want to configure the application with the domain name or names by which it should be accessible.
+  The problem is that we don’t have a DNS record that maps to the IP address of
+  our Vagrant box. In this case, that’s 192.168.33.10. There’s nothing stopping us from
+  setting up a DNS entry for this. For example, we could create a DNS entry from
+  mezzanine-internal.ansiblebook.com that points to 192.168.33.10.
+  However, if we want to create a DNS name that resolves to a particular IP address,
+  there’s a convenient service called nip.io, provided free of charge by Exentrique
+  Solutions, that we can use so that we don’t need to create our own DNS records.
+  If AAA.BBB.CCC.DDD is an IP address, the DNS entry AAA.BBB.CCC.DDD.nip.io
+  will resolve to AAA.BBB.CCC.DDD. For example, 192.168.33.10.nip.io resolves to
+  192.168.33.10. In addition, www.192.168.33.10.nip.io also resolves to 192.168.33.10.
+  I find nip.io to be a great tool when I’m deploying web applications to private IP
+  addresses for testing purposes. Alternatively, you can simply add entries to the /etc/
+  hosts file on your local machine, which also works when you’re offline.
+  Let’s examine the Jinja2 for loop syntax. To make things a little easier to read, we’ll
+  break it up across multiple lines, like this:
+
+
+Django applications use a special script called manage.py that performs administrative 
+  actions for Django applications such as the following:
+• Creating database tables
+• Applying database migrations
+• Loading fixtures from files into the database
+• Dumping fixtures from the database to files
+• Copying static assets to the appropriate directory
+
+
+
 
