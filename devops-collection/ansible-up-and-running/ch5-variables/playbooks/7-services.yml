@@ -1,0 +1,13 @@
+---
+# Using the service_facts module to retrieve facts
+- name: show a fact returned by a module
+  hosts: debian
+  gather_facts: false
+  tasks:
+    - name: Get services facts
+      service_facts:
+
+    - debug: var=ansible_facts['services']['sshd.service']
+# Note that we do not need to use the register keyword when invoking
+# service_facts, since the returned values are facts. Several modules
+# that ship with Ansible return facts.

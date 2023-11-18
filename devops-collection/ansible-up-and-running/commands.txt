@@ -61,4 +61,25 @@ $ ./inventory/vagrant.py --list
 # which machines are currently running
 $ vagrant status
 
- 
+# Viewing All Facts Associated with a Server
+$ ansible ubuntu -m setup
+
+# filter parameter that lets you filter by fact name, or by specifying a glob. 
+$ ansible all -m setup -a 'filter=ansible_all_ipv6_addresses'
+
+# Setting a variable from the command line
+$ ansible-playbook 4-12-greet.yml -e greeting=hiya
+
+# You have to put single quotes around the entire 'greeting="hi there"' so that the
+# shell interprets that as a single argument to pass to Ansible, and you have to put
+# double quotes around "hi there" so that Ansible treats that message as a single string
+$ ansible-playbook greet.yml -e 'greeting="hi there"'
+
+# You can pass this file (greet.yml) to the command line like this:
+$ ansible-playbook greet.yml -e @5-14-greetvars.yml
+
+# debug a variable 
+$ ansible-playbook debug-variable.yml -e variable=ansible_python
+
+
+

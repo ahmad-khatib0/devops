@@ -1,0 +1,133 @@
+Variables can be concatenated between the double braces by using the tilde operator ~, as shown here:
+
+- name: Concatenate variables
+  debug:
+    msg: "The URL is https://{{ server_name ~'.'~ domain_name }}/"
+
+
+Local Facts: 
+  Ansible provides an additional mechanism for associating facts with a host. You
+  can place one or more files on the remote host machine in the /etc/ansible/facts.d
+  directory. Ansible will recognize the file if it is:
+  • In .ini format
+  • In JSON format
+  • An executable that takes no arguments and outputs JSON on the standard output stream.
+  
+   these facts are available as keys of a special variable named ansible_local.
+
+
+Parameter                     Description
+
+hostvars                      A dict whose keys are Ansible hostnames and values are dicts 
+                              that map variable names to values
+
+inventory_hostname            The name of the current host as known in the 
+                              Ansible inventory, might include domain name
+
+inventory_host                Name of the current host as known by Ansible, without the domain name (e.g., myhost)
+name_short                   
+                    
+group_names                   A list of all groups that the current host is a member of
+
+groups                        A dict whose keys are Ansible group names and values are a list of hostnames 
+                              that are members of the group. Includes all and ungrouped groups: 
+                              {“all”: [...], “web”: [...], “ungrouped”: [...]}
+
+ansible_check_mode            A boolean that is true when running in check mode (see “Check Mode”)
+
+ansible_play_batch            A list of the inventory hostnames that are active in the current batch 
+                              (see “Running on a Batch of Hosts at a Time”)
+
+ansible_play_hosts            A list of all of the inventory hostnames that are active in the current play
+
+ansible_version               A dict with Ansible version info: 
+                              {“full”: 2.3.1.0”, “major”: 2, “minor”: 3, “revision”: 1, “string”: “2.3.1.0”}
+
+
+
+hostvars
+  In Ansible, variables are scoped by host. It makes sense to talk only about the value of
+  a variable relative to a given host. The idea that variables are relative to a given host 
+  might sound confusing, since Ansible allows you to define variables on a group of hosts. 
+  For example, if you define a variable in the vars section of a play, you are defining the 
+  variable for the set of hosts in the play. But what Ansible is really doing is creating 
+  a copy of that variable for each host in the group.
+  Sometimes, a task that’s running on one host needs the value of a variable defined
+  on another host. Say you need to create a configuration file on web servers that
+  contains the IP address of the eth1 interface of the database server, and you don’t
+  know in advance what this IP address is. This IP address is available as the ansi‐
+  ble_eth1.ipv4.address fact for the database server.
+  The solution is to use the hostvars variable. This is a dictionary that contains all of
+  the variables defined on all of the hosts, keyed by the hostname as known to Ansible.
+  If Ansible has not yet gathered facts on a host, you will not be able to access its facts
+  by using the hostvars variable, unless fact caching is enabled.1
+  Continuing our example, if our database server is db.example.com, then we could put
+  the following in a configuration template:
+    {{ hostvars['db.example.com'].ansible_eth1.ipv4.address }}
+  This evaluates to the ansible_eth1.ipv4.address fact associated with the host named db.example.com.
+
+
+inventory_hostname
+  The inventory_hostname is the hostname of the current host, as known by Ansible.
+  If you have defined an alias for a host, this is the alias name. For example, if your
+  inventory contains a line like this:     ubuntu ansible_host=192.168.4.10
+  then inventory_hostname would be ubuntu. You can output all of the variables associated with 
+  the current host with the help of the hostvars and inventory_hostname variables:
+  - debug: var=hostvars[inventory_hostname]
+
+
+groups
+  The groups variable can be useful when you need to access variables for a group
+  of hosts. Let’s say we are configuring a load-balancing host, and our configuration
+  file needs the IP addresses of all of the servers in our web group. The file template
+  contains a fragment that looks like this:
+  
+  backend web-backend
+    {% for host in groups.web %}
+    server {{ hostvars[host].inventory_hostname }} \
+    {{ hostvars[host].ansible_default_ipv4.address }}:80
+    {% endfor %}
+    
+  The generated file looks like this:
+  
+  backend web-backend
+    server georgia.example.com 203.0.113.15:80
+    server newhampshire.example.com 203.0.113.25:80
+    server newjersey.example.com 203.0.113.38:80
+    
+  With the groups variable you can iterate over hosts in a group in a configuration
+  file template, only by using the group name. You can change the hosts in the group
+  without changing the configuration file template.
+
+
+
+
+Ansible does apply variable precedence,2 and you might have a use for it. Here
+is a simple rule of thumb: the closer to the host, the higher the precedence. So
+group_vars overrules role defaults, and host_vars overrules group_vars. Here is the
+order of precedence, from least to greatest. The last listed variables override all other variables:
+  1. command line values (for example, -u my_user; these are not variables)
+  2. role defaults (defined in role/defaults/main.yml)
+  3. inventory file or script group vars
+  4. inventory group_vars/all
+  5. playbook group_vars/all
+  6. inventory group_vars/*
+  7. playbook group_vars/*
+  8. inventory file or script host vars
+  9. inventory host_vars/*
+  10. playbook host_vars/*
+  11. host facts / cached set_facts
+  12. play vars
+  13. play vars_prompt
+  14. play vars_files
+  15. role vars (defined in role/vars/main.yml)
+  16. block vars (only for tasks in block)
+  17. task vars (only for the task)
+  18. include_vars
+  19. set_facts / registered vars
+  20. role (and include_role) params
+  21. include params
+  22. extra vars (for example, -e "user=my_user")
+
+
+  

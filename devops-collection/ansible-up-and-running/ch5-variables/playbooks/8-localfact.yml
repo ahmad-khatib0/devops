@@ -1,0 +1,53 @@
+---
+- name: Copy Facts
+  hosts: fedora
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure facts.d exists
+      file:
+        path: /etc/ansible/facts.d/
+        state: directory
+        mode: 0755
+
+    - name: Copy example fact
+      copy:
+        src: example.fact
+        dest: /etc/ansible/facts.d/
+        mode: 0644
+
+- name: Print local facts
+  hosts: fedora
+  tasks:
+    - name: Print ansible_local
+      debug: var=ansible_local
+
+    - name: Print book title
+      debug:
+        msg: 'The title of the book is {{ ansible_local.example.book.title }}'
+#
+#
+#
+#
+# The output of these tasks looks like this:
+# TASK [Print ansible_local] ***************************************************
+# ok: [fedora] ==> {
+#   "ansible_local": {
+#     "example": {
+#       "book": {
+#         "authors": "Meijer, Hochstein, Moser",
+#         "publisher": "O'Reilly",
+#         "title": "Ansible: Up and Running"
+#       }
+#     }
+#   }
+# }
+#
+# TASK [Print book title] *****************************************************
+# ok: [fedora] ==> {
+#    "msg": "The title of the book is Ansible: Up and Running"
+# }
+#
+# Note the structure of the value in the ansible_local variable. Because the
+# fact file is named example.fact, the ansible_local variable is a dictionary
+# that contains a key named example.

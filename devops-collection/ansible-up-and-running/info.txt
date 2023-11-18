@@ -234,4 +234,12 @@ Ansible’s group_by module allows you to create new groups while a playbook is
   executing. Any group you create will be based on the value of a variable that has been
   set on each host, which Ansible refers to as a fact
 
+When Ansible gathers facts, it connects to the hosts and queries it for all kinds
+  of details about the hosts: CPU architecture, operating system, IP addresses, mem‐
+  ory info, disk info, and more. You can access this data in the ansible_facts vari‐
+  able. By default, you can also access some Ansible facts as top-level variables with
+  ansible_ prefix, and they behave just like any other variable. You can disable this
+  behavior using the INJECT_FACTS_AS_VARS setting.
+
+
 
