@@ -127,6 +127,18 @@ Limits
 $ ansible-playbook -vv --limit db playbook.yml
 
 
+# ansible-galaxy can also be used to generate scaffolding, an initial set of files and directories 
+  involved in a role: The --init-path flag tells ansible-galaxy the location of your 
+  roles directory. If you don’t specify it, the role files will be created in your current directory
+$ ansible-galaxy role init --init-path playbooks/roles web
 
 
+# You can install a role with the ansible-galaxy install command:
+$ ansible-galaxy install oefenweb.ntp
+
+# You can list installed roles as follows:
+$ ansible-galaxy list
+
+# You can remove a role with the remove command:
+$ ansible-galaxy remove oefenweb.ntp
 

@@ -1,0 +1,69 @@
+Basic Structure of a Role Directory
+
+Tasks
+  The tasks directory has a main.yml file that serves as an entry point for the actions a role does.
+
+Files
+  Holds files and scripts to be uploaded to hosts.
+
+Templates
+  Holds Jinja2 template files to be uploaded to hosts.
+
+Handlers
+  The handlers directory has a main.yml file that has the actions that respond to
+  change notifications.
+  
+Vars
+  Variables that shouldn’t generally be overridden.
+
+Defaults
+  Default variables that can be overridden.
+
+Meta
+  Information about the role.
+
+
+Where Does Ansible Look for My Roles?
+  Ansible looks for roles in the roles directory alongside your playbooks. It also looks
+  for systemwide roles in /etc/ansible/roles. You can customize the systemwide location
+  of roles by setting the roles_path setting in the defaults section of your ansible.cfg file,
+
+
+Our database role is comprised of the following files:
+•••  roles/database/defaults/main.yml
+•••  roles/database/files/pg_hba.conf
+•••  roles/database/handlers/main.yml
+•••  roles/database/meta/main.yml
+•••  roles/database/tasks/main.yml
+•••  roles/database/templates/postgresql.conf.j2
+•••  roles/database/vars/main.yml
+
+This role includes two customized Postgres configuration files:
+postgresql.conf.j2
+  Modifies the default listen_addresses configuration option so that Postgres will
+  accept connections on any network interface. The default for Postgres is to accept
+  connections only from localhost, which doesn’t work for us if we want our
+  database to run on a separate host from our web application.
+  
+pg_hba.conf
+  Configures Postgres to authenticate connections over the network by using a
+  username and password.
+
+  
+There’s one important caveat when it comes to using the copy, script, or template
+  modules. There is a difference between tasks defined in a role and tasks defined in a
+  regular playbook. When invoking copy or script in a task defined in a role, Ansible
+  will look in this order in these directories for the location of the file to copy or run
+  and will use the first one found. These paths are relative to the directory where you
+  start the top-level playbook from.
+  
+••• ./roles/role_name/files/
+••• ./roles/role_name/
+••• ./roles/role_name/tasks/files/
+••• ./roles/role_name/tasks/
+••• ./files/
+••• ./
+
+
+
+

@@ -1,0 +1,14 @@
+---
+postgres_packages:
+  - acl # for become_user: postgres
+  - libpq-dev
+  - postgresql
+  - python3-psycopg2
+#
+#
+#
+# The acl package is needed when both the connection user and
+# the become_user are unprivileged. The module file is written by
+# the connection user, but the file needs to be readable by the
+# become_user. Ansible will use the setfacl command to share the
+# file only with the become_user.

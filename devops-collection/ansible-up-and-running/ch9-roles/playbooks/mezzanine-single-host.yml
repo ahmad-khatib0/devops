@@ -1,0 +1,25 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Deploy mezzanine on vagrant
+  hosts: web
+
+  vars_files:
+    - secrets.yml
+
+  roles:
+    - role: database
+      tags: database
+      database_name: '{{ mezzanine_proj_name }}'
+      database_user: '{{ mezzanine_proj_name }}'
+      # Note that we can pass in variables when invoking the roles. In our
+      # example, we passed the database_name and database_user variables for
+      # the database role. If these variables have already been defined in the
+      # role (either in vars/main.yml or defaults/main.yml), then the values
+      # will be overridden with the variables that were passed in.
+
+    - role: mezzanine
+      tags: mezzanine
+      database_host: '127.0.0.1'
+
+    - role: nginx
+      tags: nginx
