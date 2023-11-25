@@ -160,6 +160,30 @@ $ ansible-playbook playbook.yml --vault-password-file ~/password.txt
 $ ansible-vault encrypt --encrypt-vault-id=prod group_vars/prod/vault
 
 
+# Limiting which hosts run
+  $ ansible-playbook -l <pattern> playbook.yml
+  $ ansible-playbook --limit <pattern> playbook.yml
+  # You can use the pattern syntax to specify arbitrary combinations of hosts. For example:
+  $ ansible-playbook -l 'staging:&database' playbook.yml
+
+
+The --step flag has Ansible prompt you before running each task, like this:
+$ ansible-playbook --step playbook.yml
+╒═════════════════════════════════════════════════════════════════════╕
+  Perform task: Install packages (y/n/c):                             
+  You can choose to execute the task (y), skip it (n), or continue    
+  running the rest of the playbook without Ansible prompting you (c). 
+╘═════════════════════════════════════════════════════════════════════╛
+
+The --start-at-task taskname flag tells Ansible to start running the playbook at
+the specified task, instead of at the beginning. 
+
+
+
+
+
+
+
 
 
 

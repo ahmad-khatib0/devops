@@ -1,0 +1,84 @@
+
+Hosts 
+You can specify a union of two groups with a colon; this example specifies all dev and staging machines:
+  hosts: dev:staging
+  
+You can specify an intersection by using a colon and ampersand. For example, to
+specify all of the database servers in your staging environment, you might do this:
+  hosts: staging:&database
+
+--  Supported patterns
+Action                       Example usage
+All hosts                    all
+All hosts                    *
+Union                        dev:staging
+Intersection                 staging:&database
+Exclusion                    dev:!queue
+Wildcard                     *.example.com
+Range of numbered servers    web[5:10]
+Regular expression           ~web\d+\.example\.(com|org)
+
+Ansible supports multiple combinations of patterns:
+╒═════════════════════════════════════╕
+  hosts: dev:staging:&database:!queue 
+╘═════════════════════════════════════╛
+
+
+Our Vagrant box has two interfaces, eth0 and eth1. The eth0 interface is a private
+  interface whose IP address (10.0.2.15) we cannot reach. The eth1 interface is the one
+  that has the IP address we’ve assigned in our Vagrantfile (192.168.33.10).
+
+You can use the delegate_to clause to run the task on a different host.
+Two common use cases are as follows:
+• Enabling host-based alerts with an alerting system, such as Nagios
+• Adding a host to a load balancer, such as HAProxy
+
+You can use a max_fail_percentage clause along with the serial clause to specify
+  the maximum percentage of failed hosts before Ansible fails the entire play.
+If you want Ansible to fail if any of the hosts fail a task, set the max_fail_percentage to 0.
+
+
+Running on a Batch of Hosts at a Time
+  You can also pass serial a percentage value instead of a fixed number. Ansible will apply this 
+  percentage to the total number of hosts per play to determine the number of hosts per batch,
+
+
+Using a list of serials
+- name: Configure CDN servers
+  hosts: cdn
+  serial:
+  - 1
+  - 30%
+  tasks: ....
+  
+Ansible will restrict the number of hosts on each run to the next available serial
+  item unless the end of the list has been reached or there are no hosts left. This means that the 
+  last serial will be kept and applied to each batch run as long as there are hosts left in the play.
+  In the preceding play, with 30 CDN hosts, Ansible would run against one host on the
+  first batch run, and on each subsequent batch run it would run against at most 30% of
+  the hosts (for instance, 1, 9, 9, 9, and 2).
+
+If your playbook involves multiple hosts and you want to run the local task only once:
+  - name: Run the task locally, only once
+    delegate_to: localhost
+    command /opt/my-custom-command
+    run_once: true
+
+
+Meta Commands
+  Meta commands can influence Ansible’s internal execution or state; they can be used
+  anywhere in your playbook. One example is the command flush_handlers that we
+  just discussed, another is refresh_inventory to reload the inventory (ensure it’s not
+  cached). clear_facts and clear_host_errors are options not often needed. If you
+  need more flow control meta offers:
+• end_batch ends the current batch when using serial
+• end_host ends tasks for the current host without failing
+• end_play ends the play without failure
+
+
+
+
+
+
+
+

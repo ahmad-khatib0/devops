@@ -1,4 +1,6 @@
 ---
+# You can use the serial clause on a play to tell Ansible to restrict the
+# number of hosts  (Running on One Host at a Time) on which a play runs.
 - hosts: app-servers
   serial: 1
 
