@@ -1,0 +1,43 @@
+The django_manage module always returns "changed":
+  false when it runs commands that the module doesn’t know about.
+
+Ansible has a feature called lookups that allows you to read in configuration data from various
+  sources and then use that data in your playbooks and template.
+
+
+Once you’ve written your lookup plug-in, place it in one of the following directories:
+• The lookup_plugins directory next to your playbook
+• ~/.ansible/plugins/lookup
+• /usr/share/ansible/plugins/lookup
+• The directory specified in your ANSIBLE_LOOKUP_PLUGINS environment variable
+
+Keep in mind that running in verbose mode (using -v) will show
+  the full dictionary; don’t use label to hide your passwords from
+  log output! Set no_log: true on the task instead.
+
+
+Imports and Includes
+  The import_* feature allows you to include tasks, or even whole roles, in the tasks
+  section of a play through the use of the keywords import_tasks and import_role.
+  When importing files in other playbooks statically, Ansible runs the plays and tasks in
+  each imported playbook in the order they are listed, just as if they had been defined
+  directly in the main playbook.
+  
+The include_* features allow you to dynamically include tasks, vars, or even whole
+  roles by the use of the keywords include_tasks, include_vars, and include_role.
+  This is often used in roles to separate or even group tasks and task arguments to
+  each task in the included file. Included roles and tasks may—or may not—run,
+  depending on the results of other tasks in the playbook. When a loop is used with
+  include_tasks or include_role, the included tasks or role will be executed once for
+  each item in the loop.
+
+
+In ansible.fcg under [defaults] we create a reference for the vault-IDs 
+and their corresponding vault password file (these files should exist):
+  [defaults]
+  vault_identity_list = dev@~/.vault_dev, prod@~/.vault_prod
+When we encrypt the production variables with the vault-ID prod:
+ansible-vault encrypt --encrypt-vault-id=prod group_vars/prod/vault
+
+
+

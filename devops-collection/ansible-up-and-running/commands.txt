@@ -142,3 +142,25 @@ $ ansible-galaxy list
 # You can remove a role with the remove command:
 $ ansible-galaxy remove oefenweb.ntp
 
+# store secrets 
+$ mkdir -p group_vars/all/
+$ ansible-vault create group_vars/all/vault
+
+# ansible-playbook needs to prompt us for the password of the encrypted file, or it
+  will simply error out. Do so by using the --ask-vault-pass argument:
+$ ansible-playbook --ask-vault-pass playbook.yml
+
+# provide password from file 
+$ ansible-playbook playbook.yml --vault-password-file ~/password.txt
+#  If the argument to --vault-password-file has the executable bit set, Ansible will
+#  execute it and use the contents of standard out as the vault password. This allows
+#  you to use a script to supply the password to Ansible.
+
+# encrypt for specific environment  
+$ ansible-vault encrypt --encrypt-vault-id=prod group_vars/prod/vault
+
+
+
+
+
+
