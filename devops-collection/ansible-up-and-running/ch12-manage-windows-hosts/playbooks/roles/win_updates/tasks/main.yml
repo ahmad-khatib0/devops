@@ -1,0 +1,15 @@
+---
+# Ansible helps to automate software installation with simple tasks, as shown
+# in this taks, The machine also reboots afterward if necessary. Finally,
+# it informs all users to log out before the system goes down.
+- name: Install critical and security updates
+  win_updates:
+    category_names:
+      - CriticalUpdates
+      - SecurityUpdates
+    state: installed
+  register: update_result
+
+- name: Reboot if required
+  win_reboot:
+  when: update_result.reboot_required

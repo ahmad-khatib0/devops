@@ -1,0 +1,62 @@
+Setting up Windows for Ansible
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  $url = "https://gist.github.com/bbaassssiiee/9b4b4156cba717548650b0e115344337"
+  $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
+  (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
+  powershell.exe -ExecutionPolicy ByPass -File $file
+
+
+$ ansible windows -i inventory -m win_ping
+# If you get an error you must either get a valid public
+# TLS/SSL certificate or add a trust chain for an existing internal certificate authority.
+
+To disable TLS/SSL certificate validation (risky), use:
+$ ansible_winrm_server_cert_validation: ignore
+
+
+With Ansible’s native Windows support out of the box, you can:
+• Gather facts on Windows hosts
+• Install and uninstall MSIs
+• Enable and disable Windows features
+• Start, stop, and manage Windows services
+• Create and manage local users and groups
+• Manage Windows packages via the Chocolatey package manager
+• Manage and install Windows updates
+• Fetch files from remote sites
+• Push and execute any PowerShell scripts you write
+
+
+Modules for Windows are prefixed with win_, except for the setup module, which
+works both on Linux and Windows. Here is a simple example to create a directory:
+- name: Manage tools directory
+  win_file:
+    path: 'C:/Tools'
+    state: directory
+
+
+
+It is a widespread practice to create roles for several operating
+systems. The tasks/main.yml file of such a role looks like this:
+  ---
+  # multi-platform tasks file
+  - name: install software on Linux
+    include_tasks: linux.yml
+    when:
+      - ansible_facts.os_family != 'Windows'
+      - ansible_facts.os_family != 'Darwin'
+    tags:
+      - linux
+      - name: install software on MacOS
+    include_tasks: macos.yml
+    when:
+      - ansible_facts.os_family == 'Darwin'
+    tags:
+      - mac
+    - name: install software on Windows
+      include_tasks: windows.yml
+      when: ansible_facts.os_family == 'Windows'
+      tags:
+        - windows
+  ...
+
+
