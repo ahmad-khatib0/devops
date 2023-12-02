@@ -1,0 +1,13 @@
+
+Ansible and Docker
+  When you use Ansible to create container images and start the containers on the
+  remote hosts, the application life cycle looks like this:
+1. Write Ansible playbooks for creating container images.
+2. Run the playbooks to create container images on your local machine.
+3. Push container images up from your local machine to the registry.
+4. Write Ansible playbooks to pull container images down to remote hosts and run
+   them, passing in configuration information.
+5. Run Ansible playbooks to start up the containers.
+
+
+

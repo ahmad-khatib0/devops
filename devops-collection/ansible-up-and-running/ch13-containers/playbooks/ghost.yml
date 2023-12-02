@@ -1,0 +1,33 @@
+#!/usr/bin/env ansible-playbook
+---
+# $ ansible-playbook build.yml -e force_source=true
+- name: Run Ghost locally
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Nginx image
+      docker_image:
+        build:
+          path: ./nginx
+        source: build
+        name: bbaassssiiee/nginx-ghost
+        state: present
+        # Note that invoking the docker_image module to build an image will
+        # have no effect if an image with that name already exists, even if
+        # you’ve updated the Dockerfile. If you’ve updated the Dockerfile
+        # and want to rebuild, set the force_source: true
+        force_source: '{{ force_source | default(false) }}'
+        tag: "{{ tag | default('v1') }}"
+
+    - name: Create certs
+      command: >
+        openssl req -new -x509 -nodes
+        -out certs/nginx.crt -keyout certs/nginx.key
+        -subj '/CN=localhost' -days 365
+      args:
+        creates: certs/nginx.crt
+
+    - name: Bring up services
+      docker_compose:
+        project_src: .
+        state: present

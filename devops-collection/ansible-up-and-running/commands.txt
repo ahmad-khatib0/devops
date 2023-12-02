@@ -179,6 +179,14 @@ The --start-at-task taskname flag tells Ansible to start running the playbook at
 the specified task, instead of at the beginning. 
 
 
+# run docker images
+$ ansible localhost -m docker_container -a "name=test-ghost image=ghost ports=8000:2368"
+
+# To stop and remove the container, run:
+$ ansible localhost -m docker_container -a "name=test-ghost state=absent"
+
+
+
 
 
 
