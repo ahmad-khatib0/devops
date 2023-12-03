@@ -1,0 +1,25 @@
+#!/usr/bin/env ansible-playbook
+## install requirements:  ansible-galaxy install -f -p roles -r roles/requirements.yml
+---
+- hosts: all:127.0.0.1
+  gather_facts: true
+  become: true
+
+  vars:
+    net_allow:
+      - '10.1.0.0/16'
+      - '192.168.0.0/16'
+
+  roles:
+    - { role: common, tags: common }
+    - { role: epel, tags: epel }
+    - { role: ansible-auditd, tags: auditd }
+    - { role: nettime, tags: nettime }
+    - { role: rsyslog, tags: syslog }
+    - { role: crontab, tags: crontab }
+    - { role: keybase, tags: keybase }
+    - { role: gpg_agent, tags: gpg }
+    - { role: tailscale, tags: tailscale }
+# Virtual machines in the cloud need to be secured, so we run a couple of roles to set up
+# security, auditing, and time synchronization. Then we configure the SSH settings and
+# install extra software for encryption and VPN.

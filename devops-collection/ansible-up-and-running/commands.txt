@@ -241,5 +241,19 @@ $ ansible-galaxy collection publish path/to/a_namespace-the_bundle-1.0.0.tar.gz
 
 
 
+# Build the packer image with:
+$ packer build rhel8.pkr.hcl
+
+# When the build finishes successfully, you can add the box file as a template for Vagrant/VirtualBox:
+$ vagrant box add --force --name RedHat-EL8 output-rhel8/rhel8.box
+
+# bring up a virtual machine named rhel8 based on that template:
+$ vagrant up rhel8
+
+# Once it launches, you can connect to it with Remote Desktop as the Vagrant user on:
+$ rdp://localhost:5900
+
+
+
 
 
