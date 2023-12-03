@@ -325,4 +325,77 @@ TestInfra
   systems managed with Puppet.
 
 
+IaaS clouds typically use virtual machines to implement the servers, although you
+  can build an IaaS cloud by using bare-metal servers (where users run directly on the
+  hardware rather than inside a virtual machine) or containers. Most IaaS clouds let
+  you do more than just start up and tear down servers. In particular, they typically
+  let you provision storage so you can attach and detach disks to and from your
+  servers. This type of storage is commonly referred to as block storage. They also offer
+  networking features, so you can define network topologies that describe how your
+  servers are interconnected, as well as firewall rules or security groups that restrict
+  networking to and from your servers.
+  
+  The next layer in a cloud consists of specific innovations developed by cloud service
+  providers and application runtimes like container clusters, application servers, ser‐
+  verless environments, operating systems, and databases. This layer is called platform
+  as a service (PaaS). You manage your applications and data; the platform manages
+  the rest. PaaS allows distinctive features that are a point of competition among cloud
+  providers, especially since competing over cost-efficiency in IaaS is a race to the
+  bottom. However, the Kubernetes container platform, a common platform in any
+  cloud, has seen the greatest interest.
+  Any app that runs in the cloud has many layers, but when only one is visible to the
+  cloud customer (or their customers) it is software as a service (SaaS). They just use
+  the software, unaware of the servers’ whereabouts.
+
+
+EC2 documentation interchangeably uses the terms creating instances, launching
+  instances, and running instances to describe the process of bringing up a new instance.
+  However, starting instances means something different—starting up an instance that
+  had previously been put in the stopped state.
+
+Each AMI has an associated identifier string, called an AMI ID, which starts with
+  ami- and then has hexadecimal characters—for example, ami-1234567890abcdef0.
+  Prior to January 2016, the IDs assigned to newly created AMIs used eight characters
+  after the hyphen (for example, ami-1a2b3c4d). Between January 2016 and June 2018,
+  Amazon was in the process of changing the IDs of all these resource types to use
+  17 characters after the hyphen. Depending on when your account was created, you
+  might have resources with short IDs, though any new resources of these types receive the longer IDs. 
+
+All the bits of Ansible that interact with EC2 talk to the EC2 API. 
+  The API does not use a username and password for credentials. Instead, it uses two
+  strings: an access key ID and a secret access key.
+  These strings typically look like this:
+  • Sample EC2 access key ID: AKIAIOSFODNN7EXAMPLE
+  • Sample EC2 secret access key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+
+Virtual Private Clouds
+  When Amazon first launched EC2 back in 2006, all of the EC2 instances were
+  effectively connected to the same flat network.3 Every EC2 instance had a private IP
+  address and a public IP address. In 2009, Amazon introduced a feature called Virtual
+  Private Cloud (VPC). VPC allows users to control how their instances are networked
+  together and whether they will be publicly accessible from the internet or isolated.
+  Amazon uses the term VPC to describe the virtual networks that users can create
+  inside EC2. Think of a VPC as an isolated network. When you create a VPC, you
+  specify an IP address range. It must be a subset of one of the private address ranges
+  (10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16).
+
+Permitted IP Addresses
+  Security groups allow you to restrict which IP addresses may connect to an instance.
+  You specify a subnet by using classless interdomain routing (CIDR) notation. An
+  example of a subnet specified with CIDR notation is 203.0.113.0/24,6 which means
+  that the first 24 bits of the IP address must match the first 24 bits of 203.0.113.0.
+  People sometimes just say “/24” to refer to the size of a CIDR that ends in /24.
+  A /24 is a nice value because it corresponds to the first three octets of the address,
+  namely 203.0.113.7 What this means is that any IP address that starts with 203.0.113
+  is in the subnet, that is, any IP address in the range 203.0.113.0 to 203.0.113.255. Be
+  aware that addresses 0 and 255 are not allowed for hosts.
+  If you specify 0.0.0.0/0, any IP address may connect.
+
+
+
+
+
+
+
 

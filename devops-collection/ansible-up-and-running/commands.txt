@@ -256,4 +256,13 @@ $ rdp://localhost:5900
 
 
 
+# You should be able to confirm that the inventory is working by running the following:
+$ ansible-inventory --list|jq -r .aws_ec2
+
+# create a secure key pair by using a passphrase on a keypair of 
+  type ed25519, with brute-force protection:
+$ ssh-keygen -t ed25519 -a 100 -C '' -f ~/.ssh/ec2-user
+
+
+
 
