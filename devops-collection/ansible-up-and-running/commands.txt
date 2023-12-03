@@ -211,6 +211,33 @@ $ molecule init scenario -r ssh --driver-name docker --verifier-name testinfra t
 
 
 
+# You can store roles and collections in private Git repositories just as well:
+$ ansible-galaxy collection install my_namespace.my_collection
+# You can use a requirements.yml file that lists recommended security-related 
+  collections and roles as input for the ansible-galaxy command:
+$ ansible-galaxy install -r requirements.yml
+  By default, this will install the collections in a “global” way, 
+  in a subdirectory in your home directory: $HOME/.ansible/collections/ansible_collection
+
+# The first thing to do after installing collections is to see which collections you
+# installed separately and which came bundled with your installed Ansible:
+$ ansible-galaxy collection list
+
+# To list the modules included in a collection, run:
+$ ansible-doc -l namespace.collection
+
+# ansible-galaxy collection init can be used to create a starting point for a new user-created collection:
+$ ansible-galaxy collection init ansiblebook.the_bundle
+
+# The tag.gz format is more suitable for use on-premises. The
+  tarball is created from the collection with this command:
+$ ansible-galaxy collection build
+
+# Verify the installation locally and test it:
+$ ansible-galaxy collection install a_namespace-the_bundle-1.0.0.tar.gz -p ./collections
+
+# Now you can finally publish the collection:
+$ ansible-galaxy collection publish path/to/a_namespace-the_bundle-1.0.0.tar.gz
 
 
 
