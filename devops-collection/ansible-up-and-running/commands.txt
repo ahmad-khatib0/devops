@@ -185,9 +185,29 @@ $ ansible localhost -m docker_container -a "name=test-ghost image=ghost ports=80
 # To stop and remove the container, run:
 $ ansible localhost -m docker_container -a "name=test-ghost state=absent"
 
+# To install the Collection you’ll need, use the following:
+$ ansible-galaxy collection install <collection_name>
 
+# Creating an Ansible Role You can create a role with:
+$ ansible-galaxy role init my_role
 
+# To initialize Molecule in an existing role, or add a scenario, you would use:
+$ molecule init scenario -r <role_name> --driver-name docker s_name
 
+# running Molecule:
+$ molecule init role my_new_role --driver-name docker
+
+# Each scenario can be used independent of the other with the following flag:
+$ molecule test -s <scenario_name>
+
+# To check a playbook you use the ansible-lint command with the playbook’s filename as argument
+$ ansible-lint lintme.yml
+
+# To integrate Goss with Molecule, install molecule-goss with pip and create a scenario:
+$ molecule init scenario -r ssh --driver-name docker --verifier-name goss goss
+
+# Create a scenario with testinfra:
+$ molecule init scenario -r ssh --driver-name docker --verifier-name testinfra testinfra
 
 
 

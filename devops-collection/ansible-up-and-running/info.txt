@@ -288,5 +288,41 @@ Django applications use a special script called manage.py that performs administ
 • Copying static assets to the appropriate directory
 
 
+We usually start by running molecule converge several times to get the Ansible role
+  just right. Converge runs the converge.yml playbook that molecule init created. If
+  there is a pre-condition for the role, like another role to run first, then it makes sense
+  to create a prepare.yml playbook to save time during development. When using the
+  delegated driver, create a cleanup.yml playbook. You can call these extra playbooks
+  with molecule prepare and molecule cleanup, respectively.
+
+
+Verifiers
+  Verifiers are tools used to assert the success of running the role in a playbook. While
+  we know that each module of Ansible has been tested, the outcome of a role is not
+  guaranteed. It is good practice to automate tests that validate the outcome. There are
+  three verifiers available for use with Molecule:
+  Ansible
+    The default verifier
+  Goss
+    A third-party verifier based on YAML specifications
+  TestInfra
+    A Python test framework
+    
+  The Goss and TestInfra verifiers use the files from the tests subdirectory of a molecule
+  scenario, test_default.yaml for Goss and test_default.py for TestInfra.
+
+Ansible
+  You can use a playbook named verify.yml to verify the results of the converge and
+  idempotence steps once they have finished. Just use Ansible modules like wait_for,
+  package_facts, service_facts, uri, and assert to test the outcomes. To do so, use:
+  $ molecule verify
+
+TestInfra
+  If you have advanced testing requirements, it’s helpful to have a Python-based test
+  framework. With TestInfra, you can write unit tests in Python to verify the actual
+  state of your Ansible-configured servers. TestInfra aspires to be the Python equivalent
+  of the Ruby-based ServerSpec, which gained popularity as a test framework for
+  systems managed with Puppet.
+
 
 

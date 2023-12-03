@@ -1,0 +1,10 @@
+---
+- name: Restart redis
+  systemd:
+    name: '{{ redis_daemon }}'
+    state: restarted
+
+- name: Restart sentinel
+  systemd:
+    name: '{{ sentinel_daemon }}'
+    state: restarted
