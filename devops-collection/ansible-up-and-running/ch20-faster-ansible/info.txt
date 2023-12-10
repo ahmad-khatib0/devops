@@ -1,0 +1,96 @@
+
+shows an entry to configure SSH to use multiplexing in the ~/.ssh/config file: 
+ControlMaster auto
+ControlPath ~/.ssh/sockets/%r@%h:%p
+ControlPersist 10m
+
+ControlMaster auto enables SSH multiplexing and tells SSH to create the main
+  connection and the control socket if they do not exist yet.
+  
+ControlPersist 10m tells SSH to close the master connection if there have been no
+  SSH connections for 10 minutes.
+  
+ControlPath ~/.ssh/sockets/%r@%h:%p tells SSH where to put the control Unix
+  domain socket files on the filesystem:
+• %l is a placeholder for the local hostname, including the domain.
+• %h is a placeholder for the target hostname.
+• %p is a placeholder for the port.
+• %r is a placeholder for the remote login username.
+• %C is a placeholder for the hash of %l%h%p%r.
+
+If we want to SSH with these options as the Vagrant user:
+$ ssh -i ~/.vagrant.d/insecure_private_key vagrant@192.168.56.10.nip.io
+
+  SSH will create a control socket at ~/.ssh/sockets/vagrant@192.168.56.10.nip.io:22 the
+  first time you SSH to the server. Arguments to ControlPath can use the tilde syntax
+  to refer to a user’s home directory. We recommend that any ControlPath you use for
+  opportunistic connection sharing include at least %h, %p, and %r (or alternatively %C)
+  and that you place it in a directory that is not writable by other users. This ensures
+  that shared connections are uniquely identified.
+
+You can check whether a master connection is open by using the -O check flag:
+$ ssh -O check vagrant@192.168.56.10.nip.io
+
+You can also stop the master connection by using the -O exit flag, like this:
+$ ssh -O exit vagrant@192.168.56.10.nip.io
+
+You can see more details about these settings on the ssh_config manual page:
+$ man 5 ssh_config
+
+Test how long it takes to initiate an SSH connection to the server and run the /usr/bin/true
+$ time ssh -i ~/.vagrant.d/insecure_private_key vagrant@192.168.56.10.nip.io  /usr/bin/true
+
+
+
+For pipelining to work on Linux, you need to make sure that requiretty is not
+enabled in your /etc/sudoers file on your hosts. Otherwise, you’ll get errors 
+
+If the /etc/sudoers.d directory is present, your hosts should support adding sudoers config 
+files in that directory. You can use the ansible command-line tool to check for the directory:
+$ ansible vagrant -a "file /etc/sudoers.d"
+
+
+Mitogen is a third-party Python library for writing distributed self-replicating programs. 
+  Mitogen for Ansible is a completely redesigned UNIX connection layer and module runtime 
+  for Ansible. Requiring minimal configuration changes, it updates Ansible’s slow and 
+  wasteful shell-centric implementation with pure-Python equivalents, invoked via highly 
+  efficient remote procedure calls to persistent interpreters tunnelled over SSH.
+
+Setting the gathering configuration option to smart in ansible.cfg tells Ansible to use
+  smart gathering. This means that Ansible will gather facts only if they are not present
+  in the cache or if the cache has expired. The caching mechanism is plug-in based, and
+  a list of available plug-ins can be retrieved with:
+  $ ansible-doc -t cache -l
+
+
+there are three types of fact_caching implementations:
+  • File-based: JSON, YAML, Pickle
+  • RAM backed, nonpersistant: memory
+  • NoSQL: Redis, Memcached, MongoDB
+
+To enable fact caching by using the Redis backend, you need to do the following:
+  1. Install Redis on your control machine.
+  2. Ensure that the Redis service is running on the control machine.
+  3. Install the Python Redis package.
+  4. Modify ansible.cfg to enable fact caching with Redis.
+
+To enable fact caching by using the Memcached backend, you need to do the following:
+  1. Install Memcached on your control machine.
+  2. Ensure that the Memcached service is running on the control machine.
+  3. Install the Python Memcached package.
+  4. Modify ansible.cfg to enable fact caching with Memcached.
+
+ 
+Ansible introduced support for asynchronous actions with the async clause to work
+  around the problem of connection timeouts. If the execution time for a task exceeds
+  that timeout, Ansible will lose its connection to the host and report an error. Marking
+  a long-running task with the async clause eliminates the risk of a connection timeout.
+  However, asynchronous actions can also be used for a different purpose: to start a
+  second task before the first task has completed. This can be useful if you have two
+  tasks that both take a long time to execute and are independent (that is, you don’t
+  need the first to complete to execute the second).
+
+ 
+
+
+

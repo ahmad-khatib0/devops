@@ -45,6 +45,7 @@
     - crypto
     - goss
 
+# This task ensures that Bas’s key has exclusive access to the deploy user:
 - name: Change ssh key to ed25519
   authorized_key:
     user: vagrant
@@ -112,7 +113,6 @@
     - ssh
     - crypto
 
-# These tasks ensure that the host key is generated and configured:
 - name: Check the ed25519 host key
   become: true
   stat:

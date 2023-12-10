@@ -486,3 +486,31 @@ When Ansible runs a playbook in check mode, it will not make any changes to
 
 
 
+When Ansible runs a playbook it makes many SSH connections, to do things such as
+  copy over files and run modules. Each time Ansible makes a new SSH connection to a
+  host, it has to pay this negotiation penalty. OpenSSH is the most common implementation 
+  of SSH; if you are on Linux or macOS, it is almost certainly the SSH client you have 
+  installed on your local machine. OpenSSH supports an optimization called SSH multiplexing, 
+  also referred to as ControlPersist, which allows multiple SSH sessions to the same host 
+  to share the same TCP connection. This means that the TCP connection negotiation 
+  happens only the first time, thus eliminating the negotiation penalty.
+
+When you enable multiplexing, here is what happens:
+• The first time you try to SSH to a host, OpenSSH starts one connection.
+• OpenSSH creates a Unix domain socket (known as the control socket) that is
+  associated with the remote host.
+• The next time you try to SSH to a host, OpenSSH will use the control socket to
+  communicate with the host instead of making a new TCP connection.
+
+
+
+Ansible supports an optimization called pipelining. Pipelining, if supported by the
+  connection plug-in, reduces the number of network operations required to execute
+  a module on the remote server, by executing many Ansible modules without actual file 
+  transfer. Ansible executes the Python scripts by piping them to the SSH session instead of 
+  copying them. This saves time because it tells Ansible to use one SSH session instead of two.
+
+
+
+
+

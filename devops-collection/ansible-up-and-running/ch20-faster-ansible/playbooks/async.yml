@@ -1,0 +1,57 @@
+#!/usr/bin/env ansible-playbook
+---
+# shows a list of tasks that use the async clause to clone a large
+# Git repository. Because the task is marked as async, Ansible
+# will not wait until the Git clone is complete before it begins to
+# install the operating system packages.
+- name: Install git
+  hosts: all
+  become: true
+  apt:
+    name: git
+    update_cache: true
+
+- name: Clone Linus's git repo
+  hosts: all
+  git:
+    repo: git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+    dest: /home/vagrant/linux
+  # We specify that this is an async task that should take less than
+  # 3,600 seconds. If the execution time exceeds this value, Ansible will
+  # automatically stop the process associated with the task.
+  async: 3600
+  # We specify a poll argument of 0 to tell Ansible that it should immediately
+  # move on to the next task after it spawns this task asynchronously. If we
+  # had specified a nonzero value instead, Ansible would not move on to the
+  # next task. Instead, it would periodically poll the status of the async task
+  # to check whether it was complete, sleeping between checks for the amount
+  # of time in seconds specified by the poll argument.
+  poll: 0
+  # When we run async, we must use the register clause to capture
+  # the async result. The result object has an ansible_job_id value
+  # that we will use later to poll for the job status.
+  register: linux_clone
+
+- name: Install several packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - linux-image-extra-virtual
+      - software-properties-common
+      - python-pip
+  become: true
+
+- name: Wait for linux clone to complete
+  hosts: all
+  # We use the async_status module to poll for the status of the
+  # async job we started earlier.
+  async_status:
+    # We must specify a jid value that identifies the async job.
+    jid: '{{ linux_clone.ansible_job_id }}'
+  register: result
+  # The async_status module polls only a single time. We need to specify
+  # an until clause so that it will keep polling until the job completes,
+  # or until we exhaust the specified number of retries.
+  until: result.finished
+  retries: 3600
