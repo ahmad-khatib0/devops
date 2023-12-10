@@ -511,6 +511,13 @@ Ansible supports an optimization called pipelining. Pipelining, if supported by 
   copying them. This saves time because it tells Ansible to use one SSH session instead of two.
 
 
+For a long time, we had two types of management strategies for network devices:
+• Buy an expensive proprietary software that configures your devices.
+• Develop minimal tooling around your configuration files: back up your 
+  configs locally, make some changes by editing them, and copy the result 
+  back onto the devices through the console.
+
+
 
 
 

@@ -1,0 +1,54 @@
+Every organization has different security requirements. There are several security
+  baselines such as CIS, DISA-STIG, PCI, HIPAA, NIST, and FedRAMP for different
+  industries in the United States, including payment cards, health care, the federal gov‐
+  ernment, and defense contractors. In Europe, national institutes like BSI Germany,
+  BSI UK, and NCSC publish recommendations to help secure computers and their
+  connections. If your government does not require a security standard, you can look at
+  the examples provided by software foundations like Mozilla.
+
+In modern IT architectures, several factors affect the use of the internet and cryptog‐
+  raphy. SSL inspection is common in web proxy servers to avoid malware infection in
+  PCs. SSL inspection allows IT administrators to see, and intervene in, website traffic
+  from web browsers in the company. To avoid legal implications, these proxy servers
+  support using lists of trusted and distrusted site categories. Web proxy servers can
+  limit the internet use of employees with good intentions, but there can be security
+  issues with software as well. Either way, proxy inspection can help avoid viruses and
+  ransomware, but it can also block development and innovation.
+
+In ks.cfg file: 
+  the org_fedora_oscap add-on uses ospp as a profile. OSPP is based on the crypto policy 
+  FIPS. The FIPS:OSPP crypto policy restricts the set of algorithms even further than 
+  FIPS does. At the moment FIPS excludes some cryptographic algorithms and US government 
+  agencies mandate the use of a particular set of algorithms evaluated by NIST.
+
+
+Shadow IT involves any computing resources that are not procured or delivered
+  under corporate governance. It includes private laptops, old PCs hidden under the
+  desks, personal cloud subscriptions, personal servers, and so on. To leapfrog the
+  competition, some corporations even create a greenfield company to avoid dealing with 
+  all the red tape accumulated over decades. If the central IT organization delivers systems 
+  that don’t meet developers’ expectations, the developers will create their own systems.
+
+Sunshine IT
+  Modern software is best created by autonomous teams, enabled by platforms that
+  don’t hinder productivity across departments, regions, and most of all, the corporate
+  firewall. These software teams have, to coin a phrase, intelligence autonomy; that is,
+  they have access to any information, API, AI, SaaS, IaaS, PaaS, source code, library,
+  or tool they need to get the job done. They can organize their own work and communicate 
+  in strict privacy. If you think about it, strategically, this is a competitive
+  advantage. It might disrupt your position if you work in central IT, but fear not!
+
+Zero Trust
+  The idea of zero trust, a trending term coined by security expert John Kindervag,
+  holds that the traditional “fortress” model of security operates on an outdated
+  assumption: that everything inside an organization’s network should be implicitly
+  trusted, with bastions and firewalls to secure the perimeter. This implicit trust means
+  a lack of granular security controls, so that once on the network, users—including
+  threat actors and malicious insiders—are free to move laterally and access or exfil‐
+  trate sensitive data. This model no longer works in an age of cloud and container
+  technologies. Salespeople will offer you identity management, explicit verification,
+  automation, least privilege, and other buzzwords to try to sell more. 
+
+
+
+
