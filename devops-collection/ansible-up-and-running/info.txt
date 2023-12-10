@@ -395,6 +395,44 @@ Permitted IP Addresses
 
 
 
+CALLBACK PLUG-INS
+Ansible supports a feature called callback plug-ins that can perform custom actions
+  in response to Ansible events, such as a play starting or a task completing on a host.
+  You can use a callback plug-in to do things such as send a Slack message or write an
+  entry to a remote logging server. In fact, the output you see in your terminal when
+  you execute an Ansible playbook is implemented as a callback plug-in.
+  Ansible supports three kinds of callback plug-ins:
+  • Stdout plug-ins
+  • Notification plug-ins
+  • Aggregate plug-ins
+Stdout plug-ins control the format of the output displayed to the terminal. Ansible’s
+  implementation makes no distinction between notification and aggregate plug-ins,
+  which can perform a variety of actions.
+  
+ARA
+  ARA Records Ansible (ARA, another recursive acronym) is more than just a callback
+  plug-in. It provides reporting by saving detailed and granular results of ansible and
+  ansible-playbook commands wherever you run them 
+
+debug
+  The debug plug-in makes it easier to read stdout (normal output of commands)
+  and stderr (error output of commands) returned by tasks, which can be helpful for
+  debugging. The default plug-in can make it difficult to read the output:
+
+dense
+  The dense plug-in (new in Ansible 2.3) always shows two lines of output. It over‐
+  writes the existing lines rather than scrolling:
+
+json
+  The json plug-in generates machine-readable JSON as output. This is useful if you
+  want to process the Ansible output by using a script. Note that this callback will not
+  generate output until the entire playbook has finished executing.
+
+null
+  The null plug-in shows no output at all.
+
+minimal
+  The minimal plug-in does very little processing of the result Ansible returns from an event
 
 
 

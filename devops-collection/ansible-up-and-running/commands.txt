@@ -265,4 +265,12 @@ $ ssh-keygen -t ed25519 -a 100 -C '' -f ~/.ssh/ec2-user
 
 
 
+# to see the list of plug-ins available in the version you installed.
+$ ansible-doc -t callback -l 
+
+# To look up a particular callback plug-in’s options, try:
+$ ansible-doc -t callback plugin
+
+
+
 
