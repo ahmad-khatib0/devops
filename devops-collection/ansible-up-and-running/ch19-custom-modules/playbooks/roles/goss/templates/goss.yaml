@@ -1,0 +1,3 @@
+---
+gossfile:
+  {{ goss_test_directory }}/test_*.y*ml: {}

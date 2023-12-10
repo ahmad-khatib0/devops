@@ -437,3 +437,52 @@ minimal
 
 
 
+
+
+You can think of modules as the “verbs” of the Ansible “language”—without them, the YAML would 
+  not do anything. Ansible modules are programmed in Python for Linux/BSD/Unix machines and 
+  in PowerShell for Windows machines, but in principle they can be written in any language. 
+  
+How Ansible Invokes Modules: 
+  1. Generate a standalone Python script with the arguments (Python modules only)
+  2. Copy the module to the host
+  3. Create an arguments file on the host (non-Python modules only)
+  4. Invoke the module on the host, passing the arguments file as an argument
+  5. Parse the standard output of the module
+
+We can tell Ansible to generate the arguments file for the module as JSON, 
+  by adding the following line to playbooks/library/can_reach:  # WANT_JSON
+
+
+Output Variables That Ansible Expects: 
+changed
+All Ansible modules should return a changed variable. The changed variable is a Boolean that 
+  tells whether the module execution caused the host to change state. When Ansible runs, 
+  it will show in the output whether a state change has happened. If a task has a notify 
+  clause to notify a handler, the notification will fire only if changed is true.
+
+failed
+  If the module fails to complete, it should return "failed": true. Ansible will treat
+  this task execution as a failure and will not run any further tasks against the host that
+  failed unless the task has an ignore_errors or failed_when clause. If the module succeeds, 
+  you can either return "failed": false or you can simply leave out the variable.
+
+msg
+  Use the msg variable to add a descriptive message that describes the reason that a
+  module failed. If a task fails, and the module returns a msg variable, then Ansible will 
+  output that variable slightly differently than it does the other variables. For example, 
+  if a module returns the following:
+    {"failed": true, "msg": "could not reach www.example.com:81"}
+  then Ansible will output the following lines when executing this task:
+    failed: [fedora] ==> {"failed": true}
+    msg: could not reach www.example.com:81
+  After a host fails, Ansible tries to continue with the remaining hosts that did not fail.
+
+When Ansible runs a playbook in check mode, it will not make any changes to
+  the hosts when it runs. Instead, it will simply report whether each task would have
+  changed the host, returned successfully without making a change, or returned an error.
+
+
+
+
+

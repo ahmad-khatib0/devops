@@ -1,0 +1,38 @@
+Debugging Your Module
+The Ansible repository in GitHub has a couple of scripts that allow you to invoke
+your module directly on your local machine, without having to run it by using the
+ansible or ansible-playbook commands. 
+
+Clone the Ansible repository:
+$ git clone https://github.com/ansible/ansible.git
+
+Change directory to the repository root directory:
+  $ cd ansible
+
+Create a virtual environment:
+  $ python3 -m venv venv
+  
+Activate the virtual environment:
+  $ source venv/bin/activate
+  
+Install development requirements:
+  $ python3 -m pip install --upgrade pip
+  $ pip install -r requirements.txt
+  
+Run the environment setup script for each new dev shell process:
+  $ source hacking/env-setup
+  
+Invoke your module:
+  $ ansible/hacking/test-module -m /path/to/can_reach -a "host=example.com port=81"
+  
+Since example.com doesn’t have a service that listens on port 81, our module should
+fail with a meaningful error message. And it does
+...
+...
+...
+
+So As the output suggests, when you run this test-module, Ansible will generate
+  a Python script and copy it to ~/.ansible_module_generated. This is a standalone
+  Python script that you can execute directly if you like.
+
+  
