@@ -1,0 +1,78 @@
+Organize Content
+• Use GitHub to share your Ansible content for collaboration and preservation.
+• Use a repo per role, collection, project, and inventory.
+• Track changes and approvals with a workflow like GitHub Flow.
+• Manage your dependencies: distributions, packages, libraries, tools.
+• Magic happens when you put your files in the right places.
+• Use the right tool for the job: try finding a module first.
+• Don’t solve complexity with Ansible; try writing a module with Python.
+
+Decouple Inventories from Projects
+• Make projects reusable to cater to multiple users.
+• Let infrastructure owners define access to hosts in inventory.
+• Use an inventory with group names based on function (or role).
+• Combine projects and inventories, with separate Git repositories.
+• Create staging environments to test properly before going live.
+• Use the alternative directory layout to prepare for AWX/Ansible Automation Platform.
+
+Decouple Roles and Collections
+• Be aware that roles are ways of automatically loading vars, files, tasks, handlers,
+  and templates based on a known file structure. Convention over configuration is a powerful pattern.
+• Do one thing well with a role.
+• Collections are a composite of roles, modules, plug-ins, etc. Test them as components.
+• Group content by roles to allow for easy sharing with other users.
+• Use the roles/requirements.yml manifest to express versioned dependencies.
+• Separate project roles, shared roles, and Galaxy roles. Configure roles_path to search for these roles.
+• Use top-level directories: files, templates for local implementation of role templates.
+• The defaults are easy to override by the user with group_vars.
+• The vars are not meant for the user to change.
+
+Playbooks
+• Make playbooks readable for nonspecialists (note to self).
+• Think declarative, desired state, or simple state change.
+• Safe defaults for newbies. Make IT simple for the whole team.
+• When you can do something simply, do something simply.
+• Playbooks are executable (with the #! shebang); vars files are not. Code Style
+• Format playbooks with native YAML style.
+• Editors use file extensions for syntax coloring and linting.
+• Always name your playbooks, plays, and tasks considering the logging.
+• Comments start with a hashmark (#). Overuse comments and empty lines.
+• To find problems in your content before you commit, use the rules of ansible-
+  lint, ansible-later, yamllint, SonarQube, Pylint, ShellCheck, Perl::Critic, or
+  any other linter required in your project. Tag and Test All the Things
+• Tags help organize execution of playbooks. You can run or skip parts of playbooks.
+• Tags can help in testing. Add unit test tasks with the unitTest tag.
+• Use Molecule for testing roles; verify the result.
+
+Desired State
+• Idempotency: the same operation should yield the same result, again and again.
+• Ensure there are no changes unless things change.
+• No uncertainty: describe the desired state and use variables to toggle state.
+• Try to support check mode.
+• Test states with a delegated driver: molecule converge and molecule cleanup.
+
+Deliver Continuously
+• Try to schedule provisioning and deployment as early and often as possible.
+• Use the same playbooks in each environment with different credentials.
+• Roll out changes to all environments in stages, in a visible way, by using Tower or Jenkins with ARA.
+• Understand the serial keyword for rolling updates.
+
+Security
+• Make it easy to manage vault variables.
+• Don’t login as root. Don’t use service accounts interactively.
+• Design users and groups to minimize using privileges.
+• Don’t store logins and passwords in inventory.
+• Encrypt logins, passwords, and tokens with ansible-vault.
+• Use vault IDs for different access levels.
+• Document become at the top of the task for easier auditing.
+• Harden SSH and your system’s attack surface.
+• Run ssh-audit to validate SSH crypto.
+• Consider using signed SSH keys.
+
+Deployment
+• Create and store software packages in a repository, like Nexus or Artifactory.
+• Releasing software is a one-bit decision, not a transfer of bytes.
+• Manage applications’ configuration with a central system or Git workflow.
+• Create smoke tests to confirm proper startup, and validate the proper startup order.
+
+
