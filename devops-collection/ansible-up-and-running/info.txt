@@ -518,6 +518,18 @@ For a long time, we had two types of management strategies for network devices:
   back onto the devices through the console.
 
 
+Staging
+  Most organizations that develop software have a blueprint for staging. Staging means
+  running separate environments for different purposes in the life cycle of software.
+  You develop software on a virtual desktop, and the software is built on the dev
+  environment, tested on the test environment, and then deployed for “acceptance” and
+  eventually production. There are many ways to do this, but in general you’d like to
+  find problems as early as possible. It is a good practice to use network separation and security 
+  controls like firewalls, access management, and redundancy depicts such staging environments.
+
+
+
+
 
 
 
