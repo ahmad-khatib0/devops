@@ -1,0 +1,51 @@
+Let’s see how to create an execution environment. 
+
+First, create a virtual environment to work with ansible-builder and ansible-runner:
+$ python3 -m venv .venv
+
+Activate the virtual environment and update your tools:
+$ source .venv/bin/activate
+$ python3 -m pip install --upgrade pip
+$ pip3 install wheel
+
+Then install ansible-builder and ansible-runner:
+$ pip3 install ansible-builder
+$ pip3 install ansible-runner
+
+Ansible Builder needs a definition in a file named execution-environment.yml:
+---
+version: 1
+ansible_config: 'ansible.cfg'
+dependencies:
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+
+additional_build_steps:
+  prepend: |
+    RUN pip3 install --upgrade pip setuptools
+  append:
+    - RUN yum clean all
+
+Python libraries should be listed in requirements.txt, and Ansible requirements in
+requirements.yml. A new file type is used for binary dependencies, like the git and
+unzip packages. These are listed with their platform’s package manager in bindep.txt:
+  git [platform:rpm]
+  unzip [platform:rpm]
+
+Once you are happy with the definition of your execution environment, you can
+build it:
+$ ansible-builder --build-arg ANSIBLE_RUNNER_IMAGE=quay.io/ansible/ansible-runner:stable-2.11-latest \
+  -t ansible-controller -c context --container-runtime podman
+
+To use the execution environment, create a wrapper script around this command:
+$ podman run --rm --network=host -ti \
+  -v${HOME}/.ssh:/root/.ssh \
+  -v ${PWD}/playbooks:/runner \
+  -e RUNNER_PLAYBOOK=playbook.yml \
+     ansible-controller
+
+
+
+
+
