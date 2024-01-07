@@ -1,0 +1,7 @@
+
+teraform inti 
+teraform plan 
+terraform apply
+
+
+

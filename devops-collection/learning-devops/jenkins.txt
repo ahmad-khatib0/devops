@@ -1,4 +1,3 @@
-
 Microservices architecture is an extension of service-oriented architecture (SOA). Both architectures 
   rely on services as the main component, but they vary greatly in terms of service characteristics:
 
