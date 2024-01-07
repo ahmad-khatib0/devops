@@ -184,4 +184,6 @@ run terraform init to tell Terraform to scan the code, figure out which provider
   may want to add it to .gitignore). Terraform will also record information about the
   provider code it downloaded into a .terraform.lock.hcl file
 
+The -/+ in the plan output means “replace”; look for the text “forces replacement”
+  in the plan output to figure out what is forcing Terraform to do a replacement.
 

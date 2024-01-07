@@ -3,5 +3,7 @@ teraform inti
 teraform plan 
 terraform apply
 
+# show graph of dependencies
+$ terraform graph
 
 
