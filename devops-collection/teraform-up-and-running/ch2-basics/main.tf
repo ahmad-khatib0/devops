@@ -1,3 +1,13 @@
+# terraform {
+#   required_version = ">= 1.0.0, < 2.0.0"
+
+#   required_providers {
+#     aws = {
+#       source  = "hashicorp/aws"
+#       version = "~> 4.0"
+#     }
+#   }
+# }
 
 provider "aws" {
   region = "us-east-2"
@@ -75,9 +85,19 @@ resource "aws_launch_configuration" "example" {
 
 # This ASG will run between 2 and 10 EC2 Instances (defaulting to 2 for the initial launch), 
 # each tagged with the name terraform-asg-example
+#
+# The default health_check_type is "EC2", which is a minimal health check that considers an
+# Instance unhealthy only if the AWS hypervisor says the VM is completely down or
+# unreachable. The "ELB" health check is more robust, because it instructs the ASG to use the 
+# target group’s health check to determine whether an Instance is healthy and to automatically 
+# replace Instances if the target group reports them as unhealthy. That way, Instances will be 
+# replaced not only if they are completely down but also if, for example, they’ve stopped serving 
+# requests because they ran out of memory or a critical process crashed.
 resource "aws_autoscaling_group" "example" {
   launch_configuration = aws_launch_configuration.example.name
   vpc_zone_identifier  = data.aws_subnets.default.ids
+  target_group_arns    = [aws_lb_target_group.asg.arn]
+  health_check_type    = "ELB"
   min_size             = 2
   max_size             = 10
 
@@ -89,7 +109,7 @@ resource "aws_autoscaling_group" "example" {
 }
 
 resource "aws_security_group" "instance" {
-  name = "terraform-example-instance"
+  name = var.instance_security_group_name
 
   ingress {
     from_port   = var.server_port
@@ -119,5 +139,92 @@ data "aws_subnets" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
+
+
+resource "aws_lb" "example" {
+  name               = var.alb_name
+  load_balancer_type = "application"
+  subnets            = data.aws_subnets.default.ids
+  security_groups    = [aws_security_group.alb.id]
+}
+
+# define a listener for this ALB using the aws_lb_listener resource
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.example.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  # By default, return a simple 404 page
+  # send a simple 404 page as the default response for requests that don’t match any listener rules
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: page not found"
+      status_code  = 404
+    }
+  }
+}
+
+resource "aws_lb_target_group" "asg" {
+  name     = var.alb_name
+  port     = var.server_port
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.default.id
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 15
+    timeout             = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+}
+
+
+# a listener rule that sends requests that match any path to the target group that contains your ASG
+resource "aws_lb_listener_rule" "asg" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.asg.arn
+  }
+}
+
+
+# by default, all AWS resources, including ALBs, don’t allow any incoming or
+# outgoing traffic, so you need to create a new security group specifically for the ALB
+# This security group should allow incoming requests on port 80 so that you can access
+# the load balancer over HTTP, and allow outgoing requests on all ports so that the
+# load balancer can perform health checks
+resource "aws_security_group" "alb" {
+  name = var.alb_security_group_name
+
+  # Allow inbound HTTP requests
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound requests
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 
 
