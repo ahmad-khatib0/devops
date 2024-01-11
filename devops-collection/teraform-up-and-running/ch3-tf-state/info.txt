@@ -1,0 +1,86 @@
+
+if you want to use Terraform as a team on a real product, you run into several problems:
+  
+Shared storage for state files
+  To be able to use Terraform to update your infrastructure, each of your team members needs access to 
+  the same Terraform state files. That means you need to store those files in a shared location.
+  
+Locking state files
+  As soon as data is shared, you run into a new problem: locking. Without locking, if two team members 
+  are running Terraform at the same time, you can run into race conditions as multiple Terraform processes 
+  make concurrent updates to the state files, leading to conflicts, data loss, and state file corruption.
+  
+Isolating state files
+  When making changes to your infrastructure, it’s a best practice to isolate different environments. 
+  For example, when making a change in a testing or staging environment, you want to be sure that 
+  there is no way you can accidentally break production. But how can you isolate your changes if all 
+  of your infrastructure is defined in the same Terraform state file?
+
+
+Shared Storage for State Files problems: 
+Manual error
+  It’s too easy to forget to pull down the latest changes from version control before running 
+  Terraform or to push your latest changes to version control after running Terraform. It’s just 
+  a matter of time before someone on your team runs Terraform with out-of-date state files and, 
+  as a result, accidentally rolls back or duplicates previous deployments.
+  
+Locking
+  Most version control systems do not provide any form of locking that would prevent two team 
+  members from running terraform apply on the same state file at the same time.
+  
+Secrets
+  All data in Terraform state files is stored in plain text. This is a problem because certain Terraform 
+  resources need to store sensitive data. For example, if you use the aws_db_instance resource to create 
+  a database, Terraform will store the username and password for the database in a state file in plain 
+  text, and you shouldn’t store plain text secrets in version control.
+
+A Terraform backend determines how Terraform loads and stores state
+
+Remote backends solve the three issues just listed:
+Manual error
+  After you configure a remote backend, Terraform will automatically load the state file from 
+  that backend every time you run plan or apply, and it’ll automatically store the state file 
+  in that backend after each apply, so there’s no chance of manual error.
+  
+Locking
+  Most of the remote backends natively support locking. To run terraform apply , Terraform will automatically 
+  acquire a lock; if someone else is already running apply, they will already have the lock, and you 
+  will have to wait. You can run apply with the -lock-timeout=<TIME> parameter to instruct Terraform to 
+  wait up to TIME for a lock to be released (e.g., -lock-timeout=10m will wait for 10 minutes).
+
+Secrets
+  Most of the remote backends natively support encryption in transit and encryption at rest of the 
+  state file. Moreover, those backends usually expose ways to configure access permissions 
+  (e.g., using IAM policies with an Amazon S3 bucket), so you can control who has access to your state 
+  files and the secrets they might contain. It would be better still if Terraform natively supported 
+  encrypting secrets within the state file, but these remote backends reduce most of the
+  security concerns, given that at least the state file isn’t stored in plain text on disk anywhere.
+
+
+S3 is typically your best bet as a remote backend for the following reasons:
+• It’s a managed service, so you don’t need to deploy and manage extra infrastructure to use it.
+• It’s designed for 99.999999999% durability and 99.99% availability, which means
+  you don’t need to worry too much about data loss or outages.1
+• It supports encryption, which reduces worries about storing sensitive data in state files. 
+  You still have to be very careful who on your team can access the S3 bucket, but at least 
+  the data will be encrypted at rest (Amazon S3 supports server-side encryption using AES-256) 
+  and in transit (Terraform uses TLS when talking to Amazon S3).
+• It supports locking via DynamoDB. 
+• It supports versioning, so every revision of your state file is stored, 
+  and you can roll back to an older version if something goes wrong.
+• It’s inexpensive, with most Terraform usage easily fitting into the AWS Free Tier.2
+
+
+
+creating backend with terraform: 
+1. Write Terraform code to create the S3 bucket and DynamoDB table, and deploy
+   that code with a local backend.
+2. Go back to the Terraform code, add a remote backend configuration to it to use the newly created S3 
+   bucket and DynamoDB table, and run terraform init to copy your local state to S3. 
+
+If you ever wanted to delete the S3 bucket and DynamoDB table, you’d have to do this two-step process in reverse:
+1. Go to the Terraform code, remove the backend configuration, and rerun
+   terraform init to copy the Terraform state back to your local disk.
+2. Run terraform destroy to delete the S3 bucket and DynamoDB table.
+
+

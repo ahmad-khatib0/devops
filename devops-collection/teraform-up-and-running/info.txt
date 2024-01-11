@@ -238,3 +238,33 @@ depends_on
   the security group resource using depends_on.
 
 
+AWS offers three types of load balancers:
+Application Load Balancer (ALB)
+  Best suited for load balancing of HTTP and HTTPS traffic. Operates at the
+  application layer (Layer 7) of the Open Systems Interconnection (OSI) model.
+  
+Network Load Balancer (NLB)
+  Best suited for load balancing of TCP, UDP, and TLS traffic. Can scale up and down in 
+  response to load faster than the ALB (the NLB is designed to scale to tens of millions 
+  of requests per second). Operates at the transport layer (Layer 4) of the OSI model.
+  
+Classic Load Balancer (CLB)
+  This is the “legacy” load balancer that predates both the ALB and NLB. It can handle 
+  HTTP, HTTPS, TCP, and TLS traffic but with far fewer features than either the ALB or NLB. 
+  Operates at both the application layer (L7) and transport layer (L4) of the OSI model.
+
+
+The ALB consists of several parts: 
+Listener
+  Listens on a specific port (e.g., 80) and protocol (e.g., HTTP)
+  
+Listener rule
+  Takes requests that come into a listener and sends those that match specific paths (e.g., /foo and /bar) 
+  or hostnames (e.g., foo.example.com and bar.exam ple.com) to specific target groups.
+
+Target groups
+  One or more servers that receive requests from the load balancer. The target
+  group also performs health checks on these servers and sends requests only to healthy nodes.
+
+
+
