@@ -84,5 +84,141 @@ Note that even though you should almost always prefer for_each over count for cr
   tends to be simpler than setting for_each to an empty or nonempty collection. 
 
 
+a zero-downtime deployment:
+1. Configure the name parameter of the ASG to depend directly on the name of the launch configuration. 
+   Each time the launch configuration changes (which it will when you update the AMI or User Data), its 
+   name changes, and therefore the ASG’s name will change, which forces Terraform to replace the ASG.
+   
+2. Set the create_before_destroy parameter of the ASG to true so that each time
+   Terraform tries to replace it, it will create the replacement ASG before destroying the original.
+   
+3. Set the min_elb_capacity parameter of the ASG to the min_size of the cluster
+   so that Terraform will wait for at least that many servers from the new ASG to
+   pass health checks in the ALB before it will begin destroying the original ASG.
+
+
+count and for_each Have Limitations: 
+You cannot reference any resource outputs in count or for_each
+  count and for_each can reference hardcoded values, variables, data sources, and even lists of resources
+  (so long as the length of the list can be determined during plan), but not computed resource outputs
+
+Zero-Downtime Deployment Has Limitations:
+the webserver-cluster module includes a couple of aws_autoscaling_schedule resources that increase the 
+  number of servers in the cluster from 2 to 10 at 9 a.m. If you ran a deployment at, say, 11 a.m., the
+  replacement ASG would boot up with only 2 servers, rather than 10, and it would stay that way until 9 a.m. 
+  the next day. There are several possible workarounds, such as tweaking the recurrence parameter on the 
+  aws_autoscaling_schedule or setting the desired_capacity parameter of the ASG to get its value from a custom
+  script that uses the AWS API to figure out how many instances were running before deployment.
+  
+
+Valid Plans Can Fail: 
+There are two main lessons to take away from this:
+
+After you start using Terraform, you should only use Terraform.
+  When a part of your infrastructure is managed by Terraform, you should never manually make changes to it. 
+  Otherwise, you not only set yourself up for weird Terraform errors, but you also void many of the benefits of 
+  using infrastructure as code in the first place, given that the code will no longer be an accurate
+  representation of your infrastructure.
+  
+If you have existing infrastructure, use the import command. If you created infrastructure before you started using 
+  Terraform, you can use the terraform import command to add that infrastructure to Terraform’s state file so 
+  that Terraform is aware of and can manage that infrastructure. The import command takes two arguments. 
+  The first argument is the “address” of the resource in your Terraform configuration files. This makes use of the
+  same syntax as resource references, such as <PROVIDER>_<TYPE>.<NAME> (e.g., aws_iam_user.existing_user). 
+  The second argument is a resource-specific ID that identifies the resource to import. For example, the ID for 
+  an aws_iam_user resource is the name of the user (e.g., yevgeniy.brikman), and the ID for an aws_instance is 
+  the EC2 Instance ID (e.g., i-190e22e5). The documentation at the bottom of the page for each resource typically 
+  specifies how to import it. For example, here is the import command that you can use to sync the aws_iam_user you 
+  just added in your aws manually or by not using terraform:
+     $ terraform import aws_iam_user.existing_user yevgeniy.brikman
+  Terraform will use the AWS API to find your IAM user and create an association in its state file between 
+  that user and the aws_iam_user.existing_user resource in your Terraform configurations. From then on, when you 
+  run the plan command, Terraform will know that an IAM user already exists and not try to create it again. Note 
+  that if you have a lot of existing resources that you want to import into Terraform, writing the Terraform code 
+  for them from scratch and importing them one at a time can be painful, so you might want to look into tools such
+  as terraformer and terracognita, which can import both code and state from supported cloud environments automatically.
+
+
+
+Refactoring Can Be Tricky:
+If you change the name parameter of certain resources, Terraform will delete the old version of the 
+  resource and create a new version to replace it. If the resource you are deleting happens to be an 
+  ALB, there will be nothing to route traffic to your web server cluster until the new ALB boots up. 
+  Similarly, if the resource you are deleting happens to be a security group, your servers will reject
+  all network traffic until the new security group is created.
+
+Terraform associates each resource identifier with an identifier from the cloud pro‐
+  vider, such as associating an iam_user resource with an AWS IAM User ID or an
+  aws_instance resource with an AWS EC2 Instance ID. If you change the resource
+  identifier, such as changing the aws_security_group identifier from instance to
+  cluster_instance, as far as Terraform knows, you deleted the old resource and have
+  added a completely new one. As a result, if you apply these changes, Terraform will
+  delete the old security group and create a new one, and in the time period in between,
+  your servers will reject all network traffic. You may run into similar problems if
+  you change the identifier associated with a module, split one module into multiple
+  modules, or add count or for_each to a resource or module that didn’t have it before.
+
+
+
+There are four main lessons that you should take away from this discussion:
+
+Always use the plan command
+  You can catch all of these gotchas by running the plan command, carefully scanning the output, 
+  and noticing that Terraform plans to delete a resource that you probably don’t want deleted.
+  
+Create before destroy
+  If you do want to replace a resource, think carefully about whether its replacement should be created 
+  before you delete the original. If so, you might be able to use create_before_destroy to make that happen. 
+  Alternatively, you can also accomplish the same effect through two manual steps: first, add the new resource
+  to your configurations and run the apply command; second, remove the old
+  resource from your configurations and run the apply command again.
+
+Refactoring may require changing state
+  If you want to refactor your code without accidentally causing downtime, you’ll need to update the 
+  Terraform state accordingly. However, you should never update Terraform state files by hand! Instead, 
+  you have two options: do it manually by running terraform state mv commands, or do it automatically by adding 
+  a moved block to your code. Let’s first look at the terraform state mv command, which has the following syntax:
+     terraform state mv <ORIGINAL_REFERENCE> <NEW_REFERENCE>
+  where ORIGINAL_REFERENCE is the reference expression to the resource as it is now and NEW_REFERENCE is the 
+  new location you want to move it to. For example, if you’re renaming an aws_security_group group from 
+  instance to cluster_instance, you could run the following:
+      $ terraform state mv  aws_security_group.instance aws_security_group.cluster_instance
+  This instructs Terraform that the state that used to be associated with aws_security_group.instance should 
+  now be associated with aws_security_group.clus ter_instance. If you rename an identifier and run this command, 
+  you’ll know (YOU DID IT RIGHT IF THE SUBSEQUENT TERRAFORM PLAN SHOWS NO CHANGES). Having to remember to run 
+  CLI commands manually is error prone, especially if you refactored a module used by dozens of teams in your 
+  company, and each of those teams needs to remember to run terraform state mv to avoid downtime. Fortunately, 
+  Terraform 1.1 has added a way to handle this automatically: moved blocks. Any time you refactor your code, 
+  you should add a moved block to capture how the state should be updated. For example, to capture that the 
+  aws_security_group resource was renamed from instance to cluster_instance, 
+  you would add the following moved block:
+      moved {
+         from = aws_security_group.instance
+         to = aws_security_group.cluster_instance
+      }
+  Now, whenever anyone runs apply on this code, Terraform will automatically
+  detect if it needs to update the state file:
+        Terraform will perform the following actions:
+           # aws_security_group.instance has moved to
+           # aws_security_group.cluster_instance
+            resource "aws_security_group" "cluster_instance" {
+            name = "moved-example-security-group"
+            tags = {}
+                # (8 unchanged attributes hidden)
+            }
+        Plan: 0 to add, 0 to change, 0 to destroy.
+          Do you want to perform these actions?
+          Terraform will perform the actions described above.
+          Only 'yes' will be accepted to approve.
+          Enter a value:
+  If you enter yes, Terraform will update the state automatically, and as the plan shows no resources 
+  to add, change, or destroy, Terraform will make no other changes—which is exactly what you want!
+
+
+Some parameters are immutable: 
+  The parameters of many resources are immutable, so if you change them, Terraform will delete the old 
+  resource and create a new one to replace it. The documentation for each resource often specifies what 
+  happens if you change a parameter, so get used to checking the documentation. And, once again, make
+  sure to always use the plan command and consider whether you should use a create_before_destroy strategy.
 
 
