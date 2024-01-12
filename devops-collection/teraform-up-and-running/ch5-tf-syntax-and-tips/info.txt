@@ -1,0 +1,88 @@
+
+Loops
+Terraform offers several different looping constructs, each intended to be used in a slightly different scenario:
+• count parameter, to loop over resources and modules
+• for_each expressions, to loop over resources, inline blocks within a resource, and modules
+• for expressions, to loop over lists and maps
+• for string directive, to loop over lists and maps within a string
+
+
+every Terraform resource has a meta-parameter you can use called count. count is Terraform’s oldest, simplest, 
+  and most limited iteration construct: all it does is define how many copies of the resource to create.
+
+
+Array lookup syntax:
+The syntax for looking up members of an array in Terraform is similar to most other programming languages:
+  ARRAY[<INDEX>]
+For example, here’s how you would look up the element at index 1 of var.user_names:
+var.user_names[1]
+
+The length function
+Terraform has a built-in function called length that has the following syntax:
+length(<ARRAY>)
+
+
+When you use the count parameter on a resource, that resource becomes an array
+  of resources. Unfortunately, the way Terraform identifies each resource within the array is by its 
+  position (index) in that array. That is, after running apply the first time with three usernames, 
+  Terraform’s internal representation of these IAM users looks something like this:
+    aws_iam_user.example[0]: neo
+    aws_iam_user.example[1]: trinity
+    aws_iam_user.example[2]: morpheus
+  When you remove an item from the middle of an array, all the items after it shift
+  back by one, so after running plan with just two bucket names, Terraform’s internal
+  representation will look something like this:
+    aws_iam_user.example[0]:neo 
+    aws_iam_user.example[1]:morpheus
+  Notice how "morpheus" has moved from index 2 to index 1. Because it sees the index
+  as a resource’s identity, to Terraform, this change roughly translates to “rename the
+  bucket at index 1 to morpheus and delete the bucket at index 2.” In other words,
+  every time you use count to create a list of resources, if you remove an item from
+  the middle of the list, Terraform will delete every resource after that item and then
+  re-create those resources again from scratch.  Ouch. The end result, of course, is
+  exactly what you requested (i.e., two IAM users named "morpheus" and "neo"),
+  but deleting resources is probably not how you want to get there, as you may lose
+  availability (you can’t use the IAM user during the apply), and, even worse, you may
+  lose data (if the resource you’re deleting is a database, you may lose all the data in it!).
+
+
+Loops with for_each Expressions
+  The for_each expression allows you to loop over lists, sets, and maps to create (a) multiple copies of an 
+  entire resource, (b) multiple copies of an inline block within a resource, or (c) multiple copies of a module. 
+ ▲                                                                                                                ▲
+ █                                                                                                                █
+ █ NOTE: you should almost always prefer to use for_each instead of count to create multiple copies of a resource █
+ █                                                                                                                █
+ ▼                                                                                                                ▼
+
+
+String directives allow you to use control statements (e.g., for-loops and if-statements)
+  within strings using a syntax similar to string interpolations, but instead of a dollar
+  sign and curly braces (${...}), you use a percent sign and curly braces (%{...}).
+  Terraform supports two types of string directives: for-loops and conditionals.
+  The for string directive uses the following syntax:
+  %{ for <ITEM> in <COLLECTION> }<BODY>%{ endfor }
+
+
+Just as Terraform offers several different ways to do loops, there are also several
+  different ways to do conditionals, each intended to be used in a slightly different scenario:
+count parameter:               Used for conditional resources
+for_each and for expressions:  Used for conditional resources and inline blocks within a resource
+if string directive:           Used for conditionals within a string
+
+
+• If you set count to 1 on a resource, you get one copy of that resource; if you set
+  count to 0, that resource is not created at all.
+• Terraform supports conditional expressions of the format <CONDITION> ? <TRUE_VAL> : <FALSE_VAL>. 
+  This ternary syntax, which may be familiar to you from other programming languages, will evaluate the 
+  Boolean logic in CONDITION, and if the result is true, it will return TRUE_VAL, and if the result
+  is false, it’ll return FALSE_VAL.
+
+
+Note that even though you should almost always prefer for_each over count for creating multiple 
+  copies of a resource or module, when it comes to conditional logic, setting count to 0 or 1 
+  tends to be simpler than setting for_each to an empty or nonempty collection. 
+
+
+
+

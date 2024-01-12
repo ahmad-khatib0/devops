@@ -1,0 +1,50 @@
+# Existing IAM user example
+
+This folder contains example [Terraform](https://www.terraform.io/) configuration that create an 
+[IAM](https://aws.amazon.com/iam/) user in an [Amazon Web Services (AWS) account](http://aws.amazon.com/). The goal of
+these configuration is to set the name of the IAM user to a name that already exists in your AWS account so you can 
+practice importing existing resources into Terraform state.
+
+## Pre-requisites
+
+* You must have [Terraform](https://www.terraform.io/) installed on your computer. 
+* You must have an [Amazon Web Services (AWS) account](http://aws.amazon.com/).
+
+Please note that this code was written for Terraform 1.x.
+
+Configure your [AWS access 
+keys](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys) as 
+environment variables:
+
+```
+export AWS_ACCESS_KEY_ID=(your access key id)
+export AWS_SECRET_ACCESS_KEY=(your secret access key)
+```
+
+In `main.tf`, fill in the name of an IAM user that already exists in your account:
+ 
+```hcl
+resource "aws_iam_user" "existing_user" {
+  name = "<EXISTING_IAM_USER_NAME>"
+}
+``` 
+
+Validate the configuration:
+
+```
+terraform init
+terraform apply
+```
+
+If you deploy the code, you will get an error, since the user already exists! To solve this issue, use the `import` 
+command:
+
+```
+terraform import aws_iam_user.existing_user (EXISTING_IAM_USER_NAME)
+```
+
+Now try `apply` again:
+
+```
+terraform apply
+```
