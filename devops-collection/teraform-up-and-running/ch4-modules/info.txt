@@ -1,0 +1,37 @@
+Providers should be configured only in root modules and not in reusable modules 
+
+When creating modules, watch out for these gotchas:
+• File paths
+• Inline blocks
+
+By default, Terraform interprets the path relative to the current working directory.
+  That works if you’re using the templatefile function in a Terraform configuration
+  file that’s in the same directory as where you’re running terraform apply (that is,
+  if you’re using the templatefile function in the root module), but that won’t work
+  when you’re using templatefile in a module that’s defined in a separate folder (a reusable module).
+
+Terraform supports the following types of path references:
+
+path.module
+  Returns the filesystem path of the module where the expression is defined.
+  
+path.root
+  Returns the filesystem path of the root module.
+  
+path.cwd
+  Returns the filesystem path of the current working directory. In normal use of Terraform, this is 
+  the same as path.root, but some advanced uses of Terraform run it from a dire
+
+By versioning your modules, you can use different versions in different
+  environments: e.g., v0.0.1 in prod and v0.0.2 in stage,
+
+
+modules
+  This repo defines reusable modules. Think of each module as a “blueprint” that
+  defines a specific part of your infrastructure.
+live
+  This repo defines the live infrastructure you’re running in each environment (stage, prod, mgmt, etc.). 
+  Think of this as the “houses” you built from the “blueprints” in the modules repo.
+
+
+
