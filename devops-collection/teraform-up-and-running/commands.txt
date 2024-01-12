@@ -14,6 +14,21 @@ $ terraform plan -var "server_port=8080"
 $ terraform output [ OUTPUT_NAME ] 
 
 
+$ terraform workspace show
+
+$ terraform workspace new example1
+
+# if you do: teraform plan:  you will see that Terraform wants to create a totally new EC2 
+  Instance from scratch! That’s because the state files in each workspace are isolated from 
+  one another, and because you’re now in the example1 workspace, (so this is the workspace isloation level)
+
+$ terraform workspace list
+
+# switch to another workspace
+$ terraform workspace select example1
 
 
+# the Terraform console is read-only, so you don’t need to worry about accidentally changing infrastructure or state.
+$ terraform console 
+# > format("%.3f", 3.14159265359)             =>>>          3.142
 
