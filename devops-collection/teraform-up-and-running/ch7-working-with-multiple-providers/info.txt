@@ -1,0 +1,269 @@
+
+Under the hood, Terraform consists of two parts:
+Core
+  This is the terraform binary, and it provides all the basic functionality in Terraform that is used by 
+  all platforms, such as a command-line interface (i.e., plan, apply, etc.), a parser and interpreter for 
+  Terraform code (HCL), the ability to build a dependency graph from resources and data sources, logic to 
+  read and write state files, and so on. Under the hood, the code is written in Go and lives in
+  an open source GitHub repo owned and maintained by HashiCorp.
+Providers
+  Terraform providers are plugins for the Terraform core. Each plugin is written in Go to implement a 
+  specific interface, and the Terraform core knows how to install and execute the plugin. Each of these 
+  plugins is designed to work with some platform in the outside world, such as AWS, Azure, or Google Cloud. The
+  Terraform core communicates with plugins via remote procedure calls (RPCs), and those plugins, in turn, 
+  communicate with their corresponding platforms via the network (e.g., via HTTP calls), The code for each 
+  plugin typically lives in its own repo. For example, all the AWS functionality you’ve been using in the book 
+  so far comes from a plugin called the Terraform AWS Provider (or just AWS Provider for short) that lives in 
+  its own repo. Although HashiCorp created most of the initial providers, and still helps to maintain many of 
+  them, these days, much of the work for each provider is done by the company that owns the underlying 
+  platform: e.g., AWS employees work on the AWS Provider, Microsoft employees work on the Azure provider, 
+  Google employees work on the Google Cloud provider, and so on.
+
+
+terraform {
+      required_providers {
+      <LOCAL_NAME> = {
+      source = "<URL>"
+      version = "<VERSION>"
+    }
+  } 
+}
+
+LOCAL_NAME
+  This is the local name to use for the provider in this module. You must give each
+  provider a unique name, and you use that name in the provider block configura‐
+  tion. In almost all cases, you’ll use the preferred local name of that provider: e.g.,
+  for the AWS Provider, the preferred local name is aws, which is why you write
+  the provider block as provider "aws" { ... }. However, in rare cases, you may
+  end up with two providers that have the same preferred local name—e.g., two
+  providers that both deal with HTTP requests and have a preferred local name of
+  http—so you can use this local name to disambiguate between them.
+URL
+  This is the URL from where Terraform should download the provider, in the format 
+  [<HOSTNAME>/]<NAMESPACE>/<TYPE>, where HOSTNAME is the hostname of a Terraform Registry that distributes 
+  the provider, NAMESPACE is the organizational namespace (typically, a company name), and TYPE is the name 
+  of the platform this provider manages (typically, TYPE is the preferred local name). For example,
+  the full URL for the AWS Provider, which is hosted in the public Terraform Registry, is 
+  registry.terraform.io/hashicorp/aws. However, note that HOSTNAME is optional, and if you omit it, 
+  Terraform will by default download the provider from the public Terraform Registry, so the shorter and more 
+  common way to specify the exact same AWS Provider URL is hashicorp/aws. You typically only
+  include HOSTNAME for custom providers that you’re downloading from private Terraform Registries 
+  (e.g., a private Registry you’re running in Terraform Cloud or Terraform Enterprise).
+VERSION
+  This is a version constraint. For example, you could set it to a specific version,
+  such as 4.19.0, or to a version range, such as > 4.0, < 4.3. 
+
+
+If you add a new provider block named foo to your code, and you don’t
+specify a required_providers block, when you run terraform init, Terraform will automatically do the following:
+
+• Try to download provider foo with the assumption that the HOSTNAME is the public Terraform Registry and 
+  that the NAMESPACE is hashicorp, so the download URL is registry.terraform.io/hashicorp/foo.
+• If that’s a valid URL, install the latest version of the foo provider available at that URL.
+
+
+Warning 1: Multiregion is hard
+  To run infrastructure in multiple regions around the world, especially in “active-active” mode, where more 
+  than one region is actively responding to user requests at the same time (as opposed to one region being a standby), 
+  there are many hard problems to solve, such as dealing with latency between regions, deciding between one writer 
+  (which means you have lower availability and higher latency) or multiple writers (which means you have either 
+  eventual consistency or sharding), figuring out how to generate unique IDs (the standard auto increment ID in
+  most databases no longer suffices), working to meet local data regulations, and so
+  on. These challenges are all beyond the scope of the book, but I figured I’d at least
+  mention them to make it clear that multiregion deployments in the real world are
+  not just a matter of tossing a few provider aliases into your Terraform code!
+Warning 2: Use aliases sparingly
+  Although it’s easy to use aliases with Terraform, I would caution against using them too often, 
+  especially when setting up multiregion infrastructure. One of the main reasons to set up multiregion 
+  infrastructure is so you can be resilient to the outage of one region: e.g., if us-east-2 goes down, 
+  your infrastructure in us-west-1 can keep running. But if you use a single Terraform module that uses
+  aliases to deploy into both regions, then when one of those regions is down, the module will not be able 
+  to connect to that region, and any attempt to run plan or apply will fail. So right when you need to roll 
+  out changes—when there’s a major outage—your Terraform code will stop working. More generally, 
+  you should keep environments completely isolated: so instead of managing multiple regions in one 
+  module with aliases, you manage each region in separate modules. That way, you minimize
+  the blast radius, both from your own mistakes (e.g., if you accidentally break
+  something in one region, it’s less likely to affect the other) and from problems in
+  the world itself (e.g., an outage in one region is less likely to affect the other).
+
+So when does it make sense to use aliases? Typically, aliases are a good fit when the infrastructure you’re  
+  deploying across several aliased providers is truly coupled and you want to always deploy it together. 
+  For example, if you wanted to use Amazon CloudFront as a CDN (Content Distribution Network), and to provision 
+  a TLS certificate for it using AWS Certification Manager (ACM), then AWS requires the certificate to be created 
+  in the us-east-1 region, no matter what other regions you happen to be using for CloudFront itself. In that 
+  case, your code may have two provider blocks, one for the primary region you want to use for CloudFront and
+  one with an alias hardcoded specifically to us-east-1 for configuring the TLS certificate. Another use case 
+  for aliases is if you’re deploying resources designed for use across many regions: for example, AWS recommends 
+  deploying GuardDuty, an automated threat detection service, in every single region you’re using in your AWS
+  account. In this case, it may make sense to have a module with a provider block and custom alias for each 
+  AWS region. Beyond a few corner cases like this, using aliases to handle multiple regions is relatively 
+  rare. A more common use case for aliases is when you have multiple providers that need to authenticate 
+  in different ways, such as each one authenticating to a different AWS account.
+
+
+The main reasons for using multiple accounts are as follows:
+Isolation (aka compartmentalization): 
+  You use separate accounts to isolate different environments from each other and to limit the 
+  “blast radius” when things go wrong. For example, putting your staging and production environments 
+  in separate accounts ensures that if an attacker manages to break into staging, they still have no 
+  access whatsoever to production. Likewise, this isolation ensures that a developer making changes in
+  staging is less likely to accidentally break something in production.
+Authentication and authorization: 
+  If everything is in one account, it’s tricky to grant access to some things (e.g., the staging environment) 
+  but not accidentally grant access to other things (e.g., the production environment). 
+  Using multiple accounts makes it easier to have fine-grained control, as any permissions 
+  you grant in one account have no effect on any other account.
+Auditing and reporting: 
+  A properly configured account structure will allow you to maintain an audit trail of all the changes 
+  happening in all your environments, check if you’re adhering to compliance requirements, and detect 
+  anomalies. Moreover, you’ll be able to have consolidated billing, with all the charges for all of your 
+  accounts in one place, including cost breakdowns by account, service, tag, etc. This is especially useful
+  in large organizations, as it allows finance to track and budget spending by team
+  simply by looking at which account the charges are coming from.
+
+
+ ▲                                                                                         ▲
+ █ How to Get Multiple Aliases from One Email Address                                      █
+ █  If you use Gmail, you can get multiple email aliases out of a single address by taking █
+ █  advantage of the fact that Gmail ignores everything after a plus sign in an email      █
+ █  address. For example, if your Gmail address is example@gmail.com, you can send         █
+ █  email to example+foo@gmail.com and example+any-text-you-want@gmail.com, and all        █
+ █  of those emails will go to example@gmail.com. This also works if your company uses     █
+ █  Gmail via Google Workspace, even with a custom domain: e.g., example+dev@com‐          █
+ █  pany.com and example+stage@company.com will all go to example@company.com.             █
+ █  This is useful if you’re creating a dozen child AWS accounts, as instead of having     █
+ █  to create a dozen totally separate email addresses, you could use example+dev@com‐     █
+ █  pany.com for your dev account, example+stage@company.com for your stage account,       █
+ █  and so on; AWS will see each of those email addresses as a different, unique address,  █
+ █  but under the hood, all the emails will go to the same account.                        █
+ █                                                                                         █
+ ▼                                                                                         ▼
+
+Aws switch role: 
+Account
+  The 12-digit ID of the AWS account to switch to. You’ll want to enter the ID of your new child account.
+Role
+  The name of the IAM role to assume in that AWS account. Enter the name you used for the IAM 
+  role when creating the new child account, which is Organiza tionAccountAccessRole by default.
+Display name
+  AWS will create a shortcut in the nav to allow you to switch to this account in the future with a 
+  single click. This is the name to show in this shortcut. It only affects your IAM user in this browser.
+
+
+Using multiple AWS accounts notes: 
+  Warning 1: Cross-account IAM roles are double opt-in In order for an IAM role to allow access from one 
+    AWS account to another—e.g., to allow an IAM role in account 222222222222 to be assumed from account
+    111111111111—you need to grant permissions in both AWS accounts:
+    • First, in the AWS account where the IAM role lives (e.g., the child account 222222222222), you must 
+      configure its assume role policy to trust the other AWS account (e.g., the parent account 111111111111). 
+      This happened magically for you with the OrganizationAccountAccessRole IAM role because AWS Organizations 
+      automatically configures the assume role policy of this IAM role to trust the parent account. 
+      However, for any custom IAM roles you create, you need to remember to explicitly grant 
+      the sts:AssumeRole permission yourself.
+    • Second, in the AWS account from which you assume the role (e.g., the parent account 111111111111), 
+      you must also grant your user permissions to assume that IAM role. Again, this happened for you 
+      magically because, in Chapter 2, you gave your IAM user AdministratorAccess, which gives you permissions 
+      to do just about everything in the parent AWS account, including assuming IAM roles. In most real-world 
+      use cases, your user won’t be (shouldn’t be!) an admin, so you’ll need to explicitly grant your user
+      sts:AssumeRole permissions on the IAM role(s) you want to be able to assume.
+  Warning 2: Use aliases sparingly
+    I said this in the multiregion example, but it bears repeating: 
+      although it’s easy to use aliases with Terraform, I would caution against using them too often,
+      including with multi-account code. Typically, you use multiple accounts to create separation between 
+      them, so if something goes wrong in one account, it doesn’t affect the other. Modules that deploy across 
+      multiple accounts go against this principle. Only do it when you intentionally want to have resources 
+      in multiple accounts coupled and deployed together.
+
+When working with Terraform modules, you typically work with two types of modules:
+Reusable modules
+  These are low-level modules that are not meant to be deployed directly but
+  instead are to be combined with other modules, resources, and data sources.
+Root modules
+  These are high-level modules that combine multiple reusable modules into a single unit that is meant to be deployed 
+  directly by running apply (in fact, the definition of a root module is it’s the one on which you run apply).
+
+Defining provider blocks within reusable modules is an antipattern for several reasons:
+
+Configuration problems
+  If you have provider blocks defined in your reusable module, then that module controls all the configuration 
+  for that provider. For example, the IAM role ARN and regions to use are currently hardcoded in the 
+  modules/multi-account module. You could, of course, expose input variables to allow users to set the regions
+  and IAM role ARNs, but that’s only the tip of the iceberg. If you browse the AWS Provider documentation, 
+  you’ll find that there are roughly 50 different configuration options you can pass into it! Many of these 
+  parameters are going to be important for users of your module, as they control how to authenticate to
+  AWS, what region to use, what account (or IAM role) to use, what endpoints to use when talking to AWS, what 
+  tags to apply or ignore, and much more. Having to expose 50 extra variables in a module will make that 
+  module very cumbersome to maintain and use.
+
+Duplication problems
+  Even if you expose those 50 settings in your module, or whatever subset you believe is important, you’re 
+  creating code duplication for users of your module. That’s because it’s common to combine multiple modules together,
+  and if you have to pass in some subset of 50 settings into each of those modules in order to get them to all 
+  authenticate correctly, you’re going to have to copy and paste a lot of parameters, which is tedious and error prone.
+
+Performance problems
+  Every time you include a provider block in your code, Terraform spins up a new process to run that provider, 
+  and communicates with that process via RPC. If you have a handful of provider blocks, this works just fine, 
+  but as you scale up, it may cause performance problems. Here’s a real-world example: a few years ago,
+  I created reusable modules for CloudTrail, AWS Config, GuardDuty, IAM Access Analyzer, and Macie. Each of 
+  these AWS services is supposed to be deployed into every region in your AWS account, and as AWS had ~25 regions, 
+  I included 25 provider blocks in each of these modules. I then created a single root module to deploy all of 
+  these as a “baseline” in my AWS accounts: if you do the math, that’s 5 modules with 25 provider blocks each, 
+  or 125 provider blocks total. When I ran apply, Terraform would fire up 125 processes, each making hundreds 
+  of API and RPC calls. With thousands of concurrent network requests, my CPU would start thrashing, and a single 
+  plan could take 20 minutes. Worse yet, this would sometimes overload the network stack, leading to intermittent 
+  failures in API calls, and apply would fail with sporadic errors.
+
+
+it’s rare to manage multiple clouds in a single module for the same reason it’s rare to manage 
+  multiple regions or accounts in a single module. If you’re using
+  multiple clouds, you’re far better off managing each one in a separate module.
+
+
+To authenticate kubectl to the EKS cluster, you can use the aws eks update-kubeconfig command
+  to automatically update your $HOME/.kube/config file:
+  $ aws eks update-kubeconfig --region <REGION> --name <EKS_CLUSTER_NAME>
+  
+  where REGION is the AWS region and EKS_CLUSTER_NAME is the name of your EKS cluster. In the Terraform module, 
+  you deployed to the us-east-2 region and named the cluster kubernetes-example, so the command will look like this:
+  $ aws eks update-kubeconfig --region us-east-2 --name kubernetes-example
+  
+  Now, just as before, you can use the get nodes command to inspect the worker
+  nodes in your cluster, but this time, add the -o wide flag to get a bit more info:  
+  xxx.us-east-2.compute.internal Ready 22m 3.134.78.187 Amazon Linux 2
+
+
+Warning 1: These Kubernetes examples are very simplified!
+  If you are going to use Kubernetes for real-world, production use cases, you’ll need to change many 
+  aspects of this code, such as configuring a number of additional services and settings in the eks-cluster
+  module (e.g., ingress controllers, secret envelope encryption, security groups, OIDC authentication, 
+  Role-Based Access Control (RBAC) mapping, VPC CNI, kube-proxy, CoreDNS), exposing many other settings in 
+  the k8s-app module (e.g., secrets management, volumes, liveness probes, readiness probes, labels,
+  annotations, multiple ports, multiple containers), and using a custom VPC with
+  private subnets for your EKS cluster instead of the Default VPC and public subnets.
+
+Warning 2: Use multiple providers sparingly: 
+  Although you certainly can use multiple providers in a single module, I don’t recommend doing it too often, 
+  for similar reasons to why I don’t recommend using provider aliases too often: in most cases, you want each 
+  provider to be isolated in its own module so that you can manage it separately and limit the blast radius 
+  from mistakes or attackers. Moreover, Terraform doesn’t have great support for dependency ordering
+  between providers. For example, in the Kubernetes example, you had a single module that deployed both the 
+  EKS cluster, using the AWS Provider, and a Kubernetes app into that cluster, using the Kubernetes provider. 
+  As it turns out, the Kubernetes provider documentation explicitly recommends against this
+  pattern:
+    When using interpolation to pass credentials to the Kubernetes provider from other resources, these 
+    resources SHOULD NOT be created in the same Terraform module where Kubernetes provider resources are also 
+    used. This will lead to intermittent and unpredictable errors which are hard to debug and diagnose. The
+    root issue lies with the order in which Terraform itself evaluates the provider blocks vs. actual resources.
+
+
+
+
+
+
+
+
+
+
+
+
