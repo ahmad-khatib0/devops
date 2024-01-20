@@ -1,0 +1,501 @@
+Here are some of the other capabilities Kubernetes brings to the table:
+  • Providing authentication and authorization
+  • Debugging applications
+  • Accessing and ingesting logs
+  • Rolling updates
+  • Using Cluster Autoscaling
+  • Using the Horizontal Pod Autoscaler
+  • Replicating application instances
+  • Checking application health and readiness
+  • Monitoring resources
+  • Balancing loads
+  • Naming and service discovery
+  • Distributing secrets
+  • Mounting storage systems
+
+
+What Kubernetes is not: 
+  • Kubernetes doesn’t require a specific application type or framework
+  • Kubernetes doesn’t require a specific programming language
+  • Kubernetes doesn’t provide databases or message queues
+  • Kubernetes doesn’t distinguish apps from services
+  • Kubernetes doesn’t have a click-to-deploy service marketplace
+  • Kubernetes doesn’t provide a built-in function as a service solution
+  • Kubernetes doesn’t mandate logging, monitoring, and alerting systems
+  • Kubernetes doesn’t provide a CI/CD pipeline
+
+
+The benefits of containers: 
+  • Agile application creation and deployment
+  • Continuous development, integration, and deployment
+  • Development and operations separation of concerns
+  • Environmental consistency across development, testing, staging, and production
+  • Cloud and OS distribution portability
+  • Application-centric management
+  • Resource isolation
+  • Resource utilization
+
+Node
+  A node is a single host. It may be a physical or virtual machine. Its job is to run pods. Each 
+  Kubernetes node runs several Kubernetes components, such as the kubelet, the container runtime, 
+  and the kube-proxy. Nodes are managed by the Kubernetes control plane. The nodes are the worker bees of
+  Kubernetes and shoulder all the heavy lifting. In the past they were called minions. If you read some
+  old documentation or articles, don’t get confused. Minions are just nodes.
+
+Cluster
+  A cluster is a collection of hosts (nodes) that provide compute, memory, storage, and networking
+  resources. Kubernetes uses these resources to run the various workloads that comprise your system.
+  Note that your entire system may consist of multiple clusters.
+
+Control plane
+  The control plane of Kubernetes consists of several components, such as an API server, a scheduler, a
+  controller manager and, optionally, a cloud controller manager. The control plane is responsible for
+  the global state of the cluster, cluster-level scheduling of pods, and handling of events. Usually, all the
+  control plane components are set up on the same host although it’s not required. When considering
+  high-availability scenarios or very large clusters, you will want to have control plane redundancy.
+
+Pod
+  A pod is the unit of work in Kubernetes. Each pod contains one or more containers (so you can think
+  of it as a container container). A pod is scheduled as an atomic unit (all its containers run on the same
+  machine). All the containers in a pod have the same IP address and port space; they can communicate 
+  with each other using localhost or standard inter-process communication. In addition, all the
+  containers in a pod can have access to shared local storage on the node hosting the pod. Containers
+  don’t get access to local storage or any other storage by default. Volumes of storage must be mounted
+  into each container inside the pod explicitly.
+
+Label
+  Labels are key-value pairs that are used to group together sets of objects, very often pods via selectors.
+  This is important for several other concepts, such as replica sets, deployments, and services that operate 
+  on dynamic groups of objects and need to identify the members of the group. There is an NxN
+  relationship between objects and labels. Each object may have multiple labels, and each label may
+  be applied to different objects.
+
+
+Label selector
+  Label selectors are used to select objects based on their labels. Equality-based selectors 
+  specify a key name and a value. There are two operators, = (or ==) and !=, for equality or
+  inequality based on the value. For example:
+$ role = webserver
+  This will select all objects that have that label key and value.
+  Label selectors can have multiple requirements separated by a comma. For example:
+$ role = webserver, application != foo
+  Set-based selectors extend the capabilities and allow selection based on multiple values:
+$ role in (webserver, backend)
+
+
+Annotation
+  Annotations let you associate arbitrary metadata with Kubernetes objects. Kubernetes just stores the 
+  annotations and makes their metadata available. Annotation key syntax has similar requirements as label keys.
+
+Service
+  Services are used to expose some functionality to users or other services. They usually encompass
+  a group of pods, usually identified by – you guessed it – a label. You can have services that provide
+  access to external resources, or pods you control directly at the virtual IP level. Native Kubernetes
+  services are exposed through convenient endpoints. Note that services operate at layer 3 (TCP/UDP).
+  Kubernetes 1.2 added the Ingress object, which provides access to HTTP objects.
+  Services are published or discovered via one of two mechanisms: DNS, or environment variables.
+  Services can be load-balanced inside the cluster by Kubernetes. But, developers can choose to manage
+  load balancing themselves in case of services that use external resources or require special treatment.
+
+Volume
+  Local storage used by the pod is ephemeral and goes away with the pod in most cases. Sometimes that’s all 
+  you need, if the goal is just to exchange data between containers of the node, but sometimes it’s important 
+  for the data to outlive the pod, or it’s necessary to share data between pods. The volume concept supports 
+  that need. The essence of a volume is a directory with some data that is mounted into a container.
+
+Replication controller and replica set
+  Replication controllers and replica sets both manage a group of pods identified by a label selector
+  and ensure that a certain number is always up and running. The main difference between them is
+  that replication controllers test for membership by name equality and replica sets can use set-based
+  selection. Replica sets are the way to go as they are a superset of replication controllers. I expect
+  replication controllers to be deprecated at some point. Kubernetes guarantees that you will always
+  have the same number of pods running as you specified in a replication controller or a replica set.
+  Whenever the number drops due to a problem with the hosting node or the pod itself, Kubernetes
+  will fire up new instances. Note that, if you manually start pods and exceed the specified number, the
+  replica set controller will kill some extra pods.
+
+StatefulSet
+  Pods come and go, and if you care about their data then you can use persistent storage. That’s all good.
+  But sometimes you want Kubernetes to manage a distributed data store such as Cassandra or Cock-
+  roachDB. These clustered stores keep the data distributed across uniquely identified nodes. You can’t
+  model that with regular pods and services. Enter StatefulSet. If you remember earlier, we discussed
+  pets versus cattle and how cattle is the way to go. Well, StatefulSet sits somewhere in the middle.
+  StatefulSet ensures (similar to a ReplicaSet) that a given number of instances with unique identities
+  are running at any given time. StatefulSet members have the following properties:
+  • A stable hostname, available in DNS
+  • An ordinal index
+  • Stable storage linked to the ordinal and hostname
+  • Members are created and terminated gracefully in order
+
+Secret
+  Secrets are small objects that contain sensitive info such as credentials and tokens. They are stored
+  by default as plaintext in etcd, accessible by the Kubernetes API server, and can be mounted as files
+  into pods (using dedicated secret volumes that piggyback on regular data volumes) that need access
+  to them. The same secret can be mounted into multiple pods. Kubernetes itself creates secrets for its 
+  components, and you can create your own secrets. Another approach is to use secrets as environment variables. 
+  Note that secrets in a pod are always stored in memory (tmpfs in the case of mounted secrets) 
+  for better security. The best practice is to enable encryption at rest as well as access control with RBAC.
+
+Name
+  Each object in Kubernetes is identified by a UID and a name. The name is used to refer to the object
+  in API calls. Names should be up to 253 characters long and use lowercase alphanumeric characters,
+  dashes (-), and dots (.). If you delete an object, you can create another object with the same name as the
+  deleted object, but the UIDs must be unique across the lifetime of the cluster. The UIDs are generated
+  by Kubernetes, so you don’t have to worry about it.
+
+Namespace
+  A namespace is a form of isolation that lets you group resources and apply policies. It is also a scope
+  for names. Objects of the same kind must have unique names within a namespace. By default, pods
+  in one namespace can access pods and services in other namespaces.
+  Note that there are cluster-scope objects like node objects and persistent volumes that don’t live in
+  a namespace. Kubernetes may schedule pods from different namespaces to run on the same node.
+  Likewise, pods from different namespaces can use the same persistent storage. In multi-tenancy scenarios, 
+  where it’s important to totally isolate namespaces, you can do a passable job with proper network policies and 
+  resource quotas to ensure proper access and distribution of the physical cluster resources. But, in general 
+  namespaces are considered a weak form of isolation and there are other solutions more appropriated for 
+  hard multi-tenancy like virtual clusters, 
+
+
+Sidecar pattern
+  The sidecar pattern is about co-locating another container in a pod in addition to the main application
+  container. The application container is unaware of the sidecar container and just goes about its busi-
+  ness. A great example is a central logging agent. Your main container can just log to stdout, but the
+  sidecar container will send all logs to a central logging service where they will be aggregated with the
+  logs from the entire system. The benefits of using a sidecar container versus adding central logging
+  to the main application container are enormous. First, applications are not burdened anymore with
+  central logging, which could be a nuisance. If you want to upgrade or change your central logging
+  policy or switch to a totally new provider, you just need to update the sidecar container and deploy it.
+  None of your application containers change, so you can’t break them by accident. The Istio service
+  mesh uses the sidecar pattern to inject its proxies into each pod.
+
+Ambassador pattern
+  The ambassador pattern is about representing a remote service as if it were local and possibly en-
+  forcing some policy. A good example of the ambassador pattern is if you have a Redis cluster with
+  one master for writes and many replicas for reads. A local ambassador container can serve as a proxy
+  and expose Redis to the main application container on the localhost. The main application container
+  simply connects to Redis on localhost:6379 (Redis’s default port), but it connects to the ambassador
+  running in the same pod, which filters the requests, and sends write requests to the real Redis master
+  and read requests randomly to one of the read replicas. Just like with the sidecar pattern, the main
+  application has no idea what’s going on. That can help a lot when testing against a real local Redis
+  cluster. Also, if the Redis cluster configuration changes, only the ambassador needs to be modified;
+  the main application remains blissfully unaware.
+
+Adapter pattern
+  The adapter pattern is about standardizing output from the main application container. Consider the
+  case of a service that is being rolled out incrementally: it may generate reports in a format that doesn’t
+  conform to the previous version. Other services and applications that consume that output haven’t
+  been upgraded yet. An adapter container can be deployed in the same pod with the new application
+  container and massage their output to match the old version until all consumers have been upgraded.
+  The adapter container shares the filesystem with the main application container, so it can watch the
+  local filesystem, and whenever the new application writes something, it immediately adapts it.
+
+Multi-node patterns
+  The single-node patterns described earlier are all supported directly by Kubernetes via pods scheduled
+  on a single node. Multi-node patterns involve pods scheduled on multiple nodes. Multi-node patterns
+  such as leader election, work queues, and scatter-gather are not supported directly, but composing
+  pods with standard interfaces to accomplish them is a viable approach with Kubernetes.
+
+Multi-node patterns
+  The single-node patterns described earlier are all supported directly by Kubernetes via pods scheduled
+  on a single node. Multi-node patterns involve pods scheduled on multiple nodes. Multi-node patterns
+  such as leader election, work queues, and scatter-gather are not supported directly, but composing
+  pods with standard interfaces to accomplish them is a viable approach with Kubernetes.
+
+Level-triggered infrastructure and reconciliation
+  Kubernetes is all about control loops. It keeps watching itself and correcting issues. Level-triggered
+  infrastructure means that Kubernetes has a desired state, and it constantly strives toward it. For
+  example, if a replica set has a desired state of 3 replicas and it drops to 2 replicas, Kubernetes (the
+  ReplicaSet controller part of Kubernetes) will notice and work to get back to 3 replicas. The alternative
+  approach of edge-triggering is event-based. If the number of replicas dropped from 2 to 3, create a
+  new replica. This approach is very brittle and has many edge cases, especially in distributed systems
+  where events like replicas coming and going can happen simultaneously.
+
+The best way to explore the API is via API groups. Some API groups are enabled by default. Other groups can 
+  be enabled/disabled via flags. For example, to disable the autoscaling/v1 group and enable the 
+  autoscaling/v2beta2 group you can set the --runtime-config flag when running the API server as follows:
+$ --runtime-config=autoscaling/v1=false,autoscaling/v2beta2=true
+  Note that managed Kubernetes clusters in the cloud don’t let you specify flags for the API server (as they manage it).
+
+
+Resource categories
+In addition to API groups, another useful classification of available APIs is by functionality. The Ku-
+bernetes API is huge and breaking it down into categories helps a lot when you’re trying to find your
+way around. Kubernetes defines the following resource categories:
+
+• Workloads: Objects you use to manage and run containers on the cluster.
+
+• Discovery and load balancing: Objects you use to expose your workloads to the world as ex-
+  ternally accessible, load-balanced services.
+  
+• Config and storage: Objects you use to initialize and configure your applications, and to persist
+  data that is outside the container.
+  
+• Cluster: Objects that define how the cluster itself is configured; these are typically used 
+  only by cluster operators.
+  
+• Metadata: Objects you use to configure the behavior of other resources within the cluster, such
+  as HorizontalPodAutoscaler for scaling workloads.
+
+
+Workloads resource category
+The workloads category contains the following resources with their corresponding API groups:
+  • Container: core
+  • CronJob: batch
+  • ControllerRevision: apps
+  • DaemonSet: apps
+  • Deployment: apps
+  • HorizontalPodAutoscaler: autoscaling
+  • Job: batch
+  • Pod: core
+  • PodTemplate: core
+  • PriorityClass: scheduling.k8s.io
+  • ReplicaSet: apps
+  • ReplicationController: core
+  • StatefulSet: apps 
+
+
+Here is a detailed description of one of the most common operations, which gets a list of all the pods
+  across all namespaces as a REST API:
+$ GET /api/v1/pods
+
+It accepts• various query parameters (all optional):
+• fieldSelector: Specifies a selector to narrow down the returned objects based on their fields.
+  The default behavior includes all objects.
+• labelSelector: Defines a selector to filter the returned objects based on their labels. By default,
+  all objects are included.
+• limit/continue: The limit parameter specifies the maximum number of responses to be
+  returned in a list call. If there are more items available, the server sets the continue field in
+  the list metadata. This value can be used with the initial query to fetch the next set of results.
+• pretty: When set to 'true', the output is formatted in a human-readable manner.
+  resourceVersion: Sets a constraint on the acceptable resource versions that can be served by
+  the request. If not specified, it defaults to unset.
+• resourceVersionMatch: Determines how the resourceVersion constraint is applied in list
+  calls. If not specified, it defaults to unset.
+• timeoutSeconds: Specifies a timeout duration for the list/watch call. This limits the duration
+  of the call, regardless of any activity or inactivity.
+• watch : Enables the monitoring of changes to the described resources and returns a continuous stream 
+  of notifications for additions, updates, and removals. The resourceVersion parameter must be specified.
+
+Discovery and load balancing
+  Workloads in a cluster are only accessible within the cluster by default. To make them accessible externally, 
+  either a LoadBalancer or a NodePort Service needs to be used. However, for development purposes, internally 
+  accessible workloads can be accessed through the API server using the “kubectl proxy” command:
+ •  Endpoints:     core
+ •  EndpointSlice: discovery.k8s.io/v1
+ •  Ingress:       networking.k8s.io
+ •  IngressClass:  networking.k8s.io
+ •  Service:       core
+
+Config and storage
+  Dynamic configuration without redeployment and secret management are cornerstones of Kubernetes and running 
+  complex distributed applications on your Kubernetes cluster. The secret and configuration are not baked into 
+  container images and are stored in the Kubernetes state store (usually etcd). Kubernetes also provides a 
+  lot of abstractions for managing arbitrary storage. Here are some of the primary resources:
+  • ConfigMap: core
+  • CSIDriver: storage.k8s.io
+  • CSINode: storage.k8s.io
+  • CSIStorageCapacity: storage.k8s.io
+  • Secret: core
+  • PersistentVolumeClaim: core
+  • StorageClass: storage.k8s.io
+  • Volume: core
+  • VolumeAttachment: storage.k8s.io
+
+
+Metadata
+  The metadata resources typically show up as sub-resources of the resources they configure. For example, 
+    a limit range is defined at the namespace level and can specify:
+  • The range of compute resource usage (minimum and maximum) for pods or containers within a namespace.
+  • The range of storage requests (minimum and maximum) per PersistentVolumeClaim within a namespace.
+  • The ratio between the resource request and limit for a specific resource within a namespace.
+  • The default request/limit for compute resources within a namespace, which are automatically
+    injected into containers at runtime.
+
+Cluster
+  The resources in the cluster category are designed for use by cluster operators as opposed to developers.
+  There are many resources in this category as well. Here are some of the most important resources:
+  . Namespace: core
+  . Node: core
+  . PersistentVolume: core
+  . ResourceQuota: core
+  . Role: rbac.authorization.k8s.io
+  . RoleBinding: rbac.authorization.k8s.io
+  . ClusterRole: rbac.authorization.k8s.io
+  . ClusterRoleBinding: rbac.authorization.k8s.io
+  . NetworkPolicy: networking.k8s.io
+    
+
+
+
+Kubernetes components
+  A Kubernetes cluster has several control plane components used to control the cluster, as well as node 
+  components that run on each worker node. Let’s get to know all these components and how they work together
+  
+  
+Control plane components
+  The control plane components can all run on one node, but in a highly available setup or a very large
+  cluster, they may be spread across multiple nodes.
+  
+API server
+  The Kubernetes API server exposes the Kubernetes REST API. It can easily scale horizontally as it is
+  stateless and stores all the data in the etcd cluster (or another data store in Kubernetes distributions
+  like k3s). The API server is the embodiment of the Kubernetes control plane.
+
+etcd
+  etcd is a highly reliable distributed data store. Kubernetes uses it to store the entire cluster state. In
+  small, transient clusters a single instance of etcd can run on the same node with all the other control
+  plane components. But, for more substantial clusters, it is typical to have a 3-node or even 5-node etcd
+  cluster for redundancy and high availability.
+
+Kube controller manager
+  The Kube controller manager is a collection of various managers rolled up into one binary. It contains
+  the replica set controller, the pod controller, the service controller, the endpoints controller, and
+  others. All these managers watch over the state of the cluster via the API, and their job is to steer the
+  cluster into the desired state.
+
+Cloud controller manager
+  When running in the cloud, Kubernetes allows cloud providers to integrate their platform for the
+  purpose of managing nodes, routes, services, and volumes. The cloud provider code interacts with
+  Kubernetes code. It replaces some of the functionality of the Kube controller manager. When running
+  Kubernetes with a cloud controller manager you must set the Kube controller manager flag --cloud-
+  provider to external. This will disable the control loops that the cloud controller manager is taking over.
+
+Kube scheduler
+  The kube-scheduler is responsible for scheduling pods into nodes. This is a very complicated task as
+  it needs to consider multiple interacting factors, such as:
+  . Resource requirements
+  . Service requirements
+  . Hardware/software policy constraints
+  . Node affinity and anti-affinity specifications
+  . Pod affinity and anti-affinity specifications
+  . Taints and tolerations
+  . Local storage requirements
+  . Data locality
+  . Deadlines
+
+DNS
+  Starting with Kubernetes 1.3, a DNS service is part of the standard Kubernetes cluster. It is scheduled
+  as a regular pod. Every service (except headless services) receives a DNS name. Pods can receive a
+  DNS name too. This is very useful for automatic discovery.
+
+
+
+
+Node components
+  Nodes in the cluster need a couple of components to interact with the API server, receive workloads
+  to execute, and update the API server regarding their status: 
+
+Proxy
+  The kube-proxy does low-level network housekeeping on each node. It reflects the Kubernetes services
+  locally and can do TCP and UDP forwarding. It finds cluster IPs via environment variables or DNS.
+
+kubelet
+The kubelet is the Kubernetes representative on the node. It oversees communicating with the API
+    server and manages the running pods. That includes the following:
+  • Receive pod specs
+  • Download pod secrets from the API server
+  • Mount volumes
+  • Run the pod’s containers (via the configured container runtime)
+  • Report the status of the node and each pod
+  • Run container liveness, readiness, and startup probes
+
+
+Kubernetes container runtimes
+  Kubernetes originally only supported Docker as a container runtime engine. But that is no longer the
+  case. Kubernetes now supports any runtime that implements the CRI interface:
+
+The Container Runtime Interface (CRI)
+  The CRI is a gRPC API, containing specifications/requirements and libraries for container runtimes
+  to integrate with the kubelet on a node. In Kubernetes 1.7 the internal Docker integration in Kubernetes 
+  was replaced with a CRI-based integration. This was a big deal. It opened the door to multiple implementations 
+  that can take advantage of advances in the container world. The kubelet doesn’t need to interface directly 
+  with multiple runtimes. Instead, it can talk to any CRI-compliant container runtime.
+
+
+There are two gRPC service interfaces ImageService and RuntimeService that CRI container runtimes
+  (or shims) must implement. The ImageService is responsible for managing images. Here is the gRPC/
+  protobuf interface (this is not Go):
+  
+  service ImageService {
+      rpc ListImages(ListImagesRequest) returns (ListImagesResponse) {}
+      rpc ImageStatus(ImageStatusRequest) returns (ImageStatusResponse) {}
+      rpc PullImage(PullImageRequest) returns (PullImageResponse) {}
+      rpc RemoveImage(RemoveImageRequest) returns (RemoveImageResponse) {}
+      rpc ImageFsInfo(ImageFsInfoRequest) returns (ImageFsInfoResponse) {}
+  }
+
+  The RuntimeService is responsible for managing pods and containers. Here is the gRPC/protobuf interface:  
+
+  service RuntimeService {
+      rpc Version(VersionRequest) returns (VersionResponse) {}
+      rpc RunPodSandbox(RunPodSandboxRequest) returns (RunPodSandboxResponse) {}
+      rpc StopPodSandbox(StopPodSandboxRequest) returns (StopPodSandboxResponse) {}
+      rpc RemovePodSandbox(RemovePodSandboxRequest) returns (RemovePodSandboxResponse) {}
+      rpc PodSandboxStatus(PodSandboxStatusRequest) returns (PodSandboxStatusResponse) {}
+      rpc ListPodSandbox(ListPodSandboxRequest) returns (ListPodSandboxResponse) {}
+      rpc CreateContainer(CreateContainerRequest) returns (CreateContainerResponse) {}
+      rpc StartContainer(StartContainerRequest) returns (StartContainerResponse) {}
+      rpc StopContainer(StopContainerRequest) returns (StopContainerResponse) {}
+      rpc RemoveContainer(RemoveContainerRequest) returns (RemoveContainerResponse) {}
+      rpc ListContainers(ListContainersRequest) returns (ListContainersResponse) {}
+      rpc ContainerStatus(ContainerStatusRequest) returns (ContainerStatusResponse) {}
+      rpc UpdateContainerResources(UpdateContainerResourcesRequest) returns (UpdateContainerResourcesResponse) {}
+      rpc ExecSync(ExecSyncRequest) returns (ExecSyncResponse) {}
+      rpc Exec(ExecRequest) returns (ExecResponse) {}
+      rpc Attach(AttachRequest) returns (AttachResponse) {}
+      rpc PortForward(PortForwardRequest) returns (PortForwardResponse) {}
+      rpc ContainerStats(ContainerStatsRequest) returns (ContainerStatsResponse) {}
+      rpc ListContainerStats(ListContainerStatsRequest) returns (ListContainerStatsResponse) {}
+      rpc UpdateRuntimeConfig(UpdateRuntimeConfigRequest) returns (UpdateRuntimeConfigResponse) {}
+      rpc Status(StatusRequest) returns (StatusResponse) {}
+  }
+
+
+Docker
+  Docker used to be the 800-pound gorilla of containers. Kubernetes was originally designed to only
+  manage Docker containers. The multi-runtime capability was first introduced in Kubernetes 1.3 and
+  the CRI in Kubernetes 1.5. Until then, Kubernetes could only manage Docker containers. Even after the
+  CRI was introduced a Dockershim remained in the Kubernetes source code, and it was only removed
+  in Kubernetes 1.24. Since then, Docker doesn’t get any special treatment anymore.
+
+Docker Critics often mention the following concerns:
+   . Security
+   . Difficulty setting up multi-container applications (in particular, networking)
+   . Development, monitoring, and logging
+   . Limitations of Docker containers running one command
+   . Releasing half-baked features too fast
+  Docker is aware of the criticisms and has addressed some of these concerns. In particular, Docker
+  invested in its Docker Swarm product. Docker Swarm is a Docker-native orchestration solution that
+  competes with Kubernetes. It is simpler to use than Kubernetes, but it’s not as powerful or mature.
+  Starting with Docker 1.11, released in April 2016, Docker has changed the way it runs containers. The
+  runtime now uses containerd and runC to run Open Container Initiative (OCI) images in containers
+
+
+containerd
+  containerd has been a graduated CNCF project since 2019. It is now a mainstream option for Kubernetes 
+  containers. All major cloud providers support it and as of Kubernetes 1.24, it is the default container runtime.
+  In addition, the Docker container runtime is built on top of containerd as well.
+
+CRI-O
+  CRI-O is a CNCF incubator project. It is designed to provide an integration path between Kubernetes
+  and OCI-compliant container runtimes like Docker. CRI-O provides the following capabilities:
+   . . Support for multiple image formats including the existing Docker image format
+   . . Support for multiple means to download images including trust and image verification
+   . . Container image management (managing image layers, overlay filesystems, etc.)
+   . . Container process life cycle management
+   . . Monitoring and logging required to satisfy the CRI
+   . . Resource isolation as required by the CRI
+
+Lightweight VMs
+  Kubernetes runs containers from different applications on the same node, sharing the same OS. This
+  allows for running a lot of containers in a very efficient manner. However, container isolation is a
+  serious security concern and multiple cases of privilege escalation occurred, which drove a lot of
+  interest in a different approach. Lightweight VMs provide strong VM-level isolation, but are not as heavyweight 
+  as standard VMs, which allow them to operate as container runtimes on Kubernetes. Some prominent projects are:
+  . .   AWS Firecracker
+  . .   Google gVisor
+  . .   Kata Containers
+  . .   Singularity
+  . .   SmartOS
+
+
