@@ -1,0 +1,110 @@
+Installing Rancher Desktop
+  Rancher Desktop is a cross-platform desktop application that lets you run Docker on your local ma-
+  chine. It will install additional tools such as:
+    . . Helm
+    . . Kubectl
+    . . Nerdctl
+    . . Moby (open source Docker)
+    . . Docker Compose
+
+KinD stands for Kubernetes in Docker. It is a tool for creating ephemeral clusters (no persistent storage). 
+  It was built primarily for running the Kubernetes conformance tests. It supports Kubernetes 1.11+. 
+  Under the covers, it uses kubeadm to bootstrap Docker containers as nodes in the cluster. KinD is a 
+  combination of a library and a CLI. You can use the library in your code for testing or other purposes. 
+  KinD can create highly-available clusters with multiple control plane nodes. Finally, KinD is a CNCF 
+  conformant Kubernetes installer. It had better be if it’s used for the conformance tests of Kubernetes itself.
+  
+KinD is super fast to start, but it has some limitations too:
+• No persistent storage
+• No support for alternative runtimes yet, only Docker
+
+
+#### if:  Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+$ docker context ls
+
+# rancher-desktop is the context that has * symbol
+$ docker context use rancher-desktop
+
+# Creating a cluster with KinD
+$ kind create cluster
+
+# we can access the cluster using kubectl:
+$ k config current-context
+
+
+Rancher created k3s, which is a lightweight Kubernetes distribution. Rancher says that 
+  k3s is 5 less than k8s if that makes any sense. The basic idea is to remove features and 
+  capabilities that most people don’t need such as:
+    • Non-default features
+    • Legacy features
+    • Alpha features
+    • In-tree storage drivers
+    • In-tree cloud providers
+
+K3s removed Docker completely and uses containerd instead. You can still bring Docker back if you
+  depend on it. Another major change is that k3s stores its state in an SQLite DB instead of etcd. For
+  networking and DNS, k3s uses Flannel and CoreDNS.
+Unlike Minikube and KinD, k3s is actually designed for production. The primary use case is for edge
+  computing, IoT, and CI systems. It is optimized for ARM devices.
+K3d takes all the goodness that is k3s and packages it in Docker (similar to KinD) and adds a friendly CLI to manage it.
+
+
+kOps
+To create a cluster, you need to do some IAM and DNS configuration, set up an S3 bucket to store the
+  cluster configuration, and then run a single command:
+  
+kops create cluster --name=${NAME} --cloud=aws --zones=us-west-2a \ 
+  --discovery-store=s3://prefix-example-com-oidc-store/${NAME}/discovery
+
+
+The great thing about EKS is that it runs a stock Kubernetes. This means you can use all the standard
+  plugins and tools developed by the community. It also opens the door to convenient cluster federation
+  with other cloud providers and/or your own on-premise Kubernetes clusters.
+
+The eksctl tool is a great CLI for creating and managing EKS clusters and node groups for testing and development. 
+
+Fargate
+  Fargate lets you run containers directly without worrying about provisioning hardware. It eliminates
+  a huge part of the operational complexity at the cost of losing some control. When using Fargate, you
+  package your application into a container, specify CPU and memory requirements, define networking and IAM policies, 
+  and you’re off to the races. Fargate can run on top of ECS and EKS. It is a very interesting member of the serverless
+  camp although it’s not specific to Kubernetes like GKE’s Autopilot.
+
+
+should you consider creating a bare-metal cluster?
+  . . Here is a list of some of the concerns you’ll have to address:
+  . . Implementing your own cloud-provider interface or sidestepping it
+  . . Choosing a networking model and how to implement it (CNI plugin, direct compile)
+  . . Whether or not to use network policies
+  . . Selecting images for system components
+  . . The security model and SSL certificates
+  . . Admin credentials
+  . . Templates for components such as API Server, replication controller, and scheduler
+  . . Cluster services: DNS, logging, monitoring, and GUI
+
+
+Using the Cluster API for managing bare-metal clusters
+  The Cluster API (AKA CAPI) is a Kubernetes sub-project for managing Kubernetes clusters at scale.
+  It uses kubeadm for provisioning. It can provision and manage Kubernetes clusters in any environ-
+  ment using providers. At work, we use it to manage multiple clusters in the cloud. But, it has multiple
+  providers for bare-metal clusters:
+ . .  MAAS
+ . .  Equinix Metal
+ . .  Cidero
+ . .  metal3
+
+Using virtual private cloud infrastructure
+  If your use case falls under the bare-metal use cases but you don’t have the necessary skilled manpower
+  or the inclination to deal with the infrastructure challenges of bare metal, you have the option to use
+  a private cloud such as OpenStack. If you want to aim a little higher in the abstraction ladder, then
+  Mirantis offers a cloud platform built on top of OpenStack and Kubernetes.
+
+
+Building your own cluster with Kubespray
+  Kubespray is a project for deploying production-ready highly available Kubernetes clusters. It uses
+  Ansible and can deploy Kubernetes on a large number of targets
+
+Building your cluster with Rancher RKE
+  Rancher Kubernetes Engine (RKE) is a friendly Kubernetes installer that can install Kubernetes on
+  bare metal as well as virtualized servers. RKE aims to address the complexity of installing Kubernetes.
+

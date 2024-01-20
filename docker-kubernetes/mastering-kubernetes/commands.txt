@@ -1,0 +1,96 @@
+
+# check the pods in the kube-system namespace of the current active cluster:
+  kubectl get pods -n kube-system
+
+# cluster status
+k cluster-info
+
+k get nodes 
+
+k describe node minikube 
+
+minikube addons list
+
+# create deployment
+$ k create deployment echo --image=k8s.gcr.io/e2e-test-images/echoserver:2.5
+
+# To expose our (created) pod as a service, type the following:
+$ k expose deployment echo --type=NodePort --port=8080
+
+
+# Exposing the service as type NodePort means that it is exposed to the host on some port. 
+# But it is not the 8080 port we ran the pod on. Ports get mapped in the cluster. To access 
+# the service, we need the cluster IP and exposed port:
+$ minikube ip     # 172.26.246.89
+
+# then 
+$ k get service echo -o jsonpath='{.spec.ports[0].nodePort}'   # 32649
+
+# then access the echo service, which returns a lot of information:
+$ curl http://172.26.246.89:32649/hi
+
+
+
+
+# create cluster using kind config file
+kind create cluster --config kind-ha-multi-node-config.yaml --kubeconfig $TMPDIR/kind-ha-multi-node-config
+
+# after creating we'll get 3-node cluster 
+$ k get nodes --kubeconfig $TMPDIR/kind-ha-multi-node-config
+
+# KinD has its own get nodes command, where you can see the load balancer:
+$ kind get nodes --name ha-multi-node-cluster
+
+# deploy our echo service on the KinD cluster: 
+$ k create deployment echo --image=g1g1/echo-server:0.1 --kubeconfig $TMPDIR/kind-ha-multi-node-config
+
+# expose 
+$ k expose deployment echo --type=NodePort --port=7070 --kubeconfig $TMPDIR/kind-ha-multi-node-config
+
+# check the exposed service (external ip won't be shown, so complete the upcomming steps)
+$ k get svc echo --kubeconfig $TMPDIR/kind-ha-multi-node-config 
+
+
+# Accessing Kubernetes services locally through a proxy
+
+# First, we need to run the kubectl proxy command that exposes the API server, pods, and services on localhost:
+$ k proxy --kubeconfig $TMPDIR/kind-ha-multi-node-config &
+
+# Then, we can access the echo service through a specially crafted proxy URL that includes 
+# the exposed port (8080) and NOT the node port:
+$ http http://localhost:8001/api/v1/namespaces/default/services/echo:7070/proxy/yeah-it-works
+
+
+
+
+# Creating a multi-node cluster with k3d 
+
+# creating single node: (Creating a single-node cluster with k3d takes less than 20 seconds!)
+$ time k3d cluster create
+
+$ kubectl cluster-info
+
+$ k3d cluster delete
+
+
+# creating  multi-node clusters: 
+$ time k3d cluster create --agents 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
