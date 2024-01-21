@@ -1,0 +1,266 @@
+
+Redundancy
+  Redundancy is the foundation of reliable and highly available systems at the hardware and software levels. If a 
+  critical component fails and you want the system to keep running, you must have another identical component ready 
+  to go. Kubernetes itself takes care of your stateless pods via replication controllers and replica sets. But, your 
+  cluster state in etcd and the control plane components themselves need redundancy to function when some components 
+  fail. In practice, this means running etcd and the API server on 3 or more nodes.
+
+
+Hot swapping
+  Hot swapping is the concept of replacing a failed component on the fly without taking the system down, with minimal 
+  (ideally, zero) interruption for users. If the component is stateless (or its state is stored in separate redundant storage), 
+  then hot swapping a new component to replace it is easy and just involves redirecting all clients to the new component. 
+  But, if it stores local state, including in memory, then hot swapping is not trivial. There are two main options:
+  • Give up on in-flight transactions (clients will retry)
+  • Keep a hot replica in sync (active-active)
+
+
+Clustering Etcd: 
+  In order to create a cluster, the etcd nodes should be able to discover each other. There are several
+  methods to accomplish that such as:
+  . . static
+  . . etcd discovery
+  . . DNS discovery
+  
+ ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ │
+ │ │                                                                                                                 │ │
+ │ │ You should consider Velero as a solution for backing up your entire cluster including your own data.            │ │
+ │ │ Heptio (now part of VMWare) developed Velero, which is open source and may be a lifesaver for critical systems. │ │
+ │ │                                                                                                                 │ │
+ │ ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ │
+ ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Running leader election with Kubernetes
+  Some control plane components, such as the scheduler and the controller manager, can’t have multiple
+  instances active at the same time. This will be chaos, as multiple schedulers try to schedule the same
+  pod into multiple nodes or multiple times into the same node. It is possible to run multiple schedulers
+  that are configured to manage different pods. The correct way to have a highly scalable Kubernetes
+  cluster is to have these components run in leader election mode. This means that multiple instances are 
+  running but only one is active at a time, and if it fails, another one is elected as leader and takes its place.
+
+
+There are several other flags to control leader election. All of them have reasonable defaults:
+--leader-elect-lease-duration duration       default: 15s
+--leader-elect-renew-deadline duration       default: 10s
+--leader-elect-resource-lock endpoints)      Default: "endpoints" ("configmaps" is the other option)
+--leader-elect-retry-period duration         Default: 2s
+
+
+You need to test reliability and high availability, The best way to do it is to create a staging 
+  environment that replicates your production environment as closely as possible. This can
+  get expensive. There are several ways to manage the cost:
+
+. . Ad hoc HA staging environment: Create a large HA cluster only for the duration of HA testing.
+
+. . Compress time: Create interesting event streams and scenarios ahead of time, feed the input,
+    and simulate the situations in rapid succession.
+    
+. . Combine HA testing with performance and stress testing: At the end of your performance and stress tests, 
+    overload the system and see how the reliability and high availability configuration handles the load.
+
+
+In the realm of reliability, self-healing, and high availability, it means you need to figure out ways to
+  break the system and watch it put itself back together. That requires several pieces, as follows:
+    • Comprehensive list of possible failures (including reasonable combinations)
+    • For each possible failure, it should be clear how the system should respond
+    • A way to induce the failure
+    • A way to observe how the system reacts
+
+High availability, scalability, and capacity planning: 
+  use intent-based capacity planning where high-level abstraction is used and the system adjusts itself accordingly. 
+  In the context of Kubernetes, there is the Horizontal Pod Autoscaler (HPA), which can grow and shrink the 
+  number of pods needed to handle requests for a particular workload. But, that works only to change the ratio 
+  of resources allocated to different workloads. When the entire cluster (or node pool) approaches saturation,
+  you simply need more resources. This is where the cluster autoscaler comes into play. It is a Kubernetes project 
+  that became available with Kubernetes 1.8. It works particularly well in cloud environments where 
+  additional resources can be provisioned via programmatic APIs.
+  When the cluster autoscaler (CAS) determines that pods can’t be scheduled (are in a pending state)
+  it provisions a new node for the cluster. It can also remove nodes from the cluster (downscaling) if it 
+  determines that the cluster has more nodes than necessary to handle the load. The CAS will check for pending 
+  pods every 30 seconds by default. It will remove nodes only after 10 minutes of low usage to avoid thrashing.
+
+Here are some issues to consider:
+. A cluster may require more nodes even if the total CPU or memory utilization is low due to
+  control mechanisms like affinity, anti-affinity, taints, tolerations, pod priorities, max pods per
+  node, max persistent volumes per node, and pod disruption budgets.
+. In addition to the built-in delays in triggering scale up or scale down of nodes, there is an
+  additional delay of several minutes when provisioning a new node from the cloud provider.
+. Some nodes (e.g with local storage) can’t be removed by default (require special annotation).
+. The interactions between HPA and the CAS can be subtle.
+
+There are two reasons to use a CAS in a cloud environment:
+1. You installed non-managed Kubernetes yourself and you want to benefit from the CAS.
+2. You use a managed Kubernetes, but you want to modify some of its settings (e.g higher CPU utilization 
+   threshold). In this case, you will need to disable the cloud provider’s CAS to avoid conflicts.
+
+
+The vertical pod autoscaler: 
+. Recommender - Watches CPU and memory usage and provides recommendations for new values for CPU and memory requests
+. Updater - Kills managed pods whose CPU and memory requests don’t match the recommen- dations made by the recommender
+. Admission control webhook - Sets the CPU and memory requests for new or recreated pods based on recommendations
+
+
+Autoscaling based on custom metrics
+  The HPA operates by default on CPU and memory metrics. But, it can be configured to operate on
+  arbitrary custom metrics like a queue depth (e.g. AWS SQS queue) or a number of threads, which may
+  become the bottleneck due to concurrency even if there is still available CPU and memory. The Keda
+  project (https://keda.sh/) provides a strong solution for custom metrics instead of starting from
+  scratch. They use the concept of event-based autoscaling as a generalization.
+
+
+The plan for zero downtime is as follows:
+. Redundancy at every level: This is a required condition. You can’t have a single point of failure
+  in your design because when it fails, your system is down.
+. Automated hot-swapping of failed components: Redundancy is only as good as the ability of
+  the redundant components to kick into action as soon as the original component has failed.
+  Some components can share the load (for example, stateless web servers), so there is no need
+  for explicit action. In other cases, such as the Kubernetes scheduler and controller manager, you need a 
+  leader election in place to make sure the cluster keeps humming along. Tons of metrics, monitoring, and alerts 
+  to detect problems early: Even with careful design, you may miss something or some implicit assumption might 
+  invalidate your design. Often, such subtle issues creep up on you and with enough attention, you may 
+  discover them before they become an all-out system failure. For example, suppose there is a mechanism in place to
+  clean up old log files when disk space is over 90% full, but for some reason, it doesn’t work. If you set an 
+  alert for when disk space is over 95% full, then you’ll catch it and be able to prevent the system failure.
+. Tenacious testing before deployment to production: Comprehensive tests have proven themselves as a reliable 
+  way to improve quality. It is hard work to have comprehensive tests for something as complicated as a large 
+  Kubernetes cluster running a massive distributed system, but you need it. What should you test? Everything. 
+  That’s right. For zero downtime, you need to test both the application and the infrastructure together. 
+  Your 100% passing unit tests are a good start, but they don’t provide much confidence that when you deploy your 
+  application on your production Kubernetes cluster, it will still run as expected. The best tests are, of course,
+  on your production cluster after a blue-green deployment or identical cluster. In lieu of a full-fledged 
+  identical cluster, consider a staging environment with as much fidelity as possible to
+  your production environment. Here is a list of tests you should run. Each of these tests should
+  be comprehensive because if you leave something untested, it might be broken:
+   . .  Unit tests
+   . .  Acceptance tests
+   . .  Performance tests
+   . .  Stress tests
+   . .  Rollback tests
+   . .  Data restore tests
+   . .  Penetration tests
+. Keep the raw data: For many systems, the data is the most critical asset. If you keep the raw
+  data, you can recover from any data corruption and processed data loss that happens later.
+  This will not really help you with zero downtime because it can take a while to reprocess the
+  raw data, but it will help with zero-data loss, which is often more important. The downside to
+  this approach is that the raw data is often huge compared to the processed data. A good option
+  may be to store the raw data in cheaper storage compared to the processed data.
+. Perceived uptime as a last resort: OK. Some part of the system is down. You may still be able
+  to maintain some level of service. In many situations, you may have access to a slightly stale
+  version of the data or can let the user access some other part of the system. It is not a great
+  user experience, but technically the system is still available.
+
+
+Site reliability engineering
+  SRE is a real-world approach for operating reliable distributed systems. SRE embraces failures and
+  works with service-level indicators (SLIs), service-level objectives (SLOs), and service-level agree-
+  ments (SLAs). Each service has objectives such as latency below 50 milliseconds for 95% of requests.
+  If a service violates its objectives, then the team focuses on fixing the issue before going back to work
+  on new features and capabilities.
+
+When you develop or operate distributed systems, the CAP theorem should always be in the back of
+  your mind. CAP stands for consistency, availability, and partition tolerance:
+  . Consistency means that every read receives the most recent write or an error
+  . Availability means that every request receives a non-error response (but the response may be stale)
+  . Partition tolerance means the system continues to operate even when an arbitrary number of
+      messages between nodes are dropped or delayed by the network
+
+When you start thinking in terms of eventual consistency, it opens the door to potentially significant
+  performance improvements. For example, if some important value is updated frequently (let’s say,
+  every second), but you send its value only every minute, you have reduced your network traffic by a
+  factor of 60 and you’re on average only 30 seconds behind real-time updates. This is very significant.
+  This is huge. You have just scaled your system to handle 60 times more users or requests with the
+  same amount of resources.
+
+
+Storage is a huge factor in scaling a cluster. There are three categories of scalable storage solutions:
+  • Roll your own
+  • Use your cloud platform storage solution
+  • Use an out-of-cluster solution
+
+Manage regions carefully
+  Cloud platforms are organized in regions and availability zones. The cost difference between regions
+  can be up to 20% on cloud providers like GCP and Azure. On AWS, it may be even more extreme (30%- 70%). 
+  Some services and machine configurations are available only in some regions.
+
+Considering container-native solutions
+  A container-native solution is when your cloud provider offers a way to deploy containers directly into
+  their infrastructure. You don’t need to provision instances and then install a container runtime (like
+  the Docker daemon) and only then deploy your containers. Instead, you just provide your containers
+  and the platform is responsible for finding a machine to run your container. You are totally separated
+  from the actual machines your containers are running on.
+  All the major cloud providers now provide solutions that abstract instances completely:
+    • AWS Fargate
+    • Azure Container Instances
+    • Google Cloud Run
+
+
+Kubernetes is designed to support clusters with the following properties:
+  Up to 110 pods per node
+  Up to 5,000 nodes
+  Up to 150,000 pods
+  Up to 300,000 total containers
+
+Note that cloud providers still recommend up to 1,000 nodes per cluster.
+
+
+Caching reads in the API server
+  Kubernetes keeps the state of the system in etcd, which is very reliable, though not super-fast (although
+  etcd 3 delivered massive improvement specifically to enable larger Kubernetes clusters). The various
+  Kubernetes components operate on snapshots of that state and don’t rely on real-time updates. That
+  fact allows the trading of some latency for throughput. All the snapshots used to be updated by etcd
+  watches. Now, the API server has an in-memory read cache that is used for updating state snapshots.
+  The in-memory read cache is updated by etcd watches. These schemes significantly reduce the load
+  on etcd and increase the overall throughput of the API server.
+
+The pod lifecycle event generator
+  Increasing the number of nodes in a cluster is key for horizontal scalability, but pod density is crucial
+  too. Pod density is the number of pods that the kubelet can manage efficiently on one node. If pod
+  density is low, then you can’t run too many pods on one node. That means that you might not benefit
+  from more powerful nodes (more CPU and memory per node) because the kubelet will not be able
+  to manage more pods. The other alternative is to force the developers to compromise their design
+  and create coarse-grained pods that do more work per pod
+Pod Lifecycle Event Generator (PLEG). The way the PLEG works is
+  that it lists the state of all the pods and containers and compares it to the previous state. This is done
+  once for all the pods and containers. Then, by comparing the state to the previous state, the PLEG
+  knows which pods need to sync again and invokes only those pods. That change resulted in a signifi-
+  cant four-times-lower CPU usage by the kubelet and the container runtime. It also reduced the polling
+  period, which improves responsiveness.
+
+Serializing API objects with protocol buffers:
+  In Kubernetes 1.3, the Kubernetes team added an efficient protocol buffers serialization format. The JSON format 
+  is still there, but all internal communication between Kubernetes components uses the protocol buffers serialization format.
+
+Leases instead of TTLs
+  etcd2 uses Time to Live (TTL) per key as the mechanism to expire keys, while etcd3 uses leases with
+  TTLs where multiple keys can share the same key. This significantly reduces keep-alive traffic.
+
+The Kubernetes SLOs
+  Kubernetes has service level objectives (SLOs). Those guarantees must be respected when trying to
+  improve performance and scalability. Kubernetes has a one-second response time for API calls (99 percentile). 
+  That’s 1,000 milliseconds. It actually achieves an order of magnitude faster response times most of the time.
+
+
+Introducing the Kubemark tool
+  Kubemark is a Kubernetes cluster that runs mock nodes called hollow nodes used for running light-
+  weight benchmarks against large-scale (hollow) clusters. Some of the Kubernetes components that are
+  available on a real node such as the kubelet are replaced with a hollow kubelet. The hollow kubelet
+  fakes a lot of the functionality of a real kubelet. A hollow kubelet doesn’t actually start any containers,
+  and it doesn’t mount any volumes. But from the Kubernetes point of view – the state stored in etcd – all
+  those objects exist and you can query the API server. The hollow kubelet is actually the real kubelet
+  with an injected mock Docker client that doesn’t do anything.
+
+Setting up a Kubemark cluster
+A Kubemark cluster uses the power of Kubernetes. To set up a Kubemark cluster, perform the following steps:
+
+1. Create a regular Kubernetes cluster where we can run N hollow nodes.
+
+2. Create a dedicated VM to start all master components for the Kubemark cluster.
+
+3. Schedule N hollow node pods on the base Kubernetes cluster. Those hollow nodes are configured to 
+   talk to the Kubemark API server running on the dedicated VM.
+   
+4. Create add-on pods by scheduling them on the base cluster and configuring them to talk to the Kubemark API server.
+
+

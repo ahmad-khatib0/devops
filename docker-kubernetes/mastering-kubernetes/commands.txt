@@ -77,6 +77,21 @@ $ k3d cluster delete
 $ time k3d cluster create --agents 3
 
 
+### leader election 
+Here is a snippet from a scheduler manifest that shows the use of the –leader-elect flag command:
+- /bin/sh
+- -c
+- /usr/local/bin/kube-scheduler --master=127.0.0.1:8080 --v=2 --leader-elect=true 
+    1>> /var/log/kube-scheduler.log 2>&1
+    
+Here is a snippet from a controller manager manifest that shows the use of the –leader-elect flag, - command:
+- /bin/sh
+- -c
+- /usr/local/bin/kube-controller-manager --master=127.0.0.1:8080 --cluster-name=e2e-test-bburns
+    --cluster-cidr=10.245.0.0/16 --allocate-node-cidrs=true --cloud-provider=gce
+    --service-account-private-key-file=/srv/kubernetes/server.key
+    --v=2 --leader-elect=true 1>>/var/log/kube-controller-manager.log 2>&1
+    image: gcr.io/google\_containers/kube-controller-manager:fda24638d51a48baa13c35337fcd4793
 
 
 
