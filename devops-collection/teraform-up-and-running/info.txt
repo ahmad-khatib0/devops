@@ -1,3 +1,7 @@
+ ▲                                                   ▲
+ █ The ~> 4.0 syntax is equivalent to >= 4.0, < 5.0. █
+ ▼                                                   ▼
+
 There are four core values in the DevOps movement: culture, automation, measure‐
   ment, and sharing (sometimes abbreviated as the acronym CAMS). 
 

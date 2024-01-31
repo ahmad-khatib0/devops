@@ -1,0 +1,158 @@
+
+Here’s roughly how long you should expect your next production-grade infrastructure project to take:
+
+• If you want to deploy a service fully managed by a third party, such as running
+  MySQL using the AWS Relational Database Service (RDS), you can expect it to
+  take you one to two weeks to get that service ready for production.
+  
+• If you want to run your own stateless distributed app, such as a cluster of Node.js
+  apps that don’t store any data locally (e.g., they store all their data in RDS)
+  running on top of an AWS Auto Scaling Group (ASG), that will take roughly
+  twice as long, or about two to four weeks to get ready for production.
+  
+• If you want to run your own stateful distributed app, such as an Elasticsearch
+  cluster that runs on top of an ASG and stores data on local disks, that will be
+  another order-of-magnitude increase, or about two to four months to get ready for production.
+  
+• If you want to build out your entire architecture, including all of your apps, data stores, load balancers, 
+  monitoring, alerting, security, and so on, that’s another order-of-magnitude (or two) increase, or about 
+  6 to 36 months of work, with small companies typically being closer to six months and larger companies 
+  typically taking several years.
+
+
+A great practice to follow when developing a new module is to write the example code first, before you 
+  write even a line of module code. If you begin with the implementation, it’s too easy to become lost 
+  in the implementation details, and by the time you resurface and make it back to the API, you end up with 
+  a module that is unintuitive and difficult to use. On the other hand, if you begin with the example
+  code, you’re free to think through the ideal user experience and come up with a clean API for your module 
+  and then work backward to the implementation. Because the example code is the primary way of testing 
+  modules anyway, this is a form of Test-Driven Development (TDD)
+
+Use validation blocks for basic input sanitization Use validation blocks in all of your production-grade 
+  modules to prevent users from passing invalid variables into your modules. The goal is to catch basic input
+  errors before any changes have been deployed. Although precondition blocks are more powerful, you should 
+  still use validation blocks for checking variables whenever possible, as validation blocks are defined 
+  with the variables they validate, which leads to a more readable and maintainable API.
+  
+Use precondition blocks for checking basic assumptions Use precondition blocks in all of your 
+  production-grade modules to check assumptions that must be true before any changes have been deployed. 
+  This includes any checks on variables you can’t do with validation blocks (such as checks that reference 
+  multiple variables or data sources) as well as checks on resources and data sources. The goal is to catch 
+  as many errors as early as you can, before those errors can do any damage.
+  
+Use postcondition blocks for enforcing basic guarantees Use postcondition blocks in all of your 
+  production-grade modules to check guarantees about how your module behaves after changes have been 
+  deployed. The goal is to give users of your module confidence that your module will either do what it 
+  says when they run apply or exit with an error. It also gives maintainers of that module a clearer signal 
+  of what behaviors you want this module to enforce, so those aren’t accidentally lost during a refactor.
+
+
+There are two types of versioning you’ll want to think through with modules:
+    • Versioning of the module’s dependencies
+    • Versioning of the module itself
+
+Versioning of the module’s dependencies: 
+  Your Terraform code has three types of dependencies:
+  Terraform core
+    The version of the terraform binary you depend on
+  Providers
+    The version of each provider your code depends on, such as the aws provider
+  Modules
+    The version of each module you depend on that are pulled in via module blocks
+
+Having to deal with multiple Terraform versions, whether on your own computer or on your CI servers, can 
+  be tricky. Fortunately, the open source tool tfenv, the Terraform version manager, makes this much easier
+
+The real power of tfenv is its support for .terraform-version files. tfenv will automatically look for a 
+  .terraform-version file in the current folder, as well as all the parent folders, all the way up to the 
+  project root—that is, the version control root (e.g., the folder with a .git folder in it) — and if it finds 
+  that file, any terraform command you run will automatically use the version defined in that file.
+
+You don’t need to pin minor or patch versions for providers, as this happens automatically due to the 
+  lock file. The first time you run terraform init, Terraform creates a .terraform.lock.hcl file, which 
+  records the following information:
+  1 - The exact version of each provider you used If you check the .terraform.lock.hcl file into version 
+      control (which you should!), then in the future, if you run terraform init again, on this computer or
+      any other, Terraform will download the exact same version of each provider. That’s why you don’t need 
+      to pin the minor and patch version number in the required_providers block, as that’s the default behavior 
+      anyway. If you want to explicitly upgrade a provider version, you can update the version constraint in
+      the required_providers block and run terraform init -upgrade. Terraform will download new providers that 
+      match your version constraints and update the .terraform.lock.hcl file; you should review those updates 
+      and commit them to version control.
+  2 - The checksums for each provider Terraform records the checksum of each provider it downloads, and on 
+      subsequent runs of terraform init, it will show an error if the checksum changed. This is a security 
+      measure to ensure someone can’t swap out provider code with malicious code in the future. If the provider 
+      is cryptographically signed (most official HashiCorp providers are), Terraform will also validate the 
+      signature as an additional check that the code can be trusted.
+
+There are a few requirements to publish a module to the Public Terraform Registry:
+• The module must live in a public GitHub repo.
+
+• The repo must be named terraform-<PROVIDER>-<NAME>, where PROVIDER is the
+  provider the module is targeting (e.g., aws) and NAME is the name of the module (e.g., rds).
+  
+• The module must follow a specific file structure, including defining Terraform code in the root of the repo, 
+  providing a README.md, and using the convention of main.tf, variables.tf, and outputs.tf as filenames.
+  
+• The repo must use Git tags with semantic versioning (x.y.z) for releases.
+
+
+Provisioners
+  Terraform provisioners are used to execute scripts either on the local machine or a remote machine when 
+  you run Terraform, typically to do the work of bootstrapping, configuration management, or cleanup. There 
+  are several different kinds of provi‐ sioners, including local-exec (execute a script on the local machine), 
+  remote-exec (execute a script on a remote resource), and file (copy files to a remote resource).
+
+ ▲                                                                                                      ▲
+ █                                                                                                      █
+ █ Note that, by default, when you specify a provisioner, it is a creation-time provisioner,            █
+ █ which means that it runs (a) during terraform apply, and (b) only during the                         █
+ █ initial creation of a resource. The provisioner will not run on any subsequent calls to              █
+ █ terraform apply, so creation-time provisioners are mainly useful for running initial bootstrap code. █
+ █ If you set the when = destroy argument on a provisioner, it will be a destroy-time provisioner,      █
+ █ which will run after you run terraform destroy , just before the resource is deleted.                █
+ █                                                                                                      █
+ █                                                                                                      █
+ ▼                                                                                                      ▼
+
+Provisioners Versus User Data
+  You’ve now seen two different ways to execute scripts on a server using Terraform:
+  one is to use a remote-exec provisioner, and the other is to use a User Data script. I’ve
+  generally found User Data to be the more useful tool for the following reasons:
+
+  • A remote-exec provisioner requires that you open up SSH or WinRM access to your servers, which is more 
+    complicated to manage (as you saw earlier with all the security group and SSH key work) and less secure 
+    than User Data, which solely requires AWS API access (which you must have anyway when using Terraform to 
+    deploy to AWS).
+    
+  • You can use User Data scripts with ASGs, ensuring that all servers in that ASG execute the script during 
+    boot, including servers launched due to an auto scaling or auto recovery event. Provisioners take effect 
+    only while Terraform is running and don’t work with ASGs at all.
+    
+  • The User Data script can be seen in the EC2 console (select an Instance, click 
+    Actions → Instance Settings → View/Change User Data), and you can find its execution log on the EC2 Instance 
+    itself (typically in /var/log/cloud-init*.log), both of which are useful for debugging and neither of 
+    which is available with provisioners.
+
+
+Provisioners with null_resource
+  Provisioners can be defined only within a resource, but sometimes, you want to execute a provisioner 
+  without tying it to a specific resource. You can do this using something called the null_resource, 
+  which acts just like a normal Terraform resource, except that it doesn’t create anything. By defining 
+  provisioners on the null_resource, you can run your scripts as part of the Terraform lifecycle but 
+  without being attached to any “real” resource.
+
+the external data source, which allows an external command that implements a specific 
+  protocol to act as a data source. The protocol is as follows:
+  
+• You can pass data from Terraform to the external program using the query argument of the external 
+  data source. The external program can read in these arguments as JSON from stdin.
+
+• The external program can pass data back to Terraform by writing JSON to stdout. The rest of your Terraform 
+  code can then pull data out of this JSON by using the result output attribute of the external data source.
+
+
+
+
+
+

@@ -32,3 +32,20 @@ $ terraform workspace select example1
 $ terraform console 
 # > format("%.3f", 3.14159265359)             =>>>          3.142
 
+
+# using tfenv 
+$ tfenv install  # | use | list  
+
+
+Lock Files with Multiple Operating Systems By default, Terraform only records checksums for the platform
+  you ran init on: for example, if you ran init on Linux, then Terraform will only record the checksums 
+  for Linux provider binaries in .terraform.lock.hcl. If you check that file in and, later on, you run init 
+  on that code on a Mac, you’ll get an error, as the Mac checksums won’t be in the .terraform.lock.hcl file. 
+  If your team works across multiple operating systems, you’ll need to run the terraform providers lock 
+  command to record the checksums for every platform you use:
+    terraform providers lock \
+      -platform=windows_amd64 \ # 64-bit Windows
+      -platform=darwin_amd64 \ # 64-bit macOS
+      -platform=darwin_arm64 \ # 64-bit macOS (ARM)
+      -platform=linux_amd64
+       # 64-bit Linux
