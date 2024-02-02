@@ -1,0 +1,75 @@
+
+# Note that, by default, the number of tests Go will run in parallel is equal to how many CPUs you have on 
+  your computer. So if you only have one CPU, then by default, the tests will still run serially, rather than 
+  in parallel. You can override this setting by setting the GOMAXPROCS environment variable or by passing the -parallel 
+  argument to the go test command. For example, to force Go to run up to two tests in parallel, you would run the following:
+$ go test -v -timeout 30m -parallel 2
+
+
+ ▲                                                                                                             ▲
+ █ # Steps to run the test folder tests to reduce price when running the same test 
+ █   multiple times during writting the code:                                                                  █
+ █                                                                                                             █
+ ▼                                                                                                             ▼
+
+$ SKIP_teardown_db=true SKIP_teardown_app=true go test -timeout 30m -run 'TestHelloWorldAppStageWithStages'
+          (...)
+          The 'SKIP_deploy_db' environment variable is not set, so executing stage 'deploy_db'.
+          (...)
+          The 'deploy_app' environment variable is not set, so executing stage 'deploy_db'.
+          (...)
+          The 'validate_app' environment variable is not set, so executing stage 'deploy_db'.
+          (...)
+          The 'teardown_app' environment variable is set, so skipping stage 'deploy_db'.
+          (...)
+          The 'teardown_db' environment variable is set, so skipping stage 'deploy_db'.
+          (...)
+          PASS
+          ok terraform-up-and-running 423.650s
+          
+# Now you can start iterating on the hello-world-app module, and each time you make a change, you can rerun the tests,
+  but this time, direct them to skip not only the teardown stages but also the mysql module deploy stage 
+  (because mysql is still running) so that the only things that execute are deploy app and the validations for
+  the hello-world-app module:
+
+$ SKIP_teardown_db=true SKIP_teardown_app=true SKIP_deploy_db=true go test -timeout 30m -run 'TestHelloWorldAppStageWithStages'
+    (...)
+    The 'SKIP_deploy_db' environment variable is set, so skipping stage 'deploy_db'.
+    (...)
+    The 'deploy_app' environment variable is not set, so executing stage 'deploy_db'.
+    (...)
+    The 'validate_app' environment variable is not set, so executing stage 'deploy_db'.
+    (...)
+    The 'teardown_app' environment variable is set, so skipping stage 'deploy_db'.
+    (...)
+    The 'teardown_db' environment variable is set, so skipping stage 'deploy_db'.
+    (...)
+    PASS ok terraform-up-and-running 13.824s
+
+# Notice how fast each of these test runs is now: instead of waiting 10 to 15 minutes after every change, you can 
+    try out new changes in 10 to 60 seconds (depending on the change). Given that you’re likely to rerun these stages 
+    dozens or even hundreds of times during development, the time savings can be massive. Once the hello-world-app 
+    module changes are working the way you expect, it’s time to clean everything up. Run the tests once more, this 
+    time skipping the deploy and validation stages so that only the teardown stages are executed:
+    
+$ SKIP_deploy_db=true SKIP_deploy_app=true SKIP_validate_app=true go test -timeout 30m -run 'TestHelloWorldAppStageWithStages'
+    (...)
+    The 'SKIP_deploy_db' environment variable is set, so skipping stage 'deploy_db'.
+    (...)
+    The 'SKIP_deploy_app' environment variable is set, so skipping stage 'deploy_app'.
+    (...)
+    The 'SKIP_validate_app' environment variable is set, so skipping stage 'validate_app'.
+    (...)
+    The 'SKIP_teardown_app' environment variable is not set, so executing stage 'teardown_app'.
+    (...)
+    The 'SKIP_teardown_db' environment variable is not set, so executing stage 'teardown_db'.
+    (...)
+    PASS ok terraform-up-and-running 340.02s
+
+Using test stages lets you get rapid feedback from your automated tests, dramatically increasing the speed and 
+  quality of iterative development. It won’t make any difference in how long tests take in your CI environment, but 
+  the impact on the development environment is huge.
+
+
+
+

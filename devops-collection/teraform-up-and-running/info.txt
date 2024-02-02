@@ -359,6 +359,27 @@ main-xxx.tf
   many files, that might be a sign that you should break your code into smaller modules instead,
 
 
+Cleaning Up After Tests: 
+  a common pattern is to run cloud-nuke as a cron job once per day in each sandbox environment to delete all 
+  resources that are more than 48 hours old, based on the assumption that any infrastructure a developer fired 
+  up for manual testing is no longer necessary after a couple of days:
+      $ cloud-nuke aws --older-than 48h
+
+The basic strategy for writing unit tests for Terraform is as follows:
+  1. Create a small, standalone module.
+  2. Create an easy-to-deploy example for that module.
+  3. Run terraform apply to deploy the example into a real environment.
+  4. Validate that what you just deployed works as expected. This step is specific to
+     the type of infrastructure you’re testing: for example, for an ALB, you’d validate
+     it by sending an HTTP request and checking that you receive back the expected response.
+  5. Run terraform destroy at the end of the test to clean up.
+
+
+
+For example, you can use tools such as tfsec and tflint to enforce policies, such as:
+• Security groups cannot be too open: e.g., block inbound rules that allow access
+  from all IPs (CIDR block 0.0.0.0/0).
+• All EC2 Instances must follow a specific tagging convention.
 
 
 
