@@ -382,5 +382,212 @@ For example, you can use tools such as tfsec and tflint to enforce policies, suc
 • All EC2 Instances must follow a specific tagging convention.
 
 
+Suppose that you have five copies of the old version of your app running, and you want to roll out a new version. 
+ Here are a few of the most common strategies you can use::
+
+Rolling deployment with replacement
+  Take down one of the old copies of the app, deploy a new copy to replace it, wait for the new copy to come up 
+  and pass health checks, start sending the new copy live traffic, and then repeat the process until all of the 
+  old copies have been replaced. Rolling deployment with replacement ensures that you never have more than five 
+  copies of the app running, which can be useful if you have limited capacity (e.g., if each copy of the app runs 
+  on a physical server) or if you’re dealing with a stateful system where each app has a unique identity (e.g., this is
+  often the case with consensus systems, such as Apache ZooKeeper). Note that this deployment strategy can work with 
+  larger batch sizes (you can replace more than one copy of the app at a time if you can handle the load and won’t
+  lose data with fewer apps running) and that during deployment, you will have both the old and new versions 
+  of the app running at the same time.
+  
+Rolling deployment without replacement
+  Deploy one new copy of the app, wait for the new copy to come up and pass health checks, start sending the new copy 
+  live traffic, undeploy an old copy of the app, and then repeat the process until all the old copies have been replaced.
+  Rolling deployment without replacement works only if you have flexible capacity (e.g., your apps run in the cloud, 
+  where you can spin up new virtual servers any time you want) and if your application can tolerate more than five copies 
+  of it running at the same time. The advantage is that you never have less than five copies of the app running, so you’re 
+  not running at a reduced capacity during deployment. Note that this deployment strategy can also work with larger batch
+  sizes (if you have the capacity for it, you can deploy five new copies all at once) and that during deployment, 
+  you will have both the old and new versions of the app running at the same time.
+  
+Blue-green deployment
+  Deploy five new copies of the app, wait for all of them to come up and pass health checks, shift all live traffic 
+  to the new copies at the same time, and then undeploy the old copies. Blue-green deployment works only if you have 
+  flexible capacity (e.g., your apps run in the cloud, where you can spin up new virtual servers any time you want) 
+  and if your application can tolerate more than five copies of it running at the same time. The advantage is that 
+  only one version of your app is visible to users at any given time and that you never have less than five copies 
+  of the app running, so you’re not running at a reduced capacity during deployment.
+ 
+Canary deployment
+  Deploy one new copy of the app, wait for it to come up and pass health checks, start sending live traffic to it, 
+  and then pause the deployment. During the pause, compare the new copy of the app, called the “canary,” to one of the 
+  old copies, called the “control.” You can compare the canary and control across a variety of dimensions: CPU usage, 
+  memory usage, latency, throughput, error rates in the logs, HTTP response codes, and so on. Ideally, there’s no way 
+  to tell the two servers apart, which should give you confidence that the new code works just fine. In that case, 
+  you unpause the deployment and use one of the rolling deploy‐ ment strategies to complete it. On the other hand, 
+  if you spot any differences, then that may be a sign of problems in the new code, and you can cancel the deployment 
+  and undeploy the canary before the problem becomes worse. The name comes from the “canary in a coal mine” concept, 
+  where miners would take canary birds with them down into the tunnels, and if the tunnels filled with dangerous gases 
+  (e.g., carbon monoxide), those gases would affect the canary before the miners, thus providing an early warning to 
+  the miners that something was wrong and that they needed to exit immediately, before more damage was done. 
+  The canary deployment offers similar benefits, giving you a systematic way to test new code in production in a way 
+  that, if something goes wrong, you get a warning early on, when it has affected only a small portion of your users 
+  and you still have enough time to react and prevent further damage. Canary deployments are often combined with feature 
+  toggles, in which you wrap all new features in an if-statement. By default, the if-statement defaults to false, 
+  so the new feature is toggled off when you initially deploy the code. Because all new functionality is off, when you 
+  deploy the canary server, it should behave identically to the control, and any differences can be automatically flagged 
+  as a problem and trigger a rollback. If there were no problems, later on you can enable the feature toggle for a portion 
+  of your users via an internal web interface. For example, you might initially enable the new feature only for employees; 
+  if that works well, you can enable it for 1% of users; if that’s still working well, you can ramp it up to 10%; 
+  and so on. If at any point there’s a problem, you can use the feature toggle to ramp the feature back down. 
+  This process allows you to separate deployment of new code from release of new features.
+
+
+
+Promotion across environments: 
+to roll out v0.0.4 of your app, you would do the following:
+1. Deploy v0.0.4 of the app to dev.
+2. Run your manual and automated tests in dev.
+3. If v0.0.4 works well in dev, repeat steps 1 and 2 to deploy v0.0.4 to staging (this is known as promoting the artifact).
+4. If v0.0.4 works well in staging, repeat steps 1 and 2 again to promote v0.0.4 to prod.
+
+Here’s what the infrastructure code workflow looks like:
+1. Use version control
+2. Run the code locally
+3. Make code changes
+4. Submit changes for review
+5. Run automated tests
+6. Merge and release
+7. Deploy
+
+Version control for infrastructure code has a few extra requirements:
+• Live repo and modules repo
+• Golden Rule of Terraform
+• The trouble with branches
+
+Live repo and modules repo
+  you will typically want at least two separate version control repositories for your Terraform code: one repo for 
+  modules and one repo for live infrastructure. The repository for modules is where you create your reusable, versioned 
+  modules,  such as (cluster/asg-rolling-deploy, data-stores/mysql, networking/alb, and services/hello-world-app). 
+  The repository for live infrastructure defines the live infrastructure you’ve deployed in each environment 
+  (dev, stage, prod, etc.)
+
+
+The Golden Rule of Terraform
+  Here’s a quick way to check the health of your Terraform code: go into your live repository, pick several folders 
+  at random, and run terraform plan in each one. If the output is always “no changes,” that’s great, because it means 
+  that your infrastructure code matches what’s actually deployed.
+  The gold standard, or what you’re really aiming for, is what I call The Golden Rule of Terraform:
+   “ The main branch of the live repository should be a 1:1 representation of what’s actually deployed in production “
+
+“...what’s actually deployed”
+  The only way to ensure that the Terraform code in the live repository is an up-to-date representation of what’s
+  actually deployed is to never make out-of-band changes. After you begin using Terraform, do not make changes via 
+  a web UI, or manual API calls, or any other mechanism. out-of-band changes not only lead to complicated bugs, but 
+  they also void many of the benefits you get from using IaC in the first place.
+
+“...a 1:1 representation...”
+  If I browse your live repository, I should be able to see, from a quick scan, what resources have been deployed in 
+  what environments. That is, every resource should have a 1:1 match with some line of code checked into the live repo. 
+  This seems obvious at first glance, but it’s surprisingly easy to get it wrong. One way to get it wrong, as I just 
+  mentioned, is to make out-of-band changes so that the code is there, but the live infrastructure is different. 
+  A more subtle way to get it wrong is to use Terraform workspaces to manage environments so that the live infrastructure 
+  is there, but the code isn’t. That is, if you use workspaces, your live repo will have only one copy of the code, even 
+  though you may have 3 or 30 environments deployed with it. From merely looking at the code, there will be no way to know 
+  what’s actually deployed, which will lead to mistakes and make maintenance complicated. Therefore, as described in 
+  “Isolation via Workspaces” instead of using workspaces to manage environments, you want each environment defined in a 
+  separate folder, using separate files, so that you can see exactly what environments have been deployed just by 
+  browsing the live repository. Later in this chapter, you’ll see how to do this with minimal copying and pasting.
+
+“The main branch...”
+  You should have to look at only a single branch to understand what’s actually deployed in production. Typically, 
+  that branch will be main. This means that all changes that affect the production environment should go directly 
+  into main (you can create a separate branch but only to create a pull request with the intention of merging that 
+  branch into main), and you should run terraform apply only for the production environment against the main branch. 
+
+
+Atlantis is an open source tool that automatically runs terraform plan on 
+    commits and adds the plan output to pull requests as a comment, 
+
+Terraform, does not roll back automatically in case of errors. In part, that’s because there is no reasonable way 
+  to roll back many types of infrastructure changes: for example, if an app deployment failed, it’s almost always 
+  safe to roll back to an older version of the app, but if the Terraform change you were deploying failed, and that 
+  change was to delete a database or terminate a server, you can’t easily roll that back!
+
+Retries
+  Certain types of Terraform errors are transient and go away if you rerun terra form apply. The deployment tooling you 
+  use with Terraform should detect these known errors and automatically retry after a brief pause. Terragrunt has automatic 
+  retries on known errors as a built-in feature. 
+  
+Terraform state errors
+  Occasionally, Terraform will fail to save state after running terraform apply. For example, if you lose internet 
+  connectivity partway through an apply, not only will the apply fail, but Terraform won’t be able to write the 
+  updated state file to your remote backend (e.g., to Amazon S3). In these cases, Terraform will save the state file 
+  on disk in a file called errored.tfstate. Make sure that your CI server does not delete these files 
+  (e.g., as part of cleaning up the workspace after a build)! If you can still access this file after a failed deployment, 
+  as soon as internet connectivity is restored, you can push this file to your remote backend (e.g., to S3) using the 
+  state push command so that the state information isn’t lost:
+$ terraform state push errored.tfstate
+
+Errors releasing locks
+  Occasionally, Terraform will fail to release a lock. For example, if your CI server crashes in the middle of a 
+  terraform apply, the state will remain permanently locked. Anyone else who tries to run apply on the same module will 
+  get an error message saying the state is locked and showing the ID of the lock. If you’re absolutely sure this is an 
+  accidentally leftover lock, you can forcibly release it using the force-unlock command, passing it the ID of the lock 
+  from that error message:
+$ terraform force-unlock <LOCK_ID>
+
+Deployment server: 
+Lock the CI server down
+  Make it accessible solely over HTTPs, require all users to be authenticated, and follow server-hardening practices 
+  (e.g., lock down the firewall, install fail2ban, enable audit logging, etc.).
+
+Don’t expose your CI server on the public internet
+  That is, run the CI server in private subnets, without any public IP, so that it’s accessible only over a VPN connection. 
+  That way, only users with valid network access (e.g., via a VPN certificate) can access your CI server at all. Note 
+  that this does have a drawback: webhooks from external systems won’t work. For example, GitHub won’t automatically be 
+  able to trigger builds in your CI server; instead, you’ll need to configure your CI server to poll your version 
+  control system for updates. This is a small price to pay for a significantly more secure CI server.
+
+Enforce an approval workflow
+  Configure your CI/CD pipeline to require that every deployment be approved by at least one person (other than the 
+  person who requested the deployment in the first place). During this approval step, the reviewer should be able to 
+  see both the code changes and the plan output, as one final check that things look OK before apply runs. This ensures 
+  that every deployment, code change, and plan output has had at least two sets of eyes on it.
+
+Don’t give the CI server permanent credentials
+  Instead of manually managed, permanent credentials (e.g., AWS access keys copy/pasted into your CI server), you 
+  should prefer to use authentication mechanisms that use temporary credentials, such as IAM roles and OIDC.
+
+Don’t give the CI server admin credentials
+  Instead, isolate the admin credentials to a totally separate, isolated worker: e.g., a separate server, a separate 
+  container, etc. That worker should be extremely locked down, so no developers have access to it at all, and the only 
+  thing it allows is for the CI server to trigger that worker via an extremely limited remote API. For example, that 
+  worker’s API may only allow you to run specific commands (e.g., terraform plan and terraform apply), in specific repos 
+  (e.g., your live repo), in specific branches (e.g., the main branch), and so on. This way, even if an attacker gets 
+  access to your CI server, they still won’t have access to the admin credentials, and all they can do is request a 
+  deployment on some code that’s already in your version control system, which isn’t nearly as much of a catastrophe
+  as leaking the admin credentials fully
+
+Promote artifacts across environments
+  Just as with application artifacts, you’ll want to promote your immutable, versioned infrastructure artifacts from 
+  environment to environment: for example, promote v0.0.6 from dev to stage to prod.7 The rule here is also simple:
+  Always test Terraform changes in pre-prod before prod.
+  The process for promoting Terraform code across environments is similar to the process of promoting application 
+  artifacts, except there is an extra approval step, where you run terraform plan and have someone manually 
+  review the output and approve the deployment
+  Here’s what the process looks like for promoting, for instance, v0.0.6 of a Terraform
+  module across the dev, stage, and prod environments:
+
+1. Update the dev environment to v0.0.6, and run terraform plan.
+2. Prompt someone to review and approve the plan; for example, send an automated message via Slack.
+3. If the plan is approved, deploy v0.0.6 to dev by running terraform apply.
+4. Run your manual and automated tests in dev.
+5. If v0.0.6 works well in dev, repeat steps 1–4 to promote v0.0.6 to staging.
+6. If v0.0.6 works well in staging, repeat steps 1–4 again to promote v0.0.6 to production.
+
+
+Terragrunt allows you to define all of your Terraform code exactly once in the modules repo, whereas in the live repo, 
+  you will have solely terragrunt.hcl files that provide a DRY way to configure and deploy each module in each 
+  environment. This will result in a live repo with far fewer files and lines of code
+
+
+
 
 
