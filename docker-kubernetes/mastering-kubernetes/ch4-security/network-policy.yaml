@@ -1,0 +1,33 @@
+---
+# Network policies allow the fine-grained control and proper network segmentation of your cluster. At
+# the core, a network policy is a set of firewall rules applied to a set of namespaces and pods selected
+# by labels. This is very flexible because labels can define virtual network segments and be managed
+# at the Kubernetes resource level. Note that the network policy is cluster-wide, so pods from multiple
+# namespaces in the cluster can access the target namespace
+#
+# the whitelist nature of the network policy applies only to pods that are selected
+# for at least one network policy. If a pod is not selected it will allow all access. Always make sure all
+# your pods are covered by a network policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: the-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  # ingress governs which namespaces and pods can access these pods and which protocols and ports they can use
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              project: cool-project
+        - podSelector:
+            # podSelector governs which pods this network policy applies to.
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 6379
+          # If you want to target a range of ports, you can use endPort => endPort: 7000

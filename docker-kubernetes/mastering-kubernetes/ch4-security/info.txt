@@ -1,0 +1,183 @@
+
+The 4 Cs model is a coarse-grained approach for security. Another approach is building a
+  threat model based on the security challenges across different dimensions, such as:
+    • Node challenges
+    • Network challenges
+    • Image challenges
+    • Deployment and configuration challenges
+    • Pod and container challenges
+    • Organizational, cultural, and process challenges
+
+Node challenges
+  The nodes are the hosts of the runtime engines. If an attacker gets access to a node, this is a serious
+  threat. They can control at least the host itself and all the workloads running on it. But it gets worse.
+  The node has a kubelet running that talks to the API server. A sophisticated attacker can replace the
+  kubelet with a modified version and effectively evade detection by communicating normally with the Kubernetes 
+  API server while running their own workloads instead of the scheduled workloads, collecting information about 
+  the overall cluster, and disrupting the API server and the rest of the cluster by sending malicious messages
+
+Where security is concerned, it’s a numbers game. You want to understand the attack surface of the
+  system and where you’re vulnerable. Let’s list some possible node challenges:
+.  An attacker takes control of the host
+.  An attacker replaces the kubelet
+.  An attacker takes control of a node that runs master components (such as the API server, scheduler, or controller manager)
+.  An attacker gets physical access to a node
+.  An attacker drains resources unrelated to the Kubernetes cluster
+.  Self-inflicted damage occurs through the installation of debugging and troubleshooting tools
+.  or a configuration change
+
+Here are some of the network challenges you will face:
+. . Coming up with a connectivity plan
+. . Choosing components, protocols, and ports
+. . Figuring out dynamic discovery
+. . Public versus private access
+. . Authentication and authorization (including between internal services)
+. . Designing firewall rules
+. . Deciding on a network policy
+. . Key management and exchange
+. . Encrypted communication
+
+
+Malicious images are images that contain code or configuration that was designed by an attacker to
+  do some harm, collect information, or just take advantage of your infrastructure for their purposes 
+  (for example, crypto mining). Malicious code can be injected into your image preparation pipeline, including 
+  any image repositories you use. Alternatively, you may install third-party images that were compromised 
+  themselves and now contain malicious code. Vulnerable images are images you designed (or third-party images 
+  you install) that just happen to contain some vulnerability that allows an attacker to take control of the 
+  running container or cause some other harm, including injecting their own code later.
+
+We can summarize the image challenges that developers are likely to face as follows:
+. Kubernetes doesn’t know what containers are doing
+. Kubernetes must provide access to sensitive resources for the designated function
+. It’s difficult to protect the image preparation and delivery pipeline (including image repositories)
+. The speed of development and deployment of new images conflict with the careful review of changes
+. Base images that contain the OS or other common dependencies can easily get out of date and become vulnerable
+. Base images are often not under your control and might be more prone to the injection of malicious code
+
+Integrating a static image analyzer like CoreOS Clair or the Anchore Engine into your CI/CD pipeline
+  can help a lot. In addition, minimizing the blast radius by limiting the resource access of containers
+  only to what they need to perform their job can reduce the impact on your system if a container gets
+  compromised. You must also be diligent about patching known vulnerabilities.
+
+Multi-container pod challenges include the following:
+. The same pod containers share the localhost network
+. The same pod containers sometimes share a mounted volume on the host filesystem
+. Bad containers might poison other containers in the pod
+. Bad containers have an easier time attacking the node if collocated with another container that accesses crucial node resources
+. Experimental add-ons that are collocated with master components might be experimental and less secure
+. Service meshes introduce a sidecar container that might become an attack vector
+
+The challenges facing organizations that adopt Kubernetes are as follows:
+. Developers that control the operation of Kubernetes might be less security-oriented
+. The speed of development might be considered more important than security
+. Continuous deployment might make it difficult to detect certain security problems before they reach production
+. Smaller organizations might not have the knowledge and expertise to manage security properly in Kubernetes clusters
+
+
+Kubernetes manages service accounts on behalf of the pods. Whenever Kubernetes instantiates a
+  pod, it assigns the pod a service account unless the service account or the pod explicitly opted out by
+  setting automountServiceAccountToken to False. The service account identifies all the pod processes
+  when they interact with the API server. Each service account has a set of credentials mounted in a
+  secret volume. Each namespace has a default service account called default. When you create a pod,
+  it is automatically assigned the default service account unless you specify a different service account.
+
+
+The cluster administrator determines what authentication strategies to use by providing various
+  command-line arguments to the API server:
+  --client-ca-file= (for x509 client certificates specified in a file)
+  --token-auth-file= (for bearer tokens specified in a file)
+  --basic-auth-file= (for user/password pairs specified in a file)
+  --enable-bootstrap-token-auth (for bootstrap tokens used by kubeadm)
+
+Service accounts use an automatically loaded auth plugin. The administrator may provide two optional flags:
+--service-account-key-file = (If not specified, the API server’s TLS private key will be utilized
+   as the PEM-encoded key for signing bearer tokens.)
+--service-account-lookup (When enabled, the revocation of tokens will take place if they are deleted from the API.)
+
+
+The cluster administrator determines what authorization plugins to use by specifying the --authorization-mode 
+  command-line flag, which is a comma-separated list of plugin names. The following modes are supported:
+  
+. --authorization-mode=AlwaysDeny rejects all requests. Use if you don’t need authorization.
+
+. --authorization-mode=AlwaysAllow allows all requests. Use if you don’t need authorization. This is useful during testing.
+    
+. --authorization-mode=ABAC allows for a simple, local-file-based, user-configured authorization
+    policy. ABAC stands for Attribute-Based Access Control.
+    
+. --authorization-mode=RBAC is a role-based mechanism where authorization policies are stored
+    and driven by the Kubernetes API. RBAC stands for Role-Based Access Control.
+    
+. --authorization-mode=Node is a special mode designed to authorize API requests made by kubelets.
+
+. --authorization-mode=Webhook allows for authorization to be driven by a remote service using REST.
+
+
+admission control plugins: 
+  Here is the list of recommended plugins for Kubernetes >= 1.9 (the order matters):
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,Persisten tVolumeLabel,DefaultStorageClass,
+    MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,DefaultTolerationSeconds
+    
+some available plugins: 
+. DefaultStorageClass : Adds a default storage class to requests for the creation of a
+  PersistentVolumeClaim that doesn’t specify a storage class.
+. DefaultTolerationSeconds: Sets the default toleration of pods for taints (if not set already):
+  notready:NoExecute and notreachable:NoExecute.
+. EventRateLimit: Limits flooding of the API server with events.
+. ExtendedResourceToleration: Combines taints on nodes with special resources such as GPUs
+  and Field Programmable Gate Arrays (FPGAs) with toleration on pods that request those resources. The end 
+  result is that the node with the extra resources will be dedicated for pods with the proper toleration.
+. ImagePolicyWebhook: This complicated plugin connects to an external backend to decide
+  whether a request should be rejected based on the image.
+. LimitPodHardAntiAffinity: In the requiredDuringSchedulingRequiredDuringExecution field, any pod that 
+  specifies an AntiAffinity topology key other than kubernetes.io/hostname will be denied.
+. LimitRanger: Rejects requests that violate resource limits.
+. MutatingAdmissionWebhook: Calls registered mutating webhooks that are able to modify their target object. Note 
+  that there is no guarantee that the change will be effective due to potential changes by other mutating webhooks.
+. NamespaceAutoProvision: Creates the namespace in the request if it doesn’t exist already.
+. NamespaceLifecycle: Rejects object creation requests in namespaces that are in the process
+  of being terminated or don’t exist.
+. ResourceQuota: Rejects requests that violate the namespace’s resource quota.
+. ServiceAccount: Automation for service accounts.
+. ValidatingAdmissionWebhook: The admission controller invokes validating webhooks that match the request.
+  The matching webhooks are called concurrently, and if any of them reject the request, the overall request fails.
+
+
+Protecting your cluster with AppArmor: 
+  AppArmor is a Linux kernel security module. With AppArmor, you can restrict a process running in a
+  container to a limited set of resources such as network access, Linux capabilities, and file permissions.
+  You configure AppArmor through profiles.
+
+Pod Security Admission
+  Pod Security Admission is an admission controller that is responsible for managing the Pod Security 
+  Standards (https://kubernetes.io/docs/concepts/security/pod-security-standards/). The pod security 
+  restrictions are applied at the namespace level. All pods in the target namespace will be checked 
+  for the same security profile (privileged, baseline, or restricted).
+  There are three modes:
+  • enforce: Policy violations will result in the rejection of the pod.
+  • audit: Policy violations will result in the addition of an audit annotation to the event recorded
+    in the audit log, but the pod will still be allowed.
+  • warn: Policy violations will trigger a warning for the user, but the pod will still be allowed.
+
+When a secret is mounted into a container, it is never written to disk. It is stored in tmpfs. When the
+  kubelet communicates with the API server, it normally uses TLS, so the secret is protected in transit.
+  Kubernetes secrets are limited to 1 MB.
+
+When running Vault on Kubernetes there are several other important measures to ensure the Vault
+  security model remains intact such as:
+  • Considerations for multi-tenant clusters (single Vault will be shared by all tenants)
+  • End-to-end TLS (Kubernetes may skip TLS under some conditions)
+  • Turn off process core dumps to avoid revealing Vault encryption keys
+  • Ensure mlock is enabled to avoid swapping memory to disk and revealing Vault encryption keys
+  • Container supervisor and pods should run as non-root
+
+Some use cases and requirements for multiple isolated communities or deployments:
+  • A platform or service provider for software-as-a-service
+  • Managing separate testing, staging, and production environments
+  • Delegating responsibility to community/deployment admins
+  • Enforcing resource quotas and limits on each community
+  • Users see only resources in their community
+
+
+
+

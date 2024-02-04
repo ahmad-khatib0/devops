@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cool-pod
+  namespace: the-namespace
+spec:
+  containers:
+    - name: cool-container
+      image: cool/app:v1
+  imagePullSecrets:
+    - name: the-registry-secret
+# since pods can access secrets only in their own namespace, you must create a
+# secret on each namespace where you want the pod to run

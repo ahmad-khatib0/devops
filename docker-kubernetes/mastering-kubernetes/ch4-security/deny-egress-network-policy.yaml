@@ -1,0 +1,15 @@
+---
+# Kubernetes 1.8 added egress network policy support, so you can control outbound
+# traffic too. Here is an example that prevents access to the external IP 1.2.3.4.
+apiVersion: v1
+kind: policy
+metadata:
+  name: default-deny-egress
+spec:
+  #  999 ensures the policy is applied before other policies:
+  order: 999
+  egress:
+    - action: deny
+      destination:
+        net: 1.2.3.4
+      source: {}

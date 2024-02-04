@@ -95,15 +95,75 @@ Here is a snippet from a controller manager manifest that shows the use of the â
 
 
 
+# get serviceaccount details
+k get serviceaccounts/custom-service-account -o json
 
+# see the serviceaccount's secret , which includes a ca.crt file and a token:
+$ kubectl get secret custom-service-account-token-vbrbm -o yaml
 
+# create a new KinD cluster and store its credentials in a dedicated config file:
+$ export KUBECONFIG=~/.kube/kind-config
 
+# Using the kubectl can-i command, you can check what actions you can perform and even impersonate other users:
+$ kubectl auth can-i create deployments
+$ kubectl auth can-i create deployments --as jack
 
+# rolesum. This plugin gives you a summary of all the permissions a user or service account has
+$ kubectl rolesum job-controller -n kube-system
 
+# create a secret object for the credentials:
+$ kubectl create secret docker-registry the-registry-secret \
+    --docker-server=<docker registry server> \
+    --docker-username=<username> \
+    --docker-password=<password> \
+    --docker-email=<email>
 
+To activate Pod Security Admission on a namespace you simply add a label to the target namespace:
+  $ MODE=warn # One of enforce, audit, or warn
+  $ LEVEL=baseline # One of privileged, baseline, or restricted
+  $ kubectl label namespace/ns-1 pod-security.kubernetes.io/${MODE}: ${LEVEL}
 
+# adding network policies to allow ingress to specific pods explicitly
+$ k create -n ${NAMESPACE} -f deny-all-network-policy.yaml
 
+# create kubernetes secrets
+$ k create secret generic hush-hush --from-literal=username=tobias --from-literal=password=cutoffs
 
+# To get the content of a secret you can use kubectl get secret:
+$ k get secrets/hush-hush -o yaml
+
+# The secret values are base64-encoded. You need to decode them yourself:
+$ k get secrets/hush-hush -o jsonpath='{.data.password}' | base64 --decode
+
+$ k create -f ch4-security/pod-with-secret.yaml
+  pod/pod-with-secret created
+
+# get the secret inside a pod
+$ k exec pod-with-secret -- cat /mnt/hush-hush/username          # tobias
+
+# run a pod in interactive mode in the custom-namespace namespace:
+$ k run trouble -it -n custom-namespace --image=g1g1/py-kube:0.3 bash
+
+# Listing pods in the custom-namespace
+$ k get po -n custom-namespace
+
+# create multitenent cluster using vcluster
+$ vcluster create tenant-1
+
+# list clusters 
+$ k config get-contexts -o name
+
+# list whatâ€™s running in the vcluster- tenant-1 namespace:
+$ k get all -n vcluster-tenant-1 --context kind-kind
+
+# list what  namespaces are in the virtual cluster:
+$ k get ns --context vcluster_tenant-1_vcluster-tenant-1_kind-kind
+
+$ k get ns new-ns --context vcluster_tenant-2_vcluster-tenant-2_kind-kind
+# Error from server (NotFound): namespaces "new-ns" not found (so vcluster is fully isolated)
+
+$ k get ns new-ns --context kind-kind
+Error from server (NotFound): namespaces "new-ns" not found   (so vcluster is fully isolated)
 
 
 

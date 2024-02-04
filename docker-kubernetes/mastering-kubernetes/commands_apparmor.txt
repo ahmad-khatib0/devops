@@ -1,0 +1,100 @@
+# To check if AppArmor is enabled connect to a node (e.g. via ssh) and type the following:
+$ cat /sys/module/apparmor/parameters/enabled
+
+$ To apply a profile (apparmor) to a container, add the following annotation:
+$ container.apparmor.security.beta.kubernetes.io/<container name>: <profile reference>
+
+# Here is a sample profile that prevents writing to files (using apparmor):
+ ▲                                                                          ▲
+ █ > \#include \<tunables/global\>                                          █
+ █ >                                                                        █
+ █ > profile k8s-apparmor-example-deny-write flags=(attach\\\_disconnected) █
+ █ > {                                                                      █
+ █ >                                                                        █
+ █ > \#include \<abstractions/base\>                                        █
+ █ >                                                                        █
+ █ > file,                                                                  █
+ █ >                                                                        █
+ █ > \# Deny all file writes.                                               █
+ █ >                                                                        █
+ █ > deny /\\\*\\\* w,                                                      █
+ █ >                                                                        █
+ █ > }                                                                      █
+ ▼                                                                          ▼
+
+# To verify the profile was attached correctly, check the attributes of process 1:
+$ kubectl exec <pod-name> cat /proc/1/attr/current
+
+# My favorite tool is bane, which generates AppArmor profiles from a simpler profile language based
+# on the TOML syntax. bane profiles are very readable and easy to grasp. Here is a sample bane profile:
+
+# name of the profile, we will auto prefix with `docker-`
+# so the final profile name will be `docker-nginx-sample`
+Name = "nginx-sample"
+[Filesystem]
+
+# read only paths for the container
+ReadOnlyPaths = [
+  "/bin/**",
+  "/boot/**",
+  "/dev/**",
+  "/etc/**",
+  "/home/**",
+  "/lib/**",
+  "/lib64/**",
+  "/media/**",
+  "/mnt/**",
+  "/opt/**",
+  "/proc/**",
+  "/root/**",
+  "/sbin/**",
+  "/srv/**",
+  "/tmp/**",
+  "/sys/**",
+  "/usr/**",
+]
+
+# paths where you want to log on write
+LogOnWritePaths = [
+  "/**" 
+]
+
+# paths where you can write
+WritablePaths = [
+    "/var/run/nginx.pid"
+]
+
+# allowed executable files for the container
+AllowExec = [
+    "/usr/sbin/nginx"
+]
+
+# denied executable files
+DenyExec = [
+    "/bin/dash",
+    "/bin/sh",
+    "/usr/bin/top"
+]
+
+# allowed capabilities
+[Capabilities]
+
+Allow = [
+    "chown",
+    "dac_override",
+    "setuid",
+    "setgid",
+    "net_bind_service"
+]
+
+[Network]
+# if you don't need to ping in a container, you can probably set Raw to false and deny network raw
+Raw = false
+Packet = false
+Protocols = [
+    "tcp",
+    "udp",
+    "icmp"
+]
+
+
