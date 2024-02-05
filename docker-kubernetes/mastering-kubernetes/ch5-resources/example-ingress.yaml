@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Note the annotation, which hints that it is an Ingress object that works with the Nginx Ingress
+    # controller. There are many other Ingress controllers and they typically use annotations to encode
+    # information they need that is not captured by the Ingress object itself and its rules.
+
+spec:
+  ingressClassName: nginx-example
+  rules:
+    - http:
+      paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: test
+              port:
+                number: 80

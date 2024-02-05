@@ -165,7 +165,49 @@ $ k get ns new-ns --context vcluster_tenant-2_vcluster-tenant-2_kind-kind
 $ k get ns new-ns --context kind-kind
 Error from server (NotFound): namespaces "new-ns" not found   (so vcluster is fully isolated)
 
+# you can explore resources as well as specific sub-resources and fields.
+$ kubectl explain pod # | pod.spec | pod.spec.containers
 
+# query for matching labels
+$ k get po -n kube-system --show-labels
+$ k get po -n kube-system -l k8s-app=kube-dns   # filter and list only the kube-dns pods
+$ k get pods -l app=hue
+$ k get po -o wide -l app=hue,service=reminders
+
+
+# get the images that were used to create pods: 
+$ k get pods -o jsonpath='{.items[*].spec.containers[0].image}' -l app=hue | xargs printf "%s\n"
+
+
+# show the internal DNS name
+$ kubectl exec hue-learn-68d74fd4b7-rw4qr -- nslookup hue-reminders.default.svc. cluster.local
+
+# query a pod using dns Name 
+$ kubectl exec hue-learn-68d74fd4b7-fh55c -- wget -q -O - hue-reminders.default.svc. cluster.local:8080
+
+# show which node a pod is located in 
+$ k get po trouble-shooter -o jsonpath='{.spec.nodeName}'
+
+# taint our control plane node:
+$ k taint nodes k3d-k3s-default-server-0 control-plane=true:NoExecute
+
+# review the taint:
+$ k get nodes k3d-k3s-default-server-0 -o jsonpath='{.spec.taints[0]}'
+# {"effect":"NoExecute","key":"control-plane","value":"true"}
+
+# configure a context for a namespace 
+$ k config set-context k3d-k3s-restricted --cluster k3d-k3s-default
+
+# apply the kustomize on the base directory
+$ k kustomize base
+
+# Kustomize generates: 
+$ k kustomize overlays/staging
+
+# deploy it (that was created using the kustomize.yaml) to the cluster:
+$ k apply -k overlays/staging
+
+$ k get jobs
 
 
 

@@ -1,0 +1,148 @@
+
+Kubectl commands are divided into multiple categories:
+  Generic commands: Deal with resources in a generic way: create, get, delete, run, apply, patch, replace and... 
+
+  Cluster management commands: Deal with nodes and the cluster at large: cluster-info, certificate, drain, and... 
+
+  Troubleshooting commands: describe, logs, attach, exec, and so on Deployment commands: Deal with deployment 
+    and scaling: rollout, scale, auto-scale, and so on
+    
+  Settings commands: Deal with labels and annotations: label, annotate, and so on
+
+  Misc commands: help, config, and version
+
+  Customization commands: Integrate the kustomize.io capabilities into kubectl
+
+  Configuration commands: Deal with contexts, switch between clusters and namespaces, set current context and namespace, and so on
+
+
+Kubernetes assigns an internal DNS name to every service. The service DNS name is:
+  <service name>.<namespace>.svc.cluster.local
+
+Exposing a service externally
+  Kubernetes provides several ways to do it:
+   • • Configure NodePort for direct access
+   • • Configure a cloud load balancer if you run it in a cloud environment
+   • • Configure your own load balancer if you run on bare metal
+
+The main downside of exposing services though NodePort is that the port numbers are shared across
+  all services. You must coordinate them globally across your entire cluster to avoid conflicts. This is
+  not trivial at scale for large clusters with lots of developers deploying services.
+
+Ingress
+  Ingress is a Kubernetes configuration object that lets you expose a service to the 
+  outside world and takes care of a lot of details. It can do the following:
+   . .  Provide an externally visible URL to your service
+   . .  Load balance traffic
+   . .  Terminate SSL
+   . .  Provide name-based virtual hosting
+
+
+By default, the scheduler follows several guiding principles, including:
+  • Split pods from the same replica set or stateful set across nodes
+  • Schedule pods to nodes that have enough resources to satisfy the pod requests
+  • Balance out the overall resource utilization of nodes
+  
+Taints and tolerations
+  You can taint a node in order to prevent pods from being scheduled on the node. This can be useful,
+  for example, if you don’t want pods to be scheduled on your control plane nodes. Tolerations allow
+  pods to declare that they can “tolerate” a specific node taint and then these pods can be scheduled on
+  the tainted node. A node can have multiple taints and a pod can have multiple tolerations. A taint is a
+  triplet: key, value, effect. The key and value are used to identify the taint. The effect is one of:
+  
+• NoSchedule (no pods will be scheduled to the node unless they tolerate the taint)
+• PreferNoSchedule (soft version of NoSchedule; the scheduler will attempt to not schedule • pods that don’t tolerate the taint)
+• NoExecute (no new pods will be scheduled, but also existing pods that don’t tolerate the taint will be evicted)
+
+
+To allow pods to tolerate the taint, add a toleration to their spec such as:
+tolerations:
+- key: "control-plane"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+
+Node affinity and anti-affinity
+  Node affinity is a more sophisticated form of the nodeSelector. It has three main advantages:
+• Rich selection criteria (nodeSelector is just AND of exact matches on the labels)
+• Rules can be soft
+• You can achieve anti-affinity using operators like NotIn and DoesNotExist
+
+Note that if you specify both nodeSelector and nodeAffinity, then the pod will 
+  be scheduled only to a node that satisfies both requirements.
+
+For example, if we add the following section to our trouble-shooter pod, it will not be able to run
+  on any node because it conflicts with the nodeSelector:
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: NotIn
+          values:
+          - k3d-k3s-default-agent-1
+          
+
+Pod affinity is about the relationships between different pods. Pod affinity has several other 
+  concepts associated with it: namespacing (since pods are namespaced), topology zone 
+  (node, rack, cloud provider zone, cloud provider region), and weight (for preferred scheduling).
+
+
+The descheduler
+  Kubernetes is great at scheduling pods to nodes according to sophisticated placement rules. But, once
+  a pod is scheduled, Kubernetes will not move it to another node if the original conditions changed.
+  Here are some use cases that would benefit from moving workloads around:
+  
+• • Certain nodes are experiencing under-utilization or over-utilization.
+
+• • The initial scheduling decision is no longer valid when taints or labels are modified on nodes,
+      causing pod/node affinity requirements to no longer be met.
+      
+• • Certain nodes have encountered failures, resulting in the migration of their pods to other nodes.
+      Additional nodes are introduced to the clusters.
+
+And kubernetes-sigs/descheduler is a good scheduler tool
+
+Understanding the basics of Kustomize
+  Kustomize was created as a response to template-heavy approaches like Helm to configure and customize 
+  Kubernetes clusters. It is designed around the principle of declarative application management. It 
+  takes a valid Kubernetes YAML manifest (base) and specializes it or extends it by overlaying additional YAML 
+  patches (overlays). Overlays depend on their bases. All files are valid YAML files. There are no placeholders.
+  One of the best use cases for Kustomize is organizing your system into multiple namespaces such as
+  staging and production.
+
+There are three other types of liveness probes:
+  TcpSocket – Just checks that a port is open
+  Exec – Runs a command that returns 0 for success
+  gRPC – Follows the gRPC health-checking protocol (https://github.com/grpc/grpc/blob/master/doc/health-checking.md)
+
+When a readiness probe fails for a container, the container’s pod will be removed from any
+  service endpoint it is registered with. This ensures that requests don’t flood services that can’t process
+  them. Note that you can also use readiness probes to temporarily remove pods that are overbooked
+  until they drain some internal queue.
+
+Using startup probes
+  Some applications (mostly legacy) may have long initialization periods. In this case, liveness probes
+  may fail and cause the container to restart before it finishes initialization. This is where startup
+  probes come in. If a startup probe is configured, liveness and readiness checks are skipped until the
+  startup is completed. At this point, the startup probe is not invoked anymore and normal liveness
+  and readiness probes take over.
+
+Pod readiness and readiness gates
+  Pod readiness was introduced in Kubernetes 1.11 and became stable in Kubernetes 1.14. While readiness 
+  probes allow you to determine at the container level if it’s ready to serve requests, the overall
+  infrastructure that supports delivering traffic to the pod might not be ready yet. For example, the service, 
+  network policy, and load balancer might take some extra time. This can be a problem, especially
+  during rolling deployments where Kubernetes might terminate the old pods before the new pods
+  are really ready, which will cause degradation in service capacity and even cause a service outage in
+  extreme cases (all old pods were terminated and no new pod is fully ready).
+  This is the problem that the pod readiness gates address. The idea is to extend the concept of pod
+  readiness to check additional conditions in addition to making sure all the containers are ready. 
+
+Sharing with DaemonSet pods
+  DaemonSet pods are pods that are deployed automatically, one per node (or a designated subset of the
+  nodes). They are typically used for keeping an eye on nodes and ensuring they are operational. This
+  is a very important function,   
+

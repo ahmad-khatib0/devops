@@ -1,0 +1,38 @@
+---
+# imagine that, on average, 50 of these pods are scheduled on the
+# same node. This means that, every second, 50 pods make 50 network requests with very little data.
+# How about we cut it down by 50× to just a single network request? With a DaemonSet pod, all the other
+# 50 pods can communicate with it instead of talking directly to the remote service. The DaemonSet
+# pod will collect all the data from the 50 pods and, once a second, will report it in aggregate to the
+# remote service. Of course, that requires the remote service API to support aggregate reporting. The
+# nice thing is that the pods themselves don’t have to be modified; they will just be configured to talk
+# to the DaemonSet pod on localhost instead of the remote service. The DaemonSet pod serves as an
+# aggregating proxy. It can also implement retry and other similar functions.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hue-collect-proxy
+  labels:
+    tier: stats
+    app: hue-collect-proxy
+spec:
+  selector:
+    matchLabels:
+      tier: stats
+      app: hue-collect-proxy
+  template:
+    metadata:
+      labels:
+        tier: stats
+        app: hue-collect-proxy
+    spec:
+      hostPID: true
+      hostIPC: true
+      hostNetwork: true
+      containers:
+        - name: hue-collect-proxy
+          image: busybox
+#
+# The interesting part about this configuration file is that the hostNetwork, hostPID,
+# and hostIPC options are set to true. This enables the pods to communicate efficiently
+# with the proxy, utilizing the fact they are running on the same physical host

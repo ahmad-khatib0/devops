@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hue-learner
+  labels:
+    tier: internal-service
+# this pod it doesn’t have the app: hue label. It is not necessary because the label is
+# provided by the kustomization.yaml file as a common label for all the listed resources
+spec:
+  containers:
+    - name: hue-learner
+      image: g1g1/hue-learn:0.3
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+      env:
+        # discover the queue and the store via DNS
+        - name: DISCOVER_QUEUE
+          value: dns
+        - name: DISCOVER_STORE
+          value: dns

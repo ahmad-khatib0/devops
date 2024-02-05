@@ -1,0 +1,42 @@
+---
+# Deploying an internal service
+# ▲                                                                         ▲
+# █ after deploying hue-reminders, all the hue-reminders pods are scheduled █
+# █ to run on k3d-k3s-default-agent-1 next to the trouble-shooter pod       █
+# ▼                                                                         ▼
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hue-reminders
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hue
+      service: reminders
+  template:
+    metadata:
+      name: hue-reminders
+      labels:
+        app: hue
+        service: reminders
+    spec:
+      affinity:
+        podAffinity:
+          # if you want hue-reminders to always be scheduled with a trouble-shooter pod.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - 'trouble-shooter'
+              topologyKey: topology.kubernetes.io/zone
+              # for clusters on cloud providers only, The topology key is a node label that Kubernetes will
+              # treat as identical for scheduling purposes. On cloud providers, it is recommended to use
+              # topology.kubernetes.io/zone when workloads should run in proximity to each other (same zone)
+      containers:
+        - name: hue-reminders
+          image: g1g1/hue-reminders:3.0
+          ports:
+            - containerPort: 80

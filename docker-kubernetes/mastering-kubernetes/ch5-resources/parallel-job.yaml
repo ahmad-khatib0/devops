@@ -1,0 +1,21 @@
+---
+# NOTE:. A job will not launch more pods than needed for successful completions,
+# even if the parallelism number is greater.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sleep20
+spec:
+  # If you want more than one successful completion
+  completions: 3
+  # Parallelism determines how many pods to launch
+  parallelism: 6
+  template:
+    metadata:
+      name: sleep20
+    spec:
+      containers:
+        - name: sleep20
+          image: g1g1/py-kube:0.3
+          command: ['python', '-c', "import time; print('started...'); time.sleep(20); print('done.')"]
+      restartPolicy: Never

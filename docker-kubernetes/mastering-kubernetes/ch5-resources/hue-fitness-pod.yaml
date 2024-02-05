@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hue-fitness
+spec:
+  containers:
+    - name: hue-fitness
+      image: busybox
+  initContainers:
+    - name: install
+      image: busybox
+#
+#
+# in most cases, a container is ready after a couple of seconds and ready to process requests, but
+# because the initial delay is set to 5 minutes just in case, we waste a lot of time when the container
+# is idle. If the container is part of a high-traffic service, then many instances can all sit idle for
+# five minutes after each upgrade and pretty much make the service unavailable. Init containers address
+# this problem. A pod may have a set of init containers that run to completion before other containers are
+# started. An init container can take care of all the non-deterministic initialization and let application
+# containers with their readiness probe have a minimal delay. Init containers are especially useful for
+# pod-level initialization purposes like waiting for volumes to be ready. There is some overlap between
+# init containers and startup probes and the choice depends on the specific use case.

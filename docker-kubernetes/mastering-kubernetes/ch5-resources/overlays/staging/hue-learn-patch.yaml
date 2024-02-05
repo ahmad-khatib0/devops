@@ -1,0 +1,18 @@
+---
+# Patches add or replace parts of manifests. They never remove existing resources or parts of
+# resources. This patch file updates the image from g1g1/hue-learn:0.3 to g1g1/hue-learn:0.4:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hue-learner
+spec:
+  containers:
+    - name: hue-learner
+      image: g1g1/hue-learn:0.4
+      # This is a strategic merge. Kustomize supports another type of patch called JsonPatches6902. It is
+      # based on RFC 6902 ( https://tools.ietf.org/html/rfc6902 ). It is often more concise than a strategic
+      # merge. We can use YAML syntax for JSON 6902 patches. Here is the same patch of changing the image
+      # version to version 0.4 using JsonPatches6902 syntax:
+      # - op: replace
+      #   path: /spec/containers/0/image
+      #   value: g1g1/hue-learn:0.4

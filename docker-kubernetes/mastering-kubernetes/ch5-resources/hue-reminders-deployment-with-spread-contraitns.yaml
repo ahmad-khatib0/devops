@@ -1,0 +1,41 @@
+---
+# ▲                                                                         ▲
+# █ We can see that after applying the manifest, the three pods were spread █
+# █ across the two agent nodes (the server node has a taint as you recall): █
+# ▼                                                                         ▼
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hue-reminders
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hue
+      service: reminders
+  template:
+    metadata:
+      name: hue-reminders
+      labels:
+        app: hue
+        service: reminders
+    spec:
+      # Pod topology spread constraints
+      # Node affinity/anti-affinity and pod affinity/anti-affinity are sometimes too strict. You may want to
+      # spread your pods – it’s okay if some pods of the same deployment end up on the same node. Pod
+      # topology spread constraints give you this flexibility. You can specify the max skew, which is how far
+      # you can be from the optimal spread, as well as the behavior when the constraint can’t be satisfied
+      # (DoNotSchedule or ScheduleAnyway).
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: node.kubernetes.io/instance-type
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: hue
+              service: hue-reminders
+      containers:
+        - name: hue-reminders
+          image: g1g1/hue-reminders:3.0
+          ports:
+            - containerPort: 80

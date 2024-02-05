@@ -1,0 +1,31 @@
+---
+# providing a single stable access point to all the pods that share a set of selector labels
+apiVersion: v1
+kind: Service
+metadata:
+  name: hue-reminders
+  labels:
+    app: hue
+    service: reminders
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: hue
+    service: reminders
+#
+#
+#
+# Here is the spec section of the hue-reminders service when exposed to the world through NodePort:
+# spec:
+#   type: NodePort
+#   ports:
+#     - port: 8080
+#       targetPort: 8080
+#       protocol: TCP
+#       name: http
+#     - port: 443
+#       protocol: TCP
+#       name: https
+#       selector:
+#       app: hue-reminders

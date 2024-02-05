@@ -1,0 +1,18 @@
+---
+# Here is a job that runs a Python process to compute the factorial of 5 (hint: it’s 120)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: factorial5
+spec:
+  template:
+    metadata:
+      name: factorial5
+    spec:
+      containers:
+        - name: factorial5
+          image: g1g1/py-kube:0.3
+          command: ['python', '-c', 'import math; print(math.factorial(5))']
+      restartPolicy: Never
+      # Note that the restartPolicy must be either Never or OnFailure. The default value – Always –
+      # is invalid because a job doesn’t restart after successful completion
