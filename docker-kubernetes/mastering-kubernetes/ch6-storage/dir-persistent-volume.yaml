@@ -1,0 +1,19 @@
+---
+# The reclaim policy is Retain because host path volumes are retained
+# (not destroyed). The status is Available because the volume has not been claimed yet. The access mode
+# is specified as RWX, which means ReadWriteMany. All of the access modes have a shorthand version:
+#    • • RWO – ReadWriteOnce
+#    • • ROX – ReadOnlyMany
+#    • • RWX – ReadWriteMany
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: dir-pv
+spec:
+  storageClassName: dir
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: '/tmp/data'

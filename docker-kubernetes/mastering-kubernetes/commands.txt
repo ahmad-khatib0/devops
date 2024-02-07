@@ -209,5 +209,8 @@ $ k apply -k overlays/staging
 
 $ k get jobs
 
+$ k get pod hue-scheduler -o json | jq .spec.containers
+
+
 
 

@@ -1,0 +1,22 @@
+---
+# Here is the configuration file for an NFS persistent volume:
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-777
+
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem # or raw storage (Block).
+  accessModes:
+    - ReadWriteMany
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  mountOptions:
+    - hard
+    - nfsvers=4.2
+  nfs:
+    path: /tmp
+    server: nfs-server.default.svc.cluster.local

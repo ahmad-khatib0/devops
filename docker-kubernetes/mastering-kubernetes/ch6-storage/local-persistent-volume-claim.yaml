@@ -1,0 +1,27 @@
+---
+# # When containers want access to some persistent storage they make a claim (or rather, the developer
+# and cluster administrator coordinate on necessary storage resources to claim). Here is a sample claim
+# that matches the persistent volume from the file local-volume.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-storage-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+      release: stable
+    matchExpressions:
+      - { key: capacity, operator: In, values: [8Gi, 10Gi] }
+#
+#
+# create a backing directory. For KinD and k3d clusters you can access the node through Docker:
+# $ docker exec -it k3d-k3s-default-agent-1 mkdir -p /mnt/disks/disk-1
+# $ docker exec -it k3d-k3s-default-agent-1 ls -la /mnt/disks
+# k create -f local-persistent-volume-claim.yaml
+#

@@ -1,0 +1,47 @@
+---
+# Generic ephemeral volumes
+# Generic ephemeral volumes are yet another volume type that is tied to the pod lifecycle.
+# When the pod is gone the generic ephemeral volume is gone
+#
+# This v type actually creates a full-fledged persistent volume claim. This provides several capabilities:
+# 1 -  The storage for the volume can be either local or network-attached.
+# 2 -  The volume has the option to be provisioned with a fixed size.
+# 3 -  Depending on the driver and specified parameters, the volume may contain initial data.
+# 4 -  If supported by the driver, typical operations such as snapshotting, cloning, resizing, and
+#      storage capacity tracking can be performed on the volumes.
+#
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: generic-storage
+
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: the-pod
+spec:
+  containers:
+    - name: the-container
+      image: g1g1/py-kube:0.3
+      volumeMounts:
+        - mountPath: '/data'
+          name: the-volume
+      command: ['sleep', '1000000']
+  volumes:
+    - name: the-volume
+      ephemeral:
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              type: generic-ephemeral-volume
+          spec:
+            accessModes: ['ReadWriteOnce']
+            storageClassName: generic-storage
+            resources:
+              requests:
+                storage: 1Gi

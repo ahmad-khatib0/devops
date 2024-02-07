@@ -1,0 +1,119 @@
+# AWS Elastic File System (EFS)
+# AWS has a service called the Elastic File System (EFS). This is really a managed NFS service. It uses
+# the NFS 4.1 protocol and has many benefits over EBS:
+#
+# • • Multiple EC2 instances can access the same files across multiple availability zones
+#     (but within the same region)
+# • • Capacity is automatically scaled up and down based on actual usage
+# • • You pay only for what you use
+# • • You can connect on-premise servers to EFS over VPN
+# • • EFS runs off SSD drives that are automatically replicated across availability zones
+#
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-pv
+
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: <Filesystem Id> # You can find the Filesystem Id using the AWS CLI:
+    # aws efs describe-file-systems --query "FileSystems[*].FileSystemId"
+    #
+#
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-claim
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+
+  storageClassName: ''
+  resources:
+    requests:
+      storage: 1Gi
+
+#
+#
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: efs-app
+
+spec:
+  containers:
+    - name: app
+      image: centos
+      command: ['/bin/sh']
+      args: ['-c', 'while true; do echo $(date -u) >> /data/out.txt; sleep 5; done']
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: efs-claim
+#
+#
+#
+# You can also use dynamic provisioning by defining a proper storage class
+# instead of creating a static volume:
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: <Filesystem Id>
+  directoryPerms: '700'
+  gidRangeStart: '1000' # optional
+  gidRangeEnd: '2000' # optional
+  basePath: '/dynamic_provisioning' # optional
+
+---
+# The PVC is similar, but now uses the storage class name:
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: efs-app
+
+spec:
+  containers:
+    - name: app
+      image: centos
+      command: ['/bin/sh']
+      args: ['-c', 'while true; do echo $(date -u) >> /data/out; sleep 5; done']
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+      claimName: efs-claim

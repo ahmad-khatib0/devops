@@ -1,0 +1,108 @@
+Using emptyDir for intra-pod communication
+  It is very simple to share data between containers in the same pod using a shared volume. Container
+  1 and container 2 simply mount the same volume and can communicate by reading and writing to
+  this shared space. The most basic volume is the emptyDir
+
+There are several cases where a pod can rely on other pods being scheduled with it on the same node:
+ • •  In a single-node cluster, all pods obviously share the same node
+ • •  DaemonSet pods always share a node with any other pod that matches their selector
+ • •  Pods with required pod affinity are always scheduled together
+
+
+A HostPath volume is a host file or directory that is mounted into a pod. Before you 
+decide to use the HostPath volume, make sure you understand the consequences:
+
+• It is a security risk since access to the host filesystem can expose sensitive data (e.g. kubelet keys)
+
+• The behavior of pods with the same configuration might be different if they are data-driven
+  and the files on their host are different
+  
+• It can violate resource-based scheduling because Kubernetes can’t monitor HostPath resources
+
+• The containers that access host directories must have a security context with privileged set
+  to true or, on the host side, you need to change the permissions to allow writing
+  
+• It’s difficult to coordinate disk usage across multiple pods on the same node. You can easily run out of disk space 
+
+
+It is important when allocating static persistent volumes to understand the storage request patterns.
+  For example, if you provision 20 persistent volumes with 100 GiB capacity and a container claims
+  a persistent volume with 150 GiB, then this claim will not be satisfied even though there is enough
+  capacity overall in the cluster.
+
+
+Access modes:  There are three access modes:
+  • ReadOnlyMany: Can be mounted read-only by many nodes
+  • ReadWriteOnce: Can be mounted as read-write by a single node
+  • ReadWriteMany: Can be mounted as read-write by many nodes
+
+Reclaim policy
+  The reclaim policy determines what happens when a persistent volume claim is deleted. There are
+  three different policies:
+    •  Retain – the volume will need to be reclaimed manually
+    •  Delete – the content, the volume, and the backing storage are removed
+    •  Recycle – delete content only (rm -rf /volume/*)
+  The Retain and Delete policies mean the persistent volume is not available anymore for future claims.
+  The Recycle policy allows the volume to be claimed again
+
+Storage class
+  You can specify a storage class using the optional storageClassName field of the spec. If you do then
+  only persistent volume claims that specify the same storage class can be bound to the persistent volume. 
+  If you don’t specify a storage class, then only PV claims that don’t specify a storage class can be bound to it.
+
+Projected volumes
+  Projected volumes allow you to mount multiple persistent volumes into the same directory. You need
+  to be careful of naming conflicts of course. The following volume types support projected volumes:
+      • ConfigMap
+      • Secret
+      • SownwardAPI
+      • ServiceAccountToken
+
+
+serviceAccountToken projected volumes
+  Kubernetes pods can access the Kubernetes API server using the permissions of the service account
+  associated with the pod. serviceAccountToken projected volumes give you more granularity and
+  control from a security standpoint. The token can have an expiration and a specific audience.
+
+
+Kubernetes always tries to match the smallest volume that can satisfy a claim, but if there
+  are no 8 Gi or 10 Gi volumes then the labels will prevent assigning a 20 Gi or 50 Gi volume and use dynamic 
+  provisioning instead. It’s important to realize that claims don’t mention volumes by name. You can’t claim a
+  specific volume. The matching is done by Kubernetes based on storage class, capacity, and labels.
+
+Raw block volumes provide direct access to the underlying storage, which is not mediated via a file
+  system abstraction. This is very useful for applications that require high-performance storage like
+  databases or when consistent I/O performance and low latency are needed.
+
+GlusterFS and Ceph volumes in Kubernetes
+  GlusterFS and Ceph are two distributed persistent storage systems. GlusterFS is, at its core, a network
+  filesystem. Ceph is, at its core, an object store. Both expose block, object, and filesystem interfaces.
+  Both use the xfs filesystem under the hood to store the data and metadata as xattr attributes. There
+  are several reasons why you may want to use GlusterFS or Ceph as persistent volumes in your Kubernetes cluster:
+• You run on-premises and cloud storage is not available
+• You may have a lot of data and applications that access the data in GlusterFS or Ceph
+• You have operational expertise managing GlusterFS or Ceph
+• You run in the cloud, but the limitations of the cloud platform persistent storage are a non-starter
+
+Using GlusterFS
+  GlusterFS is intentionally simple, exposing the underlying directories as they are and leaving it to
+  clients (or middleware) to handle high availability, replication, and distribution. GlusterFS organizes
+  the data into logical volumes, which encompass multiple nodes (machines) that contain bricks, which
+  store files. Files are allocated to bricks according to DHT (distributed hash table). If files are renamed
+  or the GlusterFS cluster is expanded or rebalanced, files may be moved between bricks. 
+
+Using Ceph
+  Ceph’s object store can be accessed using multiple interfaces. Unlike GlusterFS, Ceph does a 
+  lot of work automatically. It does distribution, replication, and self-healing all on its own.
+
+Other storage providers:
+  • • • OpenEBS, Longhorn, Portworx
+
+The Container Storage Interface
+  The Container Storage Interface (CSI) is a standard interface for the interaction between container or-
+  chestrators and storage providers. It was developed by Kubernetes, Docker, Mesos, and Cloud Foundry.
+  The idea is that storage providers implement just one CSI driver and all container orchestrators need
+  to support only the CSI. It is the equivalent of CNI for storage.
+
+
+

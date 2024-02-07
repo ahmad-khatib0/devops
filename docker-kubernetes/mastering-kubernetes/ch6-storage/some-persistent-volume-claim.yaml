@@ -1,0 +1,25 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: some-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+#
+# k create -f some-persistent-volume-claim.yaml
+# k get pvc some-pvc
+# you will see that the some-pvc claim was associated with the local-path
+# storage class that we never specified, but it is still pending
+#
+# k get storageclass local-path -o yaml
+# You will seet that It is a storage class that comes with k3d (k3s). Note the
+# annotation: storageclass.kubernetes.io/is-default-class: "true". It tells Kubernetes that
+# this is the default storage class. Since our PVC had no storage class name it was associated with
+# the default storage class.
+# But, why is the claim still pending? The reason is that volumeBindingMode
+# is WaitForFirstConsumer. This means that the volume for the claim will be provisioned dynamically
+# only when a container attempts to mount the volume via the claim.

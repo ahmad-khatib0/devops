@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ceph-secret
+
+type: 'kubernetes.io/rbd'
+data:
+  key: QVFCMTZWMVZvRjVtRXhBQTVrQ1FzN2JCajhWVUxSdzI2Qzg0SEE9PQ==
+
+#
+#
+---
+# • monitors: Ceph monitors.
+# • pool: The name of the RADOS pool. If not provided, the default RBD pool is used.
+# • image: The image name that RBD has created.
+# • user: The RADOS username. If not provided, the default admin is used.
+# • keyring: The path to the keyring file. If not provided, the default /etc/ceph/keyring is used.
+# • secretName: The name of the authentication secrets. If provided, secretName overrides keyring.
+# • fsType: The filesystem type (ext4, xfs, and so on) that is formatted on the device.
+# • readOnly: Whether the filesystem is used as readOnly.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rbd2
+
+spec:
+  containers:
+    - image: kubernetes/pause
+      name: rbd-rw
+      volumeMounts:
+        - name: rbdpd
+          mountPath: /mnt/rbd
+  volumes:
+    - name: rbdpd
+      rbd:
+        monitors:
+          - '10.16.154.78:6789'
+          - '10.16.154.82:6789'
+          - '10.16.154.83:6789'
+      pool: kube
+      image: foo
+      fsType: ext4
+      readOnly: true
+      user: admin
+      secretRef:
+        name: ceph-secret

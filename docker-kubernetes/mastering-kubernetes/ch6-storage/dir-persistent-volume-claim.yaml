@@ -1,0 +1,18 @@
+---
+# this file
+# dir-persistent-volume.yaml
+# some-persistent-volume.yaml
+# shell-pod.yaml
+#
+# appling them will create two containers that share the same storage
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: dir-pvc
+spec:
+  storageClassName: dir
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi

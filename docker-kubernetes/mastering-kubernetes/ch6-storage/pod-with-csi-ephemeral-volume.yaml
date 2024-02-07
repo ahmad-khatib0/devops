@@ -1,0 +1,25 @@
+---
+#
+#
+# CSI ephemeral volumes are backed by local storage on the node. These volumes’ lifecycles are
+# tied to the pod’s lifecycle. In addition, they can only be mounted by containers of that pod,
+# which is useful for populating secrets and certificates directly into a pod, without going
+# through a Kubernetes secret object.
+kind: Pod
+apiVersion: v1
+metadata:
+  name: the-pod
+spec:
+  containers:
+    - name: the-container
+      image: g1g1/py-kube:0.3
+      volumeMounts:
+        - mountPath: '/data'
+          name: the-volume
+      command: ['sleep', '1000000']
+  volumes:
+    - name: the-volume
+      csi:
+        driver: inline.storage.kubernetes.io
+        volumeAttributes:
+          key: value

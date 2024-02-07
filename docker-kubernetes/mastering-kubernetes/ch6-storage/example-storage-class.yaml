@@ -1,0 +1,24 @@
+---
+# Storage classes let an administrator configure a cluster with custom persistent storage
+# (as long as there is a proper plugin to support it). A storage class has a name in the metadata
+# (it must be specified in the storageClassName file of the claim), a provisioner,
+# a reclaim policy, and parameters
+#
+# Here is a sample storage class that uses AWS EBS as a provisioner
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+
+provisioner: kubernetes.io/aws-ebs
+
+parameters:
+  type: gp2
+reclaimPolicy: Retain
+
+allowVolumeExpansion: true
+
+mountOptions:
+  - debug
+
+volumeBindingMode: Immediate

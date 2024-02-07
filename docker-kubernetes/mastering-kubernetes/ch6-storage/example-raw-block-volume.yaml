@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: block-pv
+
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  fc:
+    targetWWNs: ['50060e801049cfd1']
+    lun: 0
+    readOnly: false
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: block-pvc
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Block
+  resources:
+    requests:
+      storage: 10Gi
+#
+#
+# Pods consume raw block volumes as devices under /dev and NOT as mounted filesystems. Containers can then
+# access these devices and read/write to them. In practice this means that I/O requests to block storage go
+# directly to the underlying block storage and don’t pass through the file system drivers. This is in theory
+# faster, but in practice it can actually decrease performance if your application benefits from file
+# system buffering.
+#
+#
+---
+# Here is a pod with a container that binds the block-pvc with the raw
+# block storage as a device named /dev/xdva:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-with-block-volume
+spec:
+  containers:
+    - name: fc-container
+      image: fedora:26
+      command: ['/bin/sh', '-c']
+      args: ['tail -f /dev/null']
+      volumeDevices:
+        - name: data
+          devicePath: /dev/xvda
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+      claimName: block-pvc

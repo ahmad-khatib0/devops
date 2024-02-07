@@ -1,0 +1,7 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass # storage classes use a provisioner to allocate storage to pods
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer

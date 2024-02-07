@@ -1,0 +1,31 @@
+---
+# Here is a pod configuration file that has two containers that mount the same volume, called shared-
+# volume. The containers mount it in different paths, but when the hue-global-listener container is
+# writing a file to /notifications, the hue-job-scheduler will see that file under /incoming:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hue-scheduler
+spec:
+  containers:
+    - image: g1g1/hue-global-listener:1.0
+      name: hue-global-listener
+      volumeMounts:
+        - mountPath: /notifications
+          name: shared-volume
+    - image: g1g1/hue-job-scheduler:1.0
+      name: hue-job-scheduler
+      volumeMounts:
+        - mountPath: /incoming
+          name: shared-volume
+  volumes:
+    - name: shared-volume
+      # medium: Memory # To use the shared memory option, we just need to add medium to the emptyDir section
+      emptyDir: {}
+#
+#
+# $ kubectl exec -it hue-scheduler -c hue-global-listener -- touch /notifications/1.txt
+# $ kubectl exec -it hue-scheduler -c hue-job-scheduler -- ls /incoming  #  =>>  1.txt
+#
+# As you can see, we are able to see a file that was created in one container in the file system of another
+# container; thereby, the containers can communicate via the shared file system.

@@ -1,0 +1,34 @@
+---
+# projects a ConfigMap and a Secret into the same directory:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-volumes-demo
+
+spec:
+  containers:
+    - name: projected-volumes-demo
+      image: busybox:1.28
+      volumeMounts:
+        - name: projected-volumes-demo
+          mountPath: '/projected-volume'
+          readOnly: true
+  volumes:
+    - name: projected-volumes-demo
+      projected:
+        sources:
+          - secret:
+              name: the-user
+              items:
+                - key: username
+                  path: the-group/the-user
+          - configMap:
+            name: the-config-map
+            items:
+              - key: config
+                path: the-group/the-config-map
+#
+# The parameters for projected volumes are very similar to regular volumes. The exceptions are:
+# • To maintain consistency with ConfigMap naming, the field secretName has been updated to name for secrets.
+# • The defaultMode can only be set at the projected level and cannot be specified individually for
+#   each volume source (but you can specify the mode explicitly for each projection).
