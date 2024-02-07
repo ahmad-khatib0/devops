@@ -1,0 +1,19 @@
+---
+# consume the db-config-map.yaml
+# k logs some-pod | grep DB_IP
+apiVersion: v1
+kind: Pod
+metadata:
+  name: some-pod
+spec:
+  containers:
+    - name: some-container
+      image: busybox
+      command: ['/bin/sh', '-c', 'env']
+      env:
+        - name: DB_IP_ADDRESSES
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: db-ip-addresses
+  restartPolicy: Never

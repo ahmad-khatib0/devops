@@ -1,0 +1,24 @@
+Utilizing StatefulSet
+  StatefulSets are specially designed to support distributed stateful applications where the identities of the 
+  members are important, and if a pod is restarted, it must retain its identity in the set. It provides ordered 
+  deployment and scaling. Unlike regular pods, the pods of a StatefulSet are associated with persistent storage.
+
+When to use StatefulSet
+StatefulSets are great for applications that necessitate any of the following capabilities:
+ • •  Consistent and distinct network identifiers
+ • •  Persistent and enduring storage
+ • •  Methodical and orderly deployment and scaling
+ • •  Systematic and organized deletion and termination
+
+
+Digging into the Cassandra configuration file
+  There are two settings that are particularly relevant: the seed provider and the snitch. The seed pro-
+  vider is responsible for publishing a list of IP addresses (seeds) for nodes in the cluster. Each node that
+  starts running connects to the seeds (there are usually at least three) and if it successfully reaches one
+  of them, they immediately exchange information about all the nodes in the cluster. This information
+  is updated constantly for each node as the nodes gossip with each other.
+
+
+
+
+

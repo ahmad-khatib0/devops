@@ -1,0 +1,17 @@
+---
+# The role of the headless service is to allow clients in the Kubernetes cluster to connect to the Cassandra
+# cluster through a standard Kubernetes service instead of keeping track of the network identities of
+# the nodes or putting a dedicated load balancer in front of all the nodes. Kubernetes provides all that
+# out of the box through its services.
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cassandra
+    name: cassandra
+spec:
+  clusterIP: None # the service is headless and Kubernetes will not do any load-balancing or proxying
+  ports:
+    - port: 9042
+  selector:
+    app: Cassandra

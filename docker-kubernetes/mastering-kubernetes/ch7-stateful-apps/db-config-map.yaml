@@ -1,0 +1,11 @@
+---
+#  Kubernetes offers the ConfigMap resource as a way to keep configuration separate
+# from the container image. The configuration is a set of key-value pairs. The configuration information
+# can be exposed in two ways. One way is as environment variables. The other way is as a configuration
+# file mounted as a volume in the container.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+data:
+  db-ip-addresses: 1.2.3.4,5.6.7.8
