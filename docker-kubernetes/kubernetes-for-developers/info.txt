@@ -224,5 +224,46 @@ Summary
 • Most platforms enable Pod spreading by default, to ensure that replicas are not generally placed on the same node, 
   thus avoiding a single point of failure. Make sure you have a few nodes in your cluster to achieve higher availability.
 
+Scaling Pods and Nodes:
+  In the case of GKE, if you use Autopilot, nodes are provisioned automatically, For GKE’s Standard mode of 
+  operation, the command looks like this:
+    gcloud container clusters resize cluster-name --node-pool pool-name --num-nodes $NODE_COUNT
+  Scaling down is performed with the same commands. When you scale down the nodes, depending on your provider, 
+  you should be able to run the same command as to scale up, and the cluster will first cordon and drain the 
+  nodes (to prevent new Pods being scheduled on them, and give running Pods’ time to shutdown gracefully and 
+  be re-created on other nodes). Alternatively, you can manually cordon, drain, and remove nodes with the 
+  following commands:
+    kubectl get nodes # get a list of node names
+    kubectl cordon node $NODE_NAME # prevent scheduling on the node
+    kubectl drain node $NODE_NAME # remove running pods from the node
+    kubectl delete node $NODE_NAME
 
+Many HTTP services spend a lot of time waiting on external services like databases. These deployments may 
+  need to scale using other metrics like the number of requests per second hitting the service, rather 
+  than the CPU utilization. Kubernetes offers two built in metrics: CPU and memory. It doesn’t directly 
+  support metrics like requests per second, but it can be configured by using custom and external metrics 
+  exposed by your monitoring service
+
+OBSERVING AND DEBUGGING
+  To see what the HPA is doing, you can run kubectl describe hpa. Pay particular attention
+  to the “ScalingActive” condition. If it is `False`, then it likely means that your metric is not
+  active which can be for a number of reasons: a) the metric adapter wasn’t installed (or isn’t
+  authenticated), b) your metric name or selector is wrong, or c) there just isn’t any metrics
+  available yet. Note that even with the correct configuration, you will see ‘False’ when there
+  is no data (for example there are no requests), so be sure to send some requests to the
+  endpoint and wait a minute or two for the data to come through before investigating further.
+
+Spare Capacity with Cluster Autoscaling
+  One of the drawbacks of autoscaling nodes compared to manually adding nodes is that sometimes the Autoscaler 
+  can tune things a little too well and result in no spare capacity. This can be great for keeping costs down, 
+  but it makes it slower to start new Pods, as capacity needs to be provisioned before the Pod can startup.
+  Adding new Nodes then starting the Pod is slower than adding new Pods to existing Nodes. Nodes have to be 
+  provisioned and booted, while Pods that get scheduled onto existing nodes just have to pull the container 
+  and boot (and if the container is already in the cache, they can even start booting right away).
+  One way to solve both these problems, while still keeping your autoscaler is to use a low
+  priority balloon pod. This is a Pod that does nothing itself, other than to reserve capacity
+  (keeping additional nodes up and running on standby). This Pod’s priority is low so that when
+  your own workloads scale up, they can preempt this pod and use the node capacity.
+  
+  
 

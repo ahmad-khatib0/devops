@@ -1,0 +1,26 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: timeserver-autoscaler
+spec:
+  minReplicas: 1
+  maxReplicas: 6
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: loadbalancing.googleapis.com|https|request_count
+          selector:
+            # ou can omit the metricSelector completely, but then it will match on all ingress objects,
+            # probably not what you want.
+            # forwarding_rule_name is how the metric server knows which ingress object you’re talking about.
+            matchLabels:
+              resource.labels.forwarding_rule_name: 'k8s2-fr-21mgs2fl'
+        target:
+          type: AverageValue
+          averageValue: 5
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: timeserver

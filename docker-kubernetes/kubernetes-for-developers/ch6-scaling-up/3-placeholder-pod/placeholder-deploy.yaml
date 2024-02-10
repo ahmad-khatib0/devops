@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      pod: placeholder-pod
+  template:
+    metadata:
+      labels:
+        pod: placeholder-pod
+    spec:
+      priorityClassName: placeholder-priority
+      terminationGracePeriodSeconds: 0 # We want this Pod to shutdown immediately with no grace period
+      containers:
+        - name: ubuntu
+          image: ubuntu
+          command: ['sleep'] # This is our “do nothing” command
+          args: ['infinity']
+          resources:
+            requests:
+              cpu: 200m
+              memory: 250Mi
