@@ -1,0 +1,12 @@
+# A high priority class definition that does not preempt running Pods
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000000
+preemptionPolicy: Never
+# The ‘Never’ Preemption policy means that lower-priority Pods won’t be booted if
+# there’s no space to schedule this Pod
+globalDefault: false # Whether this priority class should replace the default “0”
+description: 'Critical services.'

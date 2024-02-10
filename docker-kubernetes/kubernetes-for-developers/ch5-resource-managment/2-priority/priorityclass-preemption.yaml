@@ -1,0 +1,17 @@
+# A high priority class definition that will preempt lower-priority running Pods
+---
+# PRIORITY:  Priority is just an integer number (between 0 and 1,000,000,000)
+# that you can assign to Pods (via a “priority class”) to change the ranking
+# the eviction is first sorted by the priority, then how much the usage is above requests. Pods
+# that are not using more than their requests are not at risk of eviction, regardless of priority.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority-preemption
+value: 1000000
+preemptionPolicy: PreemptLowerPriority
+# Pods that belong to Deployments that are removed from the node due to eviction, or
+# preemption are not forgotten about. These Pods are returned to the “Pending” state and will
+# be re-scheduled on the cluster when there are enough rooms.
+globalDefault: false
+description: 'Critical services.'

@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:3
+          resources:
+            requests:
+              cpu: 200m # 200 milli-cores, that is, 20% of 1 core.
+              memory: 250Mi # 0.25 giga byte
+            # The resource limits of this deployment, the pod can use up to 0.3 of a CPU core, and 400 MiB memory
+            limits:
+              cpu: 300m
+              memory: 400Mi

@@ -75,7 +75,154 @@ This is an advanced rollout strategy, popular with large deployments. There are 
   (this could last days). Of course, keeping both versions scaled up doubles the resource
   usage, with the trade off that near-instant rollbacks are possible during that window.
 
+Pod Scheduling
+  The Kubernetes scheduler performs a resource-based allocation of Pods to Nodes, and is really the brains of 
+  the whole system. When you submit your configuration to Kubernetes , it’s the scheduler that does the heavy 
+  lifting of finding a Node in your cluster with enough resources, and tasks the Node with booting and running 
+  the containers in your Pods.
 
+This recreation of Pods due to node failures by the scheduler is separate behavior to the Pod restarts. Pod 
+  restarts due to liveness or readiness failures are handled locally on the node by the kubelet, whereas the 
+  Scheduler is responsible for monitoring the health of the nodes, and reallocating Pods when issues are detected.
+  It is the scheduler that has the task of finding the right place in your cluster to fit the Pod, based on 
+  its resource requirements and any other placement requirements. Any Pods that can’t be placed on the cluster 
+  will have the status “Pending” .
+
+Quality of Service
+  Having limits higher than requests, or not set at all, introduces a new problem, and that is what to do when 
+  all these Pods are consuming too many resources (most commonly, too much memory), and they need to be evicted 
+  to reclaim the resource. Kubernetes performs a stack rank of importance when choosing which pods to remove 
+  first. Kubernetes traditionally classified Pods into 3 quality of service classes in order to rank
+  their priority. These are no longer directly used in the eviction algorithm,
+
+GUARANTEED CLASS
+  Guaranteed class pods are where the limits are set equal to the requests. This is the most
+  stable configuration as the pod is guaranteed the resources it requested, no more, no less. If
+  your Pod has multiple containers, they all must meet this requirement for the Pod to be
+  considered Guaranteed.
+
+BURSTABLE CLASS
+  Burstable class Pods on the other hand have limits set higher than requests, and are able to “burst” temporarily 
+  provided there are resources are available (i.e. from other Pods not using all of their requests, or unallocated 
+  space on the node). You need to be careful with these Pods as there can be some unforeseen consequences such 
+  as accidently relying on the bursting. Say a Pod lands on an empty node and can burst to its heart’s content. 
+  Then sometime later, it gets rescheduled onto another node with less resources, the performance will now be 
+  different. So, it’s important to test burstable pods in a variety of conditions.
+
+BEST EFFORT
+  Pods without any requests or limits set are considered “best effort” and are scheduled
+  wherever Kubernetes wishes. This is the lowest of the classes, and I strongly recommend
+  against using this pattern. You can achieve a similar result with the burstable class by setting
+  really low requests, and that is more explicit than just closing your eyes and hoping for the best.
+
+Evictions, Priority and Preemption
+  In times of resource contention (too many Pods trying to burst at once), Kubernetes will reclaim resource 
+  by removing (through a process known as evicting) pods that are using resources beyond their requested 
+  allocation. This is why it’s so important to have a Pod’s resources adequately specified.
+
+EVICTION
+  Guaranteed class pods are never evicted in times of resource contention, so for a bulletproof
+  deployment, always set your Pods’ limits equal to their requests to define them as guaranteed. 
+
+When looking for Pods to evict, Kubernetes first considers those Pods which are using
+  more resources than their requests, sorts them by their priority number, and finally by how
+  many more resources (of the resource in contention) that the Pod is using beyond what it
+  requested. By default, all Pods have the same priority number (zero). When all Pods have
+  the same priority, the amount of usage above requests is what’s used to rank
+
+“EVICTED” ERROR STATUS
+  If you query your Pods and you see a status of “Evicted” it indicates that the scheduler evicted your pod 
+  because it was using more resources than it requested. To resolve, increase the resources requested by your 
+  containers, and review whether your need to add more compute capacity to your cluster as a result.
+
+PREEMPTION
+  When used by itself, priority is useful to rank workloads so that more important workloads
+  are scheduled first and evicted last. There can be a situation however where the cluster does
+  not have enough resources for a period of time and high-priority Pods are left stuck in
+  Pending while low priority ones are already running.
+  If you’d rather have higher priority workloads proactively bump lower priority ones rather
+  than waiting for capacity to free up, you can add preemption behavior by changing the
+  preemptionPolicy field in your PriorityClass
+
+Priority and preemption really come into play when you’re juggling many deployments
+  and looking to save money by squeezing every ounce of compute out of your cluster by
+  overcommitting where you need a way to signal which of your Pods are more important to
+  resolve the resource contention. I wouldn’t recommend starting with this design as you’re
+  just adding complexity. The simpler way to get started is to allocate enough resources to
+  schedule all your workloads amply, and fine tune things later to squeeze some more
+  efficiency out of your cluster.
+
+Kubernetes ships with a resource usage monitoring tool out of the box kubectl top. You can use it to view 
+  the resources used by Pods and nodes. We’ll be focusing on Pods as that’s what we need to know to set 
+  the right resource request. First, deploy your Pod with an excessively high resource request. This may even 
+  be a Pod that’s already in production—after all, it’s generally OK for performance (though not always for budget) 
+  to overestimate your resources needed. The goal of this exercise is to start high, observe the Pod’s actual 
+  usage, then pair the requests back to provision the right resources and avoid wastage.
+
+When Memory Leaks are OK
+  Instagram famously 2 disabled the garbage collection in Python for a 10% CPU improvement. While this is probably
+  not for everyone, it’s an interesting pattern to consider. Does it really matter if a process gets bloated over 
+  time and is rebooted, if it all happens automatically, and there are thousands of replicas? Maybe not. Kubernetes 
+  automatically restarts crashed containers (including when that crash is due to the system removing them due 
+  to an out of memory condition), making it fairly easy to implement such a pattern. I wouldn’t recommend this 
+  without thorough investigation, but I do think it indicates that if your application has a slow leak that it may not
+  be your highest priority bug to fix. Importantly, you need to make sure you at least give the container enough 
+  resources to boot and run for a time, otherwise you could get caught in a OOMKill crashloop which is no fun 
+  for anyone. Having enough replicas is also important to avoid a user visible failure.
+
+Using the data you gathered, find the lower bound by looking at the memory usage of your
+  Pod under load, and add a reasonable buffer (at least 10%). With this example data, would
+  have picked 505MB * 1.1 = 555Mb. You know it’s enough to run the Pod under load for at
+  least an hour, with a bit to spare. Depending on your budget, and risk profile you can tune
+  this number accordingly (the higher it is, the lower the risk, but higher the cost).
+  So, requests need to at least cover the stable state of the Pod. What about the memory
+  limit? Assuming your data is solid and covered all use-cases (i.e. there’s no high-memory
+  code path that didn’t execute while you were observing), I wouldn’t set it too much higher
+  than the 1-day value. Having an excessive limit (say, twice as high as the limit or greater)
+  doesn’t really help much since you already measured how much memory your Pods need
+  over the course of a day, and if you do have a memory leak it may be better for the Pod to
+  simply be restarted by the system when the limit is hit, than to be allowed to grow excessively.
+  An alternative is to simply set the limit equal to the request, for the guaranteed QoS
+  class. This has the advantage of giving your Pod constant performance regardless of what
+  else is running on the node. In this case, you should give the Pod a little extra resource
+  buffer, since the Pod will be terminated the moment it exceeds its requested amount.
+
+Setting CPU Requests and Limits
+  Unlike Memory, CPU is compressible. What this means is that if you don’t get the CPU
+  resources you need, the application just runs slower. Whereas if it doesn’t get the memory it
+  needs, it will crash. You still likely want to give the application the CPU it needs, otherwise
+  performance will decrease, but there’s not as much need to have a buffer as there is with memory
+
+If you’re coming from an environment where installations of your application were
+  expensive, either in monetary cost for servers, or time to configure instances, your
+  application will likely have a lot of internal concurrency configured through the use of threads
+  and/or forks, often described as the number of “workers” used to handle incoming requests concurrently.
+  Concurrent workers still have advantages in the Kubernetes world due to their resource
+  efficiency. I wouldn’t take a Pod that currently had 10 workers, and instead deploy 10 replicas with 1 worker 
+  each. The container’s internal concurrency is very efficient memory wise, as forks share some of the memory 
+  used by the application binary, and threads share even more. CPU is also pooled between workers which is 
+  useful as a typical web application spends a lot of time waiting on external dependencies, meaning there 
+  is often spare capacity to handle many requests at once.
+
+Balancing the benefits of workers is the fact that the more replicas of a Pod you have, the
+  more durable it is. For example, if you have 2 replicas of a pod, with 18 workers each to handle a total of 36 
+  concurrent connections, then if one of those Pods were to crash (or be restarted because it failed the health check), 
+  half your capacity would be offline before the Pod restarts. A better approach might be to have 6 Pods replicas 
+  with 6 workers each, still maintaining some inter-container concurrency while adding some redundancy.
+
+Summary
+• The Kubernetes scheduler lies at the core of the system and does the heavy lifting of
+  finding the right home for your deployment’s Pods on your infrastructure.
+• The scheduler will try to fit as many containers as it can on a given node, provided
+  Pods have resource requests set appropriately
+• Kubernetes uses the Pod’s resource requests and limits to govern how resources are allocated, 
+  overcommitted, and reclaimed
+• Overcommitting resources using bursting can save resources but introduces performance variability
+• The specification of requests and limits by your workloads sets the quality of service they receive
+• When designing your workloads, there is an availability/resource-usage trade-off
+  between the replica count and the Pod’s internal thread/process worker count
+• Most platforms enable Pod spreading by default, to ensure that replicas are not generally placed on the same node, 
+  thus avoiding a single point of failure. Make sure you have a few nodes in your cluster to achieve higher availability.
 
 
 

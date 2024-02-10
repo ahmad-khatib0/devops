@@ -1,0 +1,24 @@
+# A Deployment that uses a priority class
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      priorityClassName: high-priority
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:1
+          resources:
+            requests:
+              cpu: 200m
+              memory: 250Mi
