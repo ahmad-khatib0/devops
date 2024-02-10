@@ -1,0 +1,24 @@
+in the “blue” and “green” deployment (is not natively supported) 
+  In this two-deployment system, one version is live, and one is non-live at any given time.
+  The Service is selecting the live deployment with the label selector.
+  The steps to rollout a new version with blue green are the following:
+    1. Identify the non-live deployment (the one not selected by the Service)
+    2. Update the image path of the non-live deployment with the new container image version
+    3. Wait until the Deployment is fully rolled out (kubectl get deploy)
+    4. Update the Service’s selector to point to the new version’s Pod template’s labels
+    
+The update steps are performed by modifying the YAML configuration for the resource in question, 
+  and applying the changes with kubectl apply. The next time you want to rollout a change to this 
+  application, the steps are the same, but the colors are reversed (if blue was live for the last 
+  update, green will be live next time). As mentioned, this strategy doubles the number of pods 
+  used by the deployment which will likely impact your resource usage. To minimize resource costs, 
+  you can scale the non-live deployment to zero when you’re not currently doing a rollout, scaling it 
+  back up to match the live version when you’re about to do a rollout. You’ll likely need to adjust 
+  the number of nodes in your cluster as well
+
+
+
+
+
+
+

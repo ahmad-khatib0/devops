@@ -1,0 +1,81 @@
+Designing Good Health Checks: 
+  When creating the HTTP endpoints to implement these checks, it’s important to take into
+  account any external dependencies being tested. Generally, you don’t want external
+  dependencies to be checked in the liveness probe, rather it should test only whether the
+  container itself is running (assuming your container will retry the connections to its external
+  connections). This is because there’s not really any value in restarting a container that’s
+  running just fine, and only because it can’t connect to another service which is having
+  trouble. This could cause unnecessary restarts that creates churn and could lead to cascading
+  failures, particularly if you have a complex dependency graph
+
+Since the liveness is only testing whether or not the server is responding, the result can
+  and should be extremely simple, generally just a HTTP 200 status response, even one with
+  no response body text. If the request can get through to the server code, then it must be
+  “live”, and this is good enough.
+For Readiness probes on the other hand, it’s generally desirable that they test their
+  external dependencies (like a database connection). This is useful because if you have say 3
+  replicas of a Pod, and only 2 of them can connect to your database, it makes sense to only
+  have those 2 fully functional pods in the load balancer rotation. One way to test the
+  connection is to lookup a single row from the database in your readiness check.
+
+MAXSURGE
+  “maxSurge” governs how many more Pods you’re willing to create during the rollout. For example, 
+  if you set a replica count of 5, and a maxSurge of 2, then it may be possible to have 7 Pods 
+  (of different versions) scheduled. The tradeoff is that the higher this number is, the faster 
+  the rollout will complete, but the more resources it will (temporarily) use. If you’re highly 
+  optimizing your costs, you could set this to 0. Alternatively, for a large deployment you could 
+  temporarily increase the resources available in your cluster during the rollout by adding nodes, 
+  and removing them when the rollout is complete.
+  
+MAXUNAVAILABLE
+  “maxUnavailable” sets the maximum number of Pods that can be unavailable during updates
+  (percentage values are also accepted, and are rounded down to the nearest integer). If you’ve tuned 
+  your replica count to handle your expected traffic, you may not want to set this value much higher 
+  than zero, as your service quality could degrade during updates. The trade off here is that the 
+  higher the value, the more Pods can be replaced at once and the faster the rollout completes, 
+  while reducing the number of Ready pods temporarily that are able to process traffic.
+  Given that a rollout could coincide with another event that lowers availability like a node
+  failure, for production workloads I would recommend setting this to 0. The caveat is that if
+  you set it to 0, and your cluster has no schedulable resources, the rollout will get stuck and
+  you will see Pods in the “Pending” state until resources become available. When the
+  maxUnavailable is 0, maxSurge cannot also be zero (the system needs to surge, i.e. add
+  create new pods, that are by definition not ready as they are booting).
+
+RECOMMENDATION
+  Rolling update is a good go-to strategy for most services. For production services,
+  maxUnavailable is best set to 0. maxSurge should be at least 1, or higher if you have
+  enough spare capacity and want faster rollouts.
+
+Replacement Strategy ( type: Recreate )
+  Another approach, some might say the old fashion approach, is to cut the application over directly—delete 
+  all Pods of the old version, and schedule replacements of the new version. Unlike the other strategies 
+  discussed here, this is not zero-downtime. It will almost certainly result in some unavailability. 
+  With the right readiness checks in place, this downtime could be as short as the time to boot the 
+  first Pod, assuming it can handle the client traffic at that moment in time. The benefit of this 
+  strategy is does not require compatibility between the new version and the old version 
+  (since the two versions won’t be running at the same time), nor does it require any additional 
+  compute capacity at all (since it’s a direct replacement).
+  For development and staging, this strategy may be useful to avoid needing to slightly
+  overprovision compute capacity to handle rolling updates, and for its speed, but otherwise
+  should generally be avoided.
+
+Blue / Green Strategy
+The benefits of this strategy is:
+    • Only one version of the app is running at a time, for a consistent user experience
+    • The rollout is fast (within seconds)
+    • Rollbacks are similarly fast
+The drawbacks are:
+    • Temporarily consumes double the compute resources
+    • Not supported directly by Kubernetes Deployments.
+This is an advanced rollout strategy, popular with large deployments. There are often several
+  other processes included. For example, when the new version is ready—it can be tested first
+  by a set of internal users, followed by a percentage of external traffic prior to the 100% cut-
+  over—a process known as canary analysis. After the cut-over, there is often a period of time
+  where the new version continues to be evaluated, prior to the old version being scaled down
+  (this could last days). Of course, keeping both versions scaled up doubles the resource
+  usage, with the trade off that near-instant rollbacks are possible during that window.
+
+
+
+
+
