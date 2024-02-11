@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values: #  a list of possible values (or logic)
+                      - arm64
+                      - amd64
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+          resources:
+            requests:
+              cpu: 500m
+#
+# Note on values: you cannot express this “OR” logic using nodeSelector. NodeSelector conditions
+# are ANDed together, and since each label can only have 1 key, it isn’t valid to select on two
+# different keys for the same label (as this can never be satisfied). For example, the following is
+# NOT a valid replacement for the In operator used above: Invalid:
+# nodeSelector:
+#   kubernetes.io/arch: arm64
+#   kubernetes.io/arch: amd64
+#
+# The operator logic is also very expressive and can be used to turn the expression into one
+# of anti-affinity (i.e. avoid nodes with the given labels) with the opposite of In: NotIn.
+# Supported operators include
+#
+# In            The value of the node label is one of the options given.
+# NotIn         The value is not present in the list you supply.
+# Exists        The label key is present on the node (with any value)
+# DoesNotExist  The label key is not present on the node
+# Gt            The value given is greater than that which is in the node label.
+# Lt            The value given is less than that which is in the node label.

@@ -1,0 +1,42 @@
+---
+# for the “frontend” deployment where we want to require it to be placed on nodes with
+# instances of a Pod from the backend deployment, we can use the following configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+      affinity: # A
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - mariadb-pod
+              topologyKey: 'kubernetes.io/hostname'
+#
+#
+# # A Pod affinity rule
+# This specification requires that the scheduler locate this Pod on a node within the specified
+# topology that has an existing pod with the label “app: mariadb”. As the topology in the example
+# is a node topology (using the well-known label for hostname), this means that the app will
+# only be scheduled onto a node that has the target Pod. If a zonal topology was used (using
+# the well-known label for zone, as discussed in 8.2.1), then the Pod would be placed on any
+# node in the zone that has an existing pod with the target label.
+# To make this co-location a “soft” (or best-effort) requirement so that your Pods will still be scheduled,
+# ->> even if the requirement can’t be satisfied, the preferredDuringSchedulingIgnoredDuringExecution
+#  can be used instead of requiredDuringSchedulingIgnoredDuringExecution <<--.

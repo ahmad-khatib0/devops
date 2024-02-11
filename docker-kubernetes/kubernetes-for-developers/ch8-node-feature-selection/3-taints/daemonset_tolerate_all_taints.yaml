@@ -1,0 +1,27 @@
+---
+# TOLERATING ALL TAINTS
+# Some workloads, most commonly those deployed as DaemonSets ,
+# need to run on every node, and must be designed to handle all the configuration of the cluster.
+# Such workloads typically tolerate all taints, as the following example demonstrates:
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: example-ds
+spec:
+  selector:
+    matchLabels:
+      pod: example-pod
+  template:
+    metadata:
+      labels:
+        pod: example-pod
+    spec:
+      tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+      containers:
+        - image: ubuntu
+          command: ['sleep', 'infinity']
+          name: ubuntu-container

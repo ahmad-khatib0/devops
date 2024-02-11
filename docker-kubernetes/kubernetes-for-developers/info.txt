@@ -329,4 +329,100 @@ level 3 (L3) load balancer, which balances requests at the network level, and ca
   and the other on bar.example.com).
 
 
+Node Selectors
+  The way you target specific node features from your pods is with node selection and/or node affinity. Node 
+  selection and affinity are simply ways to express the desired labels (and therefore features) of the nodes 
+  that your Pods require, Take for example a Pod that needs to run on an Arm node. Arm nodes are labelled with 
+  the well-known label kubernetes.io/arch: arm64 (well-known labels are those that are defined in the open 
+  source and should be constant across different providers). We can use a nodeSelector, or node affinity 
+  to target that label, and ensure our Pod will only run on an Arm node
+
+The advantage of the nodeAffinity, and the reason you would use it is that it allows for more expressive logic
+
+Caution with preferred affinity
+  This preferredDuringSchedulingIgnoredDuringExecution logic may sometimes yield surprising results. While the 
+  preference ordering works when you have existing unallocated capacity on nodes, the way it interacts with 
+  cluster autoscaling when there is no unallocated capacity of the preferred type and a new node is needed might 
+  be contrary to what you prefer. For example, in the event that there is any unallocated capacity on existing 
+  nodes in your cluster, even if it is of the dis-preferred type, Kubernetes will actually schedule the Pod there 
+  first, before the platform kicks in to add new nodes of your preferred type. The reason for this is that the 
+  Kubernetes scheduler, responsible for placing Pods on nodes and the platform Autoscaler (a common platform 
+  component responsible for adding new nodes) are operating somewhat separately. The way a typical node Autoscaler 
+  works at the platform level is to look for Pending pods that can be scheduled if more capacity was added. But 
+  since the Kubernetes scheduler kicks in first and places the pod on the dis-preferred but available capacity, 
+  the Autoscaler doesn’t have a chance to act.
+  My advice when using a cloud provider is that you can generally just require the functionality you need, and 
+  rely on the fact that they will have capacity to serve those needs. An alternative method to reduce the instances 
+  of dispreferred capacity being used is to minimize the amount of dispreferred capacity that the workload can 
+  use by separating it from other workloads in the cluster. To do this, you can use a required selector to a set 
+  of nodes that are tainted, just like earlier in the chapter, except in this case the nodes are tainted just 
+  to keep the workload separate.
+
+Tainting Nodes to Prevent Scheduling by Default
+  Another common requirement when you have a group of nodes that have special characteristics is that Pods 
+  should not be scheduled by default on these nodes. Take Arm for example: since Arm is relatively new and 
+  not all container images yet support it, you may want to configure your cluster so that Arm nodes will 
+  not be used for scheduling by default, unless the workload expressly indicates support. Other examples 
+  include when you have a Node with special hardware like a GPU that you need to reserve only for Pods that 
+  will use this hardware, and when you have Spot compute that can be shutdown abruptly, which not all 
+  workloads may respond well to.
+  While you could annotate every other Pod to avoid such nodes using node anti-affinity (that is, a node 
+  affinity rule with the NotIn operator), that is laborious, so Kubernetes has the ability to so-called “taint 
+  the node” to prevent Pods being scheduled on it by default. How it works is that you “taint” nodes that have 
+  special characteristics and shouldn’t be scheduled on by default, then you “tolerate” this taint in 
+  the Podspec of just those workloads that are OK to run on these nodes.
+
+When you’re operating a hosted Kubernetes service, it’s unlikely that you’ll be tainting
+  nodes individually like in the above example. That’s because generally a taint applies to a
+  group of nodes (ones that share the same characteristic like Arm, or Spot, or GPU), and
+  because nodes are regularly replaced during upgrade or repair events. Look for the platform
+  provider’s API that allows you to taint groups of nodes, so that the taint will be applied to all
+  nodes in the group, and persist during upgrades.
+
+
+Workload Separation: 
+  Another use for taints, tolerations and node selectors is to separate workloads. So far the use cases for 
+  node selection we’ve covered were around feature-based selection: requiring the Arm architecture, Spot compute, 
+  GPU nodes and the like. Node selection isn’t limited to node features, and also can be used to separate workloads
+  from each other on nodes. While you can use pod anti-affinity (covered in the next section) to prevent particular 
+  pods being co-located, sometimes it helps just to keep workloads on their own dedicated groups of nodes.
+  One requirement for this I heard was from a customer who uses a cluster for a lot of batch workloads, consisting 
+  of a deployment of a coordinator that schedules the work, and the Pods for the workloads themselves. They 
+  preferred to keep the Pods for these two roles separate, so that any autoscaling of the nodes for the work 
+  Pods doesn’t impact that of the coordinator Pods. Another example is for the noisy neighbor problem, where 
+  two Pods can potentially compete for resources on the node and would be better if separated. Yet another 
+  example might be where you simply want your workload to land on a “fresh” node. If you give the workload 
+  a fresh workload separation label/toleration then you’re forcing the platform to create a new node for it, 
+  which is generally on the current version of the cluster and therefore less likely to be disrupted with 
+  an upgrade in the near future.
+
+Kubernetes has a built-in way called a “topology spread constraint”. A topology spread constraint aims to spread 
+  your nodes across a failure domain, such as the node, or even a whole zone, and multiple can be specified, 
+  so you can spread across both nodes and zones, or any other failure domains defined by your provider.
+
+Pod anti-affinity (Avoiding Certain Pods)
+  imagine you have a deployment for a backend service, and a separate deployment for a caching service, and 
+  would prefer they be spread out. For this, you can use pod anti-affinity. This is simply throwing the pod
+  affinity rule from the previous section into reverse so that the Pods will be scheduled on other nodes 
+  (or the topology of your choice).
+
+PLACEMENT RULES DON ’T APPEAR TO WORK
+  If your placement rules don’t appear to work in testing, the first thing I’d suggest is ensure you are not 
+  using any “soft” placement rules. These rules mean that the scheduler basically ignores your rule when it 
+  can’t be satisfied, which isn’t so great for testing. It’s better to verify that all your rules are working 
+  before relaxing them by changing them to soft rules. Use a small cluster with only a couple of nodes, no 
+  soft rules, and you should be able to observe the effect of the placement features. Verify that the rules 
+  are enforced by intentionally attempting to schedule Pods that would violate the rules. Their status should 
+  be “Pending” because the constraints can’t be satisfied.
+
+PODS ARE PENDING
+  Pods that display as the “Pending” state mean that the scheduler can’t find a suitable place for them. 
+  this error can occurr in the context of the cluster not having enough resources to place the Pod. Once you 
+  configure your placement rules, it’s possible the Pod can’t be scheduled because the rules can’t be satisfied. 
+  To find out what the reason is (i.e. which rule couldn’t be satisfied), describe the pod. Note, that you 
+  need to do this at a Pod level – the deployment itself won’t show any error messages 
+  (although it will indicate that the desired number of replicas isn’t met).
+
+
+
 

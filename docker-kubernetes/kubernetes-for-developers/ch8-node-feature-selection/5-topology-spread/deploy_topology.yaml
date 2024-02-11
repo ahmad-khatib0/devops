@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      topologySpreadConstraints: # override the spread topology for a particular deployment
+        - maxSkew: 1 # the maximum number of replica imbalance
+          # (which means any node can have at most 1 more pod than the other nodes)
+          topologyKey: kubernetes.io/hostname # the node label to use for the topology
+          whenUnsatisfiable: ScheduleAnyway # The behavior to use when it’s not possible to satisfy the topology requirement
+          labelSelector: # another label selector set to this template’s metadata label
+            # why do you even need this at all since it’s already embedded in the Pod’s specification?
+            matchLabels:
+              pod: timeserver-pod
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 250Mi
+#
+#
+# NOTE: In this example we’re targeting the kubernetes.io/hostname topology using the topologyKey
+# setting, which really means that Kubernetes will consider all nodes labelled with the same
+# value for the kubernetes.io/hostname key to be equal. Since no two nodes should be labelled
+# with the same hostname, this yields a node-level spreading target.
+# For this configuration to work, and I cannot stress this enough, you must ensure that the
+# nodes in your cluster actually have the label specified in topologyKey
+# (kubernetes.io/hostname in my example). There are some well-known labels 1, like the one
+# I’m using here, but there is no guarantee that your Kubernetes platform will use it. So, verify
+# by running kubectl describe node and look at the Labels that your nodes have.
+#
+#  (if you have a multi zone cluster). For this you can repeat the earlier
+# example, but using a zone-based key with topology.kubernetes.io/zone being the
+# standardized “well known” key (but again, do check that your nodes actually have this label
+# otherwise it will have no effect). Multiple topologies can be specified in the array provided to
+# topologySpreadConstraints, so you can have both a node and zonal spread.

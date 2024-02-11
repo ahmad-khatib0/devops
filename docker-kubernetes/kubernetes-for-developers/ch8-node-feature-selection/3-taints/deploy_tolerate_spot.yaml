@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      tolerations:
+        - key: spot
+          value: 'true'
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+#
+#
+# The toleration won’t cause the Pod only to be scheduled on the tainted node; it only allows
+# it to be. Where the Pod is scheduled will be determined based on a few other factors, like
+# available capacity. Thus, Pods with the toleration can land on untainted nodes, as well as nodes
+# with taints that they tolerate

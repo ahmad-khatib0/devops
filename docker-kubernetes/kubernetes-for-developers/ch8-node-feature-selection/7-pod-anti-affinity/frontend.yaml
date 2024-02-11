@@ -1,0 +1,36 @@
+---
+# A the pod affinity rule from the previous example (6-colocation/frontend.yaml) is reversed,
+# so now this Pod will explicitly avoid nodes that have a pod with the “app: mariadb” label.
+#
+# As with affinities in the previous section, you can also use “soft” rules by
+# specifying preferredDuringSchedulingIgnoredDuringExecution instead of
+# requiredDuringSchedulingIgnoredDuringExecution. When doing this, you might want to test it first
+# with the required rule to ensure you have your labelSelector setup correctly, before relaxing the rule
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - mariadb-pod
+              topologyKey: 'kubernetes.io/hostname'

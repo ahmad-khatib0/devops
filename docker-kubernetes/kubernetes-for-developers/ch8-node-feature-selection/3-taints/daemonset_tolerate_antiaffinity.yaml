@@ -1,0 +1,34 @@
+---
+# schedulable on all nodes regardless of taints, except those with a specific label, such as Arm.
+# This is done through combining the toleration, and a node-anti affinity rule, shown
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: example-ds
+spec:
+  selector:
+    matchLabels:
+      pod: example-pod
+  template:
+    metadata:
+      labels:
+        pod: example-pod
+    spec:
+      tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: NotIn
+                    values:
+                      - arm64
+      containers:
+        - image: ubuntu
+          command: ['sleep', 'infinity']
+          name: ubuntu-container

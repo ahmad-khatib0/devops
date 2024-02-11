@@ -1,0 +1,36 @@
+---
+# PREFERRED N ODE AFFINITY
+# Another benefit of nodeAffinity is that you can create “preferred” rather than “required” rules
+# to express a set of preferences. For example, if your container is multi-architecture, and can
+# run on x86 or Arm, but you prefer to use Arm if possible (for example, for cost reasons), then
+# you can express that as follows.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+  template:
+    metadata:
+      labels:
+        pod: timeserver-pod
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - arm64
+      containers:
+        - name: timeserver-container
+          image: docker.io/wdenniss/timeserver:5
+          resources:
+            requests:
+              cpu: 500m
