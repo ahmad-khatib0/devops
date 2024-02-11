@@ -1,0 +1,39 @@
+---
+# $ create a private key
+# openssl genrsa -out example.key 2048
+# $ create a certificate request for 'example.com'
+# openssl req -new -key example.key -out example.csr -subj "/CN=example.com"
+# $ self-issue an untrusted certificate
+# openssl x509 -req -days 365 -in example.csr -signkey example.key -out example.crt
+#
+# kubectl create secret tls my-tls-cert --cert example.crt --key example.key
+#
+# then in your hosts file localy:  203.0.113.2 example.com
+# or by pointing it in the dns in your own server
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: timeserver-tls
+spec:
+  tls:
+    - secretName: my-tls-cert # use the certificate
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: timeserver-internal
+                port:
+                  number: 80
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: robohash-internal
+                port:
+                  number: 80

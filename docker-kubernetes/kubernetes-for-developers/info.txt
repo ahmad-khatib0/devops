@@ -265,5 +265,68 @@ Spare Capacity with Cluster Autoscaling
   (keeping additional nodes up and running on standby). This Pod’s priority is low so that when
   your own workloads scale up, they can preempt this pod and use the node capacity.
   
+
+Internal services are a way to scale how you develop and service your application by splitting your application 
+  into multiple smaller services. These individual services can be on different development cycles 
+  (possibly by different teams) and use completely different languages and technology from each other. After all, 
+  as long as you can containerize it, you can run it in Kubernetes. No longer do you need to worry whether 
+  your application deployment platform can run what you need it to run.
   
+ClusterIP gives you a virtual IP address in the Kubernetes cluster. This IP is addressable
+  from any Pod within your cluster (like in this example, your main application). NodePort on
+  the other hand reserves a high-level port number on each node in the cluster, allowing you
+  to access it from any Pod using localhost, and the service IP. In both cases, Kubernetes
+  provides the networking setup to proxy requests to the Pods that back the service. 
+
+When a request is made from a Pod to a service over the ClusterIP or NodePort, that
+  request is first handled by the networking glue on the node, which has an updated list from
+  the Kubernetes control plane of every Pod that belongs to that service (and which nodes
+  those Pods are on). It will pick one of the Pod IPs at random and route the request to that
+  Pod via its node. Fortunately, all this happens quite seamlessly, your app can simply make a
+  request such like HTTP GET using the IP of the service, and everything behaves as you’d expect.
+
+Kubernetes offers Pods two
+  ways to perform service discovery, using a DNS lookup, or an environment variable. The DNS lookup 
+  works cluster-wide, while the environment variable is only for Pods within the same namespace.
+  Kubernetes automatically creates an environment variable for each service and populates it
+  with the Cluster IP, and makes this available in every Pod that is created after the service is
+  created. The variable follows a naming conversion whereby our example robohash-internal
+  service gets the environment variable ROBOHASH_INTERNAL_SERVICE_HOST.
+  Rather than figuring out the correct conversion, you can view a list of all such
+  environment variables available to your Pod by running the env command on you Pod with
+  exec, like so:   $ kubectl exec robohash-6c96c64448-7fn24 -- env
+
+In summary, environment variable discovery has a few advantages:
+    •  Super fast (they are string constants)
+    •  No dependency on other the DNS Kubernetes component
+And some disadvantages:
+    •  Only available to pods in the same namespace
+    •  Pods must be created after the service is created
+
+In summary, DNS-based service discovery has a few advantages:
+    • Can be called from any namespace in the cluster
+    • No ordering dependencies
+And some disadvantages:
+    • Slightly slower than using an environment variable (which is a constant)
+    • Dependency on the internal DNS service
+
+level 3 (L3) load balancer, which balances requests at the network level, and can work with a variety of 
+  protocols (TCP, UDP, SCTP). You configure the Service with your desired protocol and port, and you get 
+  an IP that will balance traffic over your Pods. If you expose a HTTP service over a LoadBalancer, you need 
+  to implement your own TLS termination handling (configuring certificates, and running a HTTPS endpoint), and 
+  all traffic to that endpoint will get routed to one set of Pods (based on the matchLabels rules). There is no
+  option for exposing two or more separate services directly on the same load balancer (though one can proxy 
+  requests to the other internally). When you are publishing a HTTP app specifically, you may get more utility 
+  from a so-called level 7 (L7) load balancer, which balances at the HTTP request level and can do more fancy 
+  things like terminate HTTPS connections (meaning it will handle the HTTPS details for you), and perform 
+  path-based routing, so you can serve a single domain host with multiple services. In Kubernetes, a HTTP load
+  balancer is created with an Ingress object. Ingress lets you place multiple internal services behind a single external IP with load
+  balancing. You can direct HTTP requests to different backend services based on their URI path (/foo, /bar), 
+  hostname (foo.example.com, bar.example.com), or both. The ability to have multiple services running on a 
+  single IP (and potentially serving different paths under a single domain name) is unique to Ingress, because 
+  if you’d exposed them with individual Services of type LoadBalancer like in the earlier chapter, the services 
+  would have separate IP addresses, necessitating separate domains (e.g. one Service hosted on foo.example.com,
+  and the other on bar.example.com).
+
+
 

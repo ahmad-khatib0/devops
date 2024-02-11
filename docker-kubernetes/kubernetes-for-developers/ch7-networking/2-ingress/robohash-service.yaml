@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: robohash-internal
+spec:
+  selector:
+    app: robohash
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: NodePort
+#
+#
+# Why NodePort type instead of ClusterIP? Well, it turns out each NodePort type service also gets a
+# cluster IP, so it’s the best of both worlds. Plus, NodePort services can be used with Ingress
+# while ClusterIP ones cannot so that’s another advantage of choosing NodePort as the default
+# to test it: kubectl port-forward service/robohash-internal 8080:80
