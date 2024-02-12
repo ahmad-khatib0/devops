@@ -1,0 +1,51 @@
+---
+# provision a 1-replica stateful workload
+#
+# So there we have it this is a single pod deployment of a MariaDB database with an attached
+# disk that won’t be deleted even if this entire Kubernetes cluster is deleted, thanks to the Retain
+# policy in the storage class we created in the prior topic (3-storage-class).
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb-container
+          image: mariadb:latest
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mariadb-volume
+          resources:
+            requests:
+              cpu: 1
+              memory: 4Gi
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              value: 'your database password'
+      volumes:
+        - name: mariadb-volume
+          persistentVolumeClaim:
+            claimName: mariadb-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

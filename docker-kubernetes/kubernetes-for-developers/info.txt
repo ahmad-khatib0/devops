@@ -423,6 +423,84 @@ PODS ARE PENDING
   need to do this at a Pod level – the deployment itself won’t show any error messages 
   (although it will indicate that the desired number of replicas isn’t met).
 
+Using Persistent Volumes, you can attach stateful storage to any Kubernetes Pod. When it comes to 
+  multi-replica deployments, just as Kubernetes offers Deployment as a high-level construct for managing a stateless 
+  application, StatefulSet exists to provide high-level management of stateful applications. Just like nodes are 
+  the Kubernetes representation of a virtual machine, Kubernetes has its own representation of disks as well
+
+Kubernetes ships with some built in volume types, and others can be added by your platform administrator via 
+  storage drivers. Some types you may encounter frequently are emptyDir, an ephemeral volume tied to the 
+  lifecycle of the node, ConfigMap, which allows you specify files in Kubernetes manifests and present them 
+  to your application as file on disk, and cloud provider disks for persistent storage.
+
+CONFIGMAP VOLUME
+  ConfigMap is a useful Kubernetes object. You can define key/value pairs and reference them in other object 
+  declarations. You can also use them to store entire files! Typically these files would be configuration 
+  files like my.cnf for MariaDB, httpd.conf for Apache, redis.conf for Redis and so on. You can mount the 
+  ConfigMap as a volume, which allows the files it defines to be read from the container. ConfigMap volumes 
+  are read-only. This technique is particularly useful for defining a configuration file for use by a public
+  container image, as it allows you to provide configuration without needing to extend the image itself. For 
+  example, to run Redis you can reference the official Redis image, and just mount your config file using 
+  ConfigMap wherever Redis expects it, no need to build your own image just to provide this one file.
+  
+CLOUD PROVIDER VOLUMES
+  More applicable for building stateful applications (where you don’t typically want to use ephemeral or 
+  read-only volumes), is mounting disks from your cloud provider as volumes. Wherever you are running 
+  Kubernetes, your provider should have supplied drivers into the cluster that allow you to mount 
+  persistent storage, whether that’s NFS or block-based (often, both).
 
 
+Persistent Volumes and Claims
+  To provide a way to manage persistent volumes in a more platform-agnostic way, Kubernetes offers higher 
+  level primitives around volumes, known as persistent volumes and persistent volume claims. Instead of 
+  linking to the volume directly, the pod references a PersistentVolumeClaim object which defines the disk 
+  resources that the Pod requires in platform-agnostic terms (for example: “1 gigabyte of storage”). The disk 
+  resources themselves are represented in Kubernetes using a PersistentVolume object, much like 
+  how Nodes in Kubernetes represent the virtual machine resource
 
+If your provider supports dynamic provisioning, a PersistentVolume backed by a disk
+  resource will be created to fulfil the storage requested by the PersistentVolumeClaim, after
+  which the PersistentVolumeClaim and PersistentVolume will be bound together. The
+  dynamic provisioning behavior of the PersisentVolume is defined through the StorageClass
+
+When you have existing data that you wish to mount into a Pod. In that case, you create the PersistentVolumeClaim 
+  and the PersistentVolume objects already pointing at each other, so they are bound immediately at birth.
+
+Storage classes are way to describe the different types of dynamic storage that are available to be requested 
+  from PersistentVolumeClaims, and how the volumes that are requested in this way should be configured
+
+The benefit of using a Deployment even for a single-replica pod 
+  is that if the pod is terminated it will be recreated.
+
+The limitation of the deployment constructs like Deployment that all pods share the same specification 
+  is an issue for ReadWriteOnce volumes. These traditional block storage volumes can only be mounted by 
+  a single instance. This is OK when there is only one replica in your Deployment, but it means that if you 
+  create a second replica, that Pod will fail to be created as the volume is already mounted. Fortunately, 
+  Kubernetes has a high-level construct that makes our lives easier when we need multiple Pods where they 
+  each get their own disk (a highly common pattern). Just like Deployment is a high-level construct for managing 
+  (normally stateless) continuously running services, StatefulSet is a high-level construct for managing stateful 
+  services. StatefulSet has a few helpful properties for building such services. You can define a volume template 
+  instead of a referencing a single volume in the pod spec and Kubernetes will create a new persistent volume 
+  claim for each pod which solves the issue when using Deployment, where each instance shared the same persistent 
+  volume claim. StatefulSet assigns each pod a stable identifier which is linked to a particular persistent 
+  volume claim and provides ordering guarantees for deployment, scaling and updates. Now you can create 
+  multiple Pods and coordinate them by using this stable identifier to assign each a different role.
+
+
+Deploying a Multi-Role StatefulSet
+  The real power of stateful set comes into play when you need to have multiple pods. When
+  designing an application that will use stateful set, pod replicas within the stateful set need to
+  know about each other and communicate with each other as part of the stateful application
+  design. This is the benefit though of using stateful set because each of the pods gets a unique
+  identifier in a set known as the ordinal. You can use this uniqueness and guaranteed ordering
+  to assign different roles to the different unique Pods in the set and associate the same
+  persistent disk through updates and even deletion and recreate.
+
+One thing to be very aware of is that commonly by default, volumes that Kubernetes creates are deleted 
+  if you delete the associated bound PersistentVolumeClaim because they are configured with the Delete 
+  retainPolicy. With this policy set in the StorageClass, deleting the StatefulSet doesn’t itself delete the 
+  PersistentVolumeClaim, which is good (forcing admins to manually clean up the StatefulSet’s PersistentVolumeClaims 
+  if they do wish to delete them, but avoiding accidental delete). But, deleting the PersistantVolumeClaim 
+  objects will delete the underlying disk resources and it’s not that hard to do (e.g. by passing --all to 
+  the relevant kubectl delete command).
+  

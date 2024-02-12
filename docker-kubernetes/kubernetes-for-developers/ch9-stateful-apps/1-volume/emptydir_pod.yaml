@@ -1,0 +1,26 @@
+---
+# The built-in volume type emptyDir is an ephemeral volume that is allocated on space from the
+# node’s boot disk. If the Pod is deleted, or moved to another node, or the node itself becomes
+# unhealthy, all data is lost. So what’s the benefit?
+#
+# Pods can have multiple containers, and emptyDir mounts can be shared between them. So when you need to
+# share data between containers, you would define an emptyDir volume, and mount it in each container
+# in the Pod. The data is also persisted between container restarts, just not all the other events
+# I mentioned earlier. This is useful for ephemeral data such as that of an on-disk cache where it
+# is beneficial if the data was preserved between Pod restarts, but where long term storage isn’t necessary.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-pod
+  labels:
+    pod: timeserver-pod
+spec:
+  containers:
+    - name: timeserver-container
+      image: docker.io/wdenniss/timeserver:5
+      volumeMounts:
+        - name: cache-volume
+          mountPath: /app/cache/
+  volumes:
+    - name: cache-volume
+      emptyDir: {}

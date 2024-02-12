@@ -1,0 +1,63 @@
+---
+# So that’s a 1-replica StatefulSet. It’s a bit more convenient than using a Deployment for
+# such a workload, as Kubernetes can take care of creating the PersistentVolumeClaim automatically.
+# If you delete the StatefulSet object, the PersistentVolumeClaim object will remain. If you
+# then re-create the StatefulSet, it will re-attach to the same PersistentVolumeClaim, so no data
+# is lost. Deleting the PersistentVolumeClaim object itself can delete the underlying data though,
+# depending on how the storage class is configured. If you care about the data being stored (e.g.
+# it’s more precious than a cache that can be re-created), be sure to follow the steps in
+# (5-stateful-set-mariadb) setup a StorageClass that will retain the underlying cloud resources if the
+# PersistentVolumeClaim object is deleted for whatever reason.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis-sts
+  serviceName: redis-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-sts
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: redis-container
+          image: redis:latest
+          command: ['redis-server']
+          args: ['/redis/conf/redis.conf']
+          volumeMounts:
+            - name: redis-configmap-volume
+              mountPath: /redis/conf/
+            - name: redis-pvc
+              mountPath: /redis/data
+          resources:
+            requests:
+              cpu: 1
+              memory: 4Gi
+      volumes:
+        - name: redis-configmap-volume
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-pvc
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  ports:
+    - port: 6379
+  clusterIP: None
+  selector:
+    app: redis-sts

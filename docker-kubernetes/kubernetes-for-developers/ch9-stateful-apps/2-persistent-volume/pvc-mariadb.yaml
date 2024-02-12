@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mariadb-demo
+  labels:
+    app: mariadb
+spec:
+  containers:
+    - name: mariadb-container
+      image: mariadb:latest
+      volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mariadb-volume
+      resources:
+        requests:
+          cpu: 1
+          memory: 4Gi
+      env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: 'your database password'
+  volumes:
+    - name: mariadb-volume
+      persistentVolumeClaim:
+        claimName: mariadb-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+#
+#
+# The ReadWriteOnce access mode is for a volume that
+# behaves like a traditional hard drive where your storage is mounted to a single pod for read
+# write access and is the most common. The other choices for accessMode are ReadOnlyMany
+# which can be used to mount a volume of existing data that’s shared across many pods, and
+# ReadWriteMany for mounting file storage (like NFS) where multiple pods can read/write at the
+# same time (a fairly special mode, only supported by a few storage drivers)

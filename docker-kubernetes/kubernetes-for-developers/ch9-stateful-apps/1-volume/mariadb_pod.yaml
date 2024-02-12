@@ -1,0 +1,33 @@
+---
+# here is the specification for a MariaDB Pod running in GKE mounting a GCE persistent disk for its storage.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mariadb-demo
+  labels:
+    app: mariadb
+spec:
+  nodeSelector:
+    topology.kubernetes.io/zone: us-west1-a # The zone of the disk
+  containers:
+    - name: mariadb-container
+      image: mariadb:latest
+      volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mariadb-volume
+      env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: 'your database password'
+  volumes:
+    - name: mariadb-volume
+      gcePersistentDisk:
+        pdName: mariadb-disk
+        # A disk with this name must exist in the zone used above. See instructions below.
+        fsType: ext4
+# Note: This method of attaching disks to Pods is completely manual.
+#       You need to create the disk resource outside of Kubernetes first.
+#       Be sure that the zone of the disk and the Pod match (update the nodeAffinity if needed).
+#       For this example in GCP using the zone us-west-1a, and a disk with the name `mariadb-disk` you
+#       can run:
+#      `gcloud compute disks create --size=10GB --zone=us-west1-a mariadb-disk`
+#
