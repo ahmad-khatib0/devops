@@ -2,10 +2,8 @@
 - name: Set facts to configure redis_master
   run_once: true
   set_fact:
-    # yamllint disable rule:line-length
     master_ip: '{{ hostvars[groups.redis_server[redis_server_master_index]].ansible_default_ipv4.address }}'
     master_hostname: '{{ hostvars[groups.redis_server[redis_server_master_index]].inventory_hostname }}'
-    # yamllint disable rule:line-length
     redis_state: 'uninstalled'
     host_list: []
     redis_hosts: []
@@ -24,7 +22,6 @@
 - name: Convert redis_hosts list to a dict with hostname and ip address
   delegate_to: localhost
   set_fact:
-    # yamllint disable-line rule:line-length
     redis_hosts: '{{ redis_hosts | combine({item: ansible_default_ipv4.address}) }}'
   with_items: '{{ host_list }}'
 
@@ -39,7 +36,6 @@
 - name: Set redis_state
   when: ansible_facts.services['rh-redis5-redis.service'] is defined
   set_fact:
-    # yamllint disable-line rule:line-length
     redis_state: "{{ ansible_facts.services['rh-redis5-redis.service']['state'] }}"
 
 - name: Display redis_state

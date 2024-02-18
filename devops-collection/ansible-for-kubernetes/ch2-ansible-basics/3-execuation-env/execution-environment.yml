@@ -1,0 +1,43 @@
+---
+#
+# Imagine that you want to create a custom my_ee Ansible Execution Environment with all the tools
+# to use Ansible for Amazon Web Services (AWS). The following code creates an Ansible Execution
+# Environment to run Amazon Web Services (AWS) collections and dependencies. A collection is a
+# group of Ansible resources that connect to Amazon Web Services. The Ansible collection to
+# interact with Amazon Web Services is community.aws and it requires the boto3 and botocore Python
+# libraries to be installed in the system. The main file is the execution-environment.yml file
+# and it provides the description of the steps to build an Ansible Execution Environment using
+# the ansible-builder command-line tool,
+#
+# The Ansible collection dependencies are specified in the requirements.yml file,
+# parsed by the internal pip command
+#
+# The Python library dependencies are specified in the requirements.txt file,
+# parsed by the internal pip command
+#
+# Additional operating system dependencies can be specified inside the bindep.
+# txt file. Note that you can specify different package names for the RPM
+# (Red Hat-like systems) or DPKG (Debian-like systems).
+#
+# $ ansible-builder build -t my_ee -v 3
+# With these variables:
+# –– build, to specify the build operation
+# –– -t my_ee, to specify the desired Execution Environment name, my_ee in this case
+# –– -v 3, to specify the verbosity level of the build, in this case, level 3 so pretty verbose
+#
+# $ ansible-runner run -p ping.yml --inventory inventory --container-­image=my_ee .
+# ––   run, to specify the run operation
+# ––   -p ping.yml, to specify the Ansible Playbook to execute
+# ––   --inventory inventory, to specify the inventory name, in this case, the inventory file
+# --   container-image=my_ee, to specify the name of the Ansible Execution Environment
+# --   . (dot), to specify the directory of the base path, in this example, the current directory
+version: 1
+dependencies:
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+additional_build_steps:
+  prepend: |
+    RUN pip3 install --upgrade pip setuptools
+  append:
+    - RUN ls -al /

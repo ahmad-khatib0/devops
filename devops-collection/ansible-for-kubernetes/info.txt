@@ -1,0 +1,52 @@
+Podman is an open-source alternative to Docker (its full name is the POD MANager). Its main advantage 
+  is that you don’t need a service to be running like Docker on your machine; Podman is “daemonless.” 
+  The command syntax is very similar to Docker’s. If you are concerned about security in your applications 
+  or planning to use Kubernetes, Podman is a better alternative
+
+
+The template code of the container is called a Dockerfile, which allows you to build a binary 
+  version of the container, called an image. A more technology-agnostic alternative to Dockerfile 
+  is a Containerfile, by the Open Container Initiative (OCI), part of The Linux Foundation. Both 
+  are configuration files that automate the steps of creating a container image. The OCI promotes 
+  open industry standards around container formats and runtimes. The OCI releases three specifications: 
+  the Runtime Specification (runtime-spec), the Image Specification (image-spec), and the Distribution 
+  Specification (distribution-spec). Dockerfiles and Containerfiles use a combination of system tools,
+  system libraries, code, runtimes, and settings to specify how an application runs. A single
+  image can be run as many times as you want in a local Docker or Kubernetes cluster.
+
+Modern business applications require one or more of the following features:
+  • High availability
+  • Multi-cloud compatibility
+  • Multi-tier storage
+  • Elastic/auto-scaling
+  • Self-healing
+  • Security by design (DevSecOps) 
+
+Container Security: 
+  In the market, there are many open-source and commercially available products for this task nowadays.
+  Popular tools include Anchore, Datadog Cloud SIEM, Sophos Cloud Native Security, Bitdefender 
+  GravityZone, Sysdig Secure, Red Hat Advanced Cluster Security for Kubernetes, and Aqua Security. 
+  Integrating one or more of these products into your DevSecOps process is a good way to address 
+  and mitigate security risks.
+
+Deploying in Operator
+  Operator enables you to verify and deploy new applications in your Kubernetes cluster automatically. 
+  You need some coding skills, because the code is going to rely on the Kubernetes Operator SDK, which 
+  is a Minikube environment for running Kubernetes locally, as well as the Go language (Golang).
+  
+The seven steps needed to generate a Kubernetes Operator are as follows:
+  1. Generate the boilerplate code using the Kubernetes Operator SDK and Minikube:
+      $ minikube start init
+      $ operator-sdk init
+  2. Create the APIs and a custom resource:
+  $  operator-sdk create api --version=v1alpha1 --kind=Traveller
+  3. Download any dependencies.
+  4. Create a deployment.
+  5. Create a service.
+  6. Add a reference in the controller for the deployment and service.
+  7. Deploy the service, install the CRD, and deploy a CRD instance.
+Operators extend Kubernetes APIs and create custom objects to customize the 
+ cluster according to your needs.
+
+
+

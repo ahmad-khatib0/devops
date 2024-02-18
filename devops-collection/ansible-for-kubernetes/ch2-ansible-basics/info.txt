@@ -1,0 +1,166 @@
+
+Ansible filters manipulate data at a variable level. The most common filters are as follows:
+  • Assign default mandatory values: {{ variable_name | default(5) }}
+  • Make variables optional: {{ variable_name | default(omit) }}
+  • Assign ternary value: {{ status | ternary('restart', 'continue') }}
+  • Manage data types: {{ variable_name | items2dict }}
+  • Format data to JSON and YAML: {{ variable_name | to_json }} or {{ variable_name | to_nice_yaml }}
+  • Work with regex: {{ "ansible" | regex_replace('^.', 'A') }}
+
+
+The when statement defines when a task will be executed or not based on the Boolean result of the following:
+  • Complex expression using parentheses ()
+  • Comparison operators ==, >=, <=, !=
+  • Ansible facts (ansible_facts['os_family'] == "Debian")
+  
+These are the most popular Ansible loop statements:
+• loop: The loop statement is added to the task and takes as a value
+  the list of items over which the task should be iterated.
+  
+• with_items statement: Like loop for simple lists, lists of strings, or a
+  list of hashes/dictionaries. Flatter to list if lists of lists are provided.
+  
+• with_file statement: This keyword requires a list of control node
+  filenames. The loop variable item holds the contents of the file.
+  
+• with_sequence statement: This keyword requires parameters to
+  generate a list of values based on a numeric sequence.
+  
+• with_fileglob statement: This statement lists files matching a pattern. For example, you can 
+  specify the *.txt parameter to list all the files with txt extensions on the target node, 
+
+
+Ansible Facts
+  Variables related to remote systems are called facts. They are powerful because you can obtain 
+  a comprehensive vision of the current host, the operating system, the distribution used, the IP 
+  address, the networking configuration, the storage configuration, and so on. With Ansible facts, 
+  you can use the behavior or state of one system as a configuration on other systems.
+  You can disable using the gather_facts: false statement when you don’t want to acquire any Ansible 
+  facts from target machines and use them inside Ansible Playbook. It’s a good habit that explicitly 
+  declares the gather_facts variable in your Ansible Playbooks.
+
+Ansible Magic Variables
+  are Ansible’s internal vars that come in handy at times. These are the five most common magic variables:
+  • hostvars: Accesses variables defined for any host
+  • groups: Lists all the groups in the inventory
+  • group_names: Lists which groups are the current host
+  • inventory_hostname: Hostname configured in the inventory
+  • ansible_version: Ansible version information
+
+Ansible Plugins
+  Plugins extend Ansible’s functionality to more services and application domains. Every Ansible plugin 
+  executes on the Ansible Control Node. The full list of Ansible plugin types include the following:
+  
+• action: Executes in the background before the module executes
+• become: Extends privilege escalation systems
+• cache: Buffers gathered facts or inventory source data
+• callback: Extends behaviors when responding to events
+• connection: Extends connection possibilities to the target hosts
+• docs: Fragments to document common parameters of multiple plugins or modules
+• filter: data manipulation—extracts a value, transforms data types and formats, performs 
+  mathematical calculus, splits and concatenates strings, inserts dates and times, and so on
+• httpapi: Interacts with a remote device’s HTTP-based API
+• inventory: Data sources for Ansible target hosts
+• lookup: Extension to the Jinja2 templating language
+• module: The most common, basic Ansible plugin
+• module_utils: Helper to write Ansible modules
+• shell: Expands how Ansible executes tasks
+• strategy: Controls the flow of play execution
+• test: Evaluates expressions and return true or false
+• vars: Adds variable data to Ansible 
+
+# Some plugin types are specific for the Ansible for Network use case:
+• cliconf: CLI interface for network devices
+• netconf: Interface to network devices
+• terminal: Initializes a network device’s SSH shell
+
+Famous Ansible lookup plugins use cases are as follows:
+  • Reading from Windows INI style files (ini)
+  • Reading from CSV files (csvfile)
+  • Listening for files matching shell expressions (fileglob)
+  • Reading lines from stdout (lines)
+  • Generating a random password (password )
+  • Reading from a UNIX pipe (pipe)
+  • Returning content from an URL via HTTP or HTTPS (url)
+
+The following directories were created:
+• defaults, the main.yml file in this directory, contains the default values of role variables 
+  that can be overwritten by the user when the role is used. These variables have low precedence 
+  and are intended to be changed and customized in plays.
+• files. This directory contains static files that are referenced by role tasks.
+• handlers. The main.yml file in this directory contains the role’s handler definitions.
+• meta. The main.yml file in this directory contains information about the role, including author, 
+  license, platforms, and optional role dependencies.
+• tasks. The main.yml file in this directory contains the role’s task definitions.
+• templates. This directory contains Jinja2 templates that are referenced by role tasks.
+• tests. This directory can contain an inventory and test.yml
+  playbook that can be used to test the role.
+• vars. The main.yml file in this directory defines the role’s variable values. Often these 
+  variables are used for internal purposes within the role. These variables have high precedence 
+  and are not intended to be changed when used in a playbook.
+  
+
+You can easily download and use Ansible roles from Ansible Galaxy in two ways:
+1. By installing roles manually. The following command downloads and installs the latest 
+   version of the geerlingguy.redis Ansible role from the Ansible Galaxy website:
+$ ansible-galaxy role install geerlingguy.redis
+
+2. By installing roles via requirements.yml. You can create a requirements.yml file when you want 
+   to install more than one role or execute all the operations automatically.
+  
+Ansible Collection
+  An Ansible collection is the most modern and complete way to distribute Ansible code between 
+  multiple platforms in a standard way: roles, modules, and plugins. An Ansible collection can 
+  be stored in a private repository or a public archive such as the Ansible Galaxy website.
+
+You can easily download and use the Ansible collection using the ansible-galaxy command in two ways:
+1. By installing one collection manually.
+  The following command downloads and installs the latest version of the community.general 
+  Ansible collection from the Ansible Galaxy website:
+$ ansible-galaxy collection install community.general
+
+2. By installing a collection via requirements.yml. You can create a requirements.yml file 
+   when you want to install more than one role or execute all the operations automatically
+
+
+Ansible Execution Environment
+  The latest approach is to create a container for your Ansible code is called Ansible Execution 
+  Environment. This is a solution to a growing problem. The more an organization adopts Ansible, 
+  the more the dependency tree grows, and the more dependency every piece of code has. Maintaining 
+  each piece of code becomes complex. Moreover, the developer environment might be misaligned with 
+  the production environment and lead to unexpected results. The main advantage of the Ansible 
+  Execution Environment is that developers can use the same container used locally in production 
+  with the same version and library dependencies. The ansible-builder and ansible-runner 
+  command-line tools help in the creation and execution of the Ansible Execution Environments (EE).
+
+The ansible-builder command-line tool was added in 2022 to simplify the creation of Ansible 
+  Execution Environments (EE). It is available in the Ansible toolchain package with the Red 
+  Hat Ansible Automation Subscription: 
+$ dnf install ansible-builder
+  The ansible-builder command-line tool is also available in the PyPI repository (via the pip tool):
+$ pip install ansible-builder
+  
+
+Under the hood, the ansible-builder tool performs the following steps:
+1. Generates a Containerfile (the generalized standard version of the Dockerfile that 
+   works with different Container engines) inside the context directory.
+2. Runs the docker build or podman build in the context to build
+   the ansible-builder Container and build the final image.
+3. Fetches the base image from registry.redhat.io (usually ee–minimal-­rhel8:latest).
+4. Downloads the Ansible collection(s) and dependencies specified
+    in the requirements.yml file using the ansible-galaxy tool.
+5. Installs the package(s) and the dependencies specified in the bindep.txt 
+   file using the microdnf package manager in Red Hat Enterprise Linux.
+6. Installs the Python package(s) and the dependencies specified
+   in the requirements.txt file using the Python Package Manager (PIP).
+7. Builds the final image with only the necessary files.
+
+The ansible-runner tool mimics the behavior of the ansible-playbook command and returns the 
+  Ansible output onscreen. Under the hood, ansible-runner runs your Ansible Playbook inside 
+  the Ansible Execution Environment in your favorite Container Engine (Docker or Podman).
+  The main advantage of using the Ansible Execution Environment is that you can
+  deploy to a Kubernetes Control Plane and scale the resources as needed.
+
+
+
+

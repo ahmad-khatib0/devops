@@ -1,11 +1,11 @@
 ---
-version: '2'
+version: "3.8"
 services:
   nginx:
     image: bbaassssiiee/nginx-ghost
     ports:
-      - '8000:80'
-      - '8443:443'
+      - "8000:80"
+      - "8443:443"
     volumes:
       - ${PWD}/certs:/certs
     links:

@@ -27,6 +27,7 @@
 
   tasks:
     - name: Ensure nginx is installed
+      # This modules manages packages on a target without specifying a package manager module
       package:
         name: nginx
         update_cache: true
