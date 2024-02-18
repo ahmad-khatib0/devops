@@ -1,0 +1,9 @@
+---
+# Flatpak doesn’t have an auto-update mechanism. You can automate the update
+# process of all your Flatpaks in the system using the Ansible command module
+- name: flatpak update demo
+  hosts: all
+  become: true
+  tasks:
+    - name: update flatpak(s)
+      ansible.builtin.command: 'flatpak update --noninteractive'

@@ -1,0 +1,44 @@
+As a Container Engine, Podman is the preferred way on Linux because it has several advantages 
+  compared to Docker, especially because it can run rootless. However, Podman on Mac requires an 
+  additional machine to run your code, and Windows requires the virtualized Windows System for Linux (WSL).
+
+Most Linux distributions, especially the Enterprise Linux distributions (for example Red Hat 
+  Enterprise Linux or SUSE Linux Enterprise Linux) prefer Podman as the Container Engine. 
+  It usually is included in the system repository or out-of-the-box.
+
+You can use the Ansible Magic Variable ansible_distribution, which automatically contains the most 
+  current operating system. Possible values are Alpine, Altlinux, Amazon, Archlinux, ClearLinux, Coreos, 
+  Debian, Gentoo, Mandriva, NA, OpenWrt, OracleLinux, Red Hat, Slackware, SMGL, SUSE, and VMwareESX.
+
+The shell module also executes the command
+  via a full shell. The difference is that the shell Ansible module supports the full variables
+  like $HOME and operations like <, >, |, ; and &, whereas the command Ansible module does not.
+
+Snap in Linux
+  An exciting feature is the ability to publish your application for Internet of Things
+  (IoT) use cases. In fact, it supports any class of Linux application, such as desktop
+  applications, server tools, IoT apps, system services, and printer drivers. The snaps
+  auto-update automatically. Under the hood, the snapd daemon checks for updates four
+  times a day using a so-called over-the-air (OTA) refresh mechanism. The significant
+  advantage is that the old snap is not replaced until the new snap is successfully installed.
+  The file is distributed using the SquashFS compressed file system, so it has a pretty small
+  footprint. Snapcraft is a tool for developers to package their applications.
+
+Snap confinement allows setting the degree of isolation from the system. There are
+  three options—Strict, Classic, and Devmode. Strict is the most restrictive and runs in
+  complete isolation. Classic is the middle way and allows accessing the system resources
+  like your operating system. Devmode is intended only for developers.
+
+
+Packer
+  Packer is a tool for building your virtual machine “box” image from physical or virtual machines. 
+  Packer uses a configuration language called HCL to connect to a provider via SSH, run a provisioned 
+  Ansible, and capture the virtual machine’s state in an Amazon Machine Image (AMI) or in the Vagrant 
+  box image format. It’s useful to build an image as part of the continuous integration process and 
+  deploy your application to a test environment. Packer has a Docker builder that can manage Docker 
+  Containers and create container images. It creates a container, runs provisioners, and saves the 
+  result as a new image. e.g You can use Ansible as a provisioner to build a Docker image,
+
+
+
+
