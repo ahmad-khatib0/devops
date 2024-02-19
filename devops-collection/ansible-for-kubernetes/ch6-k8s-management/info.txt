@@ -1,0 +1,50 @@
+
+The following modules are specific to Helm-related tasks:
+• helm: Add, update, and delete Kubernetes packages using the package manager Helm
+• helm_info: Obtain information about a Helm package deployed into the Kubernetes cluster
+• helm_plugin: Add, update, and delete Helm plugins
+• helm_plugin_info: Obtain information about your Helm plugins
+• helm_repository: Add, update and delete Helm repositories
+• helm_template: Render Helm chart templates
+
+Deploy a Monitoring Tool
+  Prometheus is a popular monitoring tool based on time series data. Under the hood, it streams 
+  timestamped values belonging to the same metric and the same set of labeled dimensions. One of 
+  the strengths of Prometheus is its deep integration with Kubernetes. You can choose between several 
+  different ways to deploy a monitoring tool inside your Kubernetes clusters:
+• Prometheus Operator and kube-prometheus
+• Ansible role cloudalchemy.prometheus
+• Helm chart
+
+The Prometheus Operator is the Kubernetes-native solution that allows you to deploy and manage 
+  Prometheus and its components, such as Alertmanager and Grafana. It provides a declarative 
+  configuration that allows you to specify the desired state of your monitoring stack, and the 
+  operator will ensure that it is always kept up-to­date. In addition to deploying Prometheus, 
+  the operator can be used to configure monitoring rules, manage alerting rules, and set up dashboards
+
+
+kube-prometheus
+  The kube-prometheus project is the easiest way to install end-to-end Kubernetes cluster monitoring 
+  with Prometheus using the Prometheus Operator. It deploys the Prometheus Operator by deploying it 
+  as part of kube-prometheus. The kube-prometheus project deploys the Prometheus Operator and 
+  schedules a Prometheus job called prometheus-k8s with alerts and rules by default. The default 
+  deployment includes multiple Prometheus and Alertmanager instances, metric exporters such as 
+  node_exporter for gathering node metrics, scrape target configurations linking Prometheus to various
+  metric endpoints, and example alerting rules for notification of potential issues in the cluster. 
+  The setup is performed in three manual steps:
+
+  1. Download the kube-prometheus project:
+     $ git clone ­https://github.com/prometheus-operator kube-­prometheus.git
+  2. Deploy kube-prometheus:
+     $ kubectl create -f manifests/setup
+     $ kubectl create -f manifests/
+  3. Forward the ports for Prometheus, Alertmanager, and Grafana:
+     $ kubectl --namespace monitoring port-forward svc/prometheus-k8s 9090
+     $ kubectl --namespace monitoring port-forward svc/prometheus-k8s 9090
+     $ kubectl --namespace monitoring port-forward svc/alertmanager-­main 9093
+     $ kubectl --namespace monitoring port-forward svc/grafana 3000
+
+
+
+
+  

@@ -1,0 +1,11 @@
+---
+# perform the uncordon operation to mark the selected node as schedulable in the Kubernetes cluster
+- name: k8s uncordon
+  hosts: all
+  vars:
+    mynode: 'k8s.ansiblepilot.com'
+  tasks:
+    - name: uncordon node
+      kubernetes.core.k8s_drain:
+        state: uncordon
+        name: '{{ mynode }}'

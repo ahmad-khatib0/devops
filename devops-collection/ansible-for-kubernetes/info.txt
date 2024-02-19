@@ -171,5 +171,113 @@ Ansible Dynamic Inventory
 │                                                                                               │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
 
+Taint Nodes
+  Taints and tolerations are a flexible way to steer pods away from nodes or evict pods that shouldn’t
+  be running. A typical use case of the taint node is to take advantage of particular nodes with 
+  special hardware (such as GPUs) to run only pods that require the use of the specialized hardware 
+  and keep out the pods that don’t require it. Moreover, you can use this tool when you need to 
+  execute maintenance in your Kubernetes cluster. Kubernetes Taint is used to mark a node as unable 
+  to schedule any pods that do not tolerate the taint. This is useful when you need to perform 
+  maintenance on a node, as it ensures that any existing pods running on the node will remain running 
+  and any new pods will be rescheduled onto other nodes in the cluster. The taint command works
+  by adding a label to the node, which is then used to identify which pods should not be
+  scheduled onto the node. This label can be removed when the maintenance is complete,
+  allowing the node to start accepting new pods again.
+
+Drain, Cordon, or Uncordon Nodes
+  Ansible for K8s Management Kubernetes Drain is a tool used to safely evict all of the pods from 
+  a node before performing maintenance on the node. Note that it’s always a good practice to have a
+  planned maintenance window. The Drain operation is often combined with the Taint operation.
+  When you run the drain command, Kubernetes will attempt to delete all of the pods on the node 
+  except for mirror pods, which are created by replication controllers, jobs, or daemon sets. The 
+  drain command also allows you to specify a PodDisruptionBudget, which will ensure that the number 
+  of pods running on the node does not drop below the specified minimum during the eviction process. 
+  Once the eviction process is complete, you can then safely perform maintenance on the node, knowing 
+  that the pods will be safely relocated to other nodes in the cluster. Kubernetes Cordon marks a 
+  node as “unschedulable,” meaning that no new pods will be scheduled onto the node. This is useful 
+  when you need to perform maintenance on a node, as it ensures that any existing pods running on 
+  the node will remain running and any new pods will be rescheduled onto other nodes in the cluster. 
+  The cordon command works by setting the node’s unschedulable flag to true, which will prevent the
+  Kubernetes scheduler from placing any new pods on the node. Once the maintenance is complete, 
+  the unschedulable flag can be reset back to false, allowing the node to start accepting new pods 
+  again. Kubernetes Uncordon is used to mark a node as schedulable, meaning that new pods can be 
+  scheduled onto the node. This is the opposite of the kubectl cordon command, which marks a node as 
+  unschedulable, thus preventing new pods from being scheduled onto that node. The uncordon command 
+  works by setting the node’s unschedulable flag to false, allowing the Kubernetes scheduler to 
+  place new pods on the node. This is useful when maintenance has been completed on a node, and 
+  you want to allow new pods to start running on the node again.
+
+
+K8s Security
+The reference for Kubernetes in this field are the four Cs of cloud-native security:
+• Cloud
+• Cluster
+• Container
+• Code
+
+To begin with, the cloud infrastructure that hosts your cluster needs to be adequately secured 
+  and enable access to ports on the cluster only by trusted networks. By default, Container Engines 
+  are open from anywhere. A network firewall could be helpful in mitigating this behavior. This 
+  prevents a potential attacker from running port scans to detect potential open ports in your 
+  systems and connect to them. This is the first “C” in cloud-native and it impacts the security 
+  of the entire infrastructure, even when the cluster is in a private or public cloud data center.
+  The next is cluster security, which involves the ability of a potential attacker to execute 
+  commands in your cluster. A potential attacker could have the ability to access running Container 
+  Engines such as Docker Daemons, exposed publicly, as well as the Kubernetes Dashboard without the 
+  proper authentication or authorization mechanism. This can be prevented by using network policies 
+  and security in ingress. The next “C” is containers. A potential attacker can run any container of 
+  choice without restriction, even in privileged mode, no matter what repository it came from or what 
+  tag is used. Moreover, the attacker can install any application when it can run a malicious container 
+  in your cluster without restriction. A few years ago, the Dirty Cow CVE-2016-5195 exploited a bug 
+  in the Linux kernel’s memory subsystem copy-on-write (COW) to gain write access from the container 
+  to the host system, increasing the privileges. You can prevent this behavior by enabling only running 
+  containers from a secure internal registry, disallowing running in privileged mode, and sandboxing 
+  isolating each other. The best way to prevent supply chain attacks and minimize microservice 
+  vulnerability is acting in the code. Avoid hard-coding database credentials, thereby passing critical 
+  pieces of information through environment variables or exposing applications without TLS/SSL. These 
+  are bad coding practices. The DevSecOps movement applies security as soon as possible in the code 
+  design phase of your development.
+  Another important tool is to scan for vulnerabilities as soon you create your container image, 
+  when you push to the container image. You must apply this methodology as soon as possible during 
+  the development process. You can also reduce the attack surface of container images using the 
+  smallest images possible, removing all unnecessary binaries. Reducing the attack surface should be
+  your mantra. A good security practice is to build your images using scratch. Add a USER directive to
+  run as a non-root user inside a container. You can sign your images in order to run only trusted 
+  containers. Most of the time, you derive your containers using the FROM directive. The most secure 
+  way is to combine the scratch with a multi-stage build. In this way, you obtain a shirked image with 
+  only your application
+  
+
+AAA
+  Every time you make a request, Kubernetes determines if it is allowed or denied using Authentication, 
+  Authorization, and Accounting (AAA). This is how your Kubernetes cluster verifies who you are and 
+  what you are authorized to execute. Policies define permissions according to role-based access 
+  control (RBAC) or attribute-based access control (ABAC). Associated policies define Kubernetes 
+  resources. Kubernetes RBAC is the most commonly used method to perform AAA tasks. Policies are 
+  in place to make decisions to allow or deny an action. The following acronyms are used in the 
+  AAA context:
+      • authn: Authentication (who are you?)
+      • authz: Authorization (what are you authorized to do?)
+      • auth: Accounting (what area are you authorized to access?)
+  You can use Kubernetes RBAC to provide authorization to resources in your Kubernetes cluster.
+  
+Kubernetes hosts a per-cluster, public OpenID Connect (OIDC) endpoint that
+  contains signing keys for JSON web tokens allowing external systems, like Amazon IAM, to validate 
+  and accept the Kubernetes-issued OIDC tokens. OIDC federation access allows you to assume RBAC 
+  roles via the Secure Token Service (STS), enabling authentication with an OIDC provider and 
+  receiving a JSON Web Token (JWT), which is used to assume a role. OpenID Connect allows single 
+  sign-on (SSO) for logging into your Kubernetes cluster. You can use an existing public OpenID 
+  Connect Identity Provider (such as Google, GitHub, Microsoft, Amazon, and so on), or you can run 
+  your own identity providers, such as dex, Keycloak, CloudFoundry UAA, or Tremolo Security’s OpenUnison.
+
+Calico
+  You can secure your network communications using Calico around your pod. Calico
+  acts like a firewall in your pod. It enables you to use network policies within a pod and
+  apply the zero-trust security model. This means that it considers all the traffic dangerous
+  by default, and you need to manually set an allow list. The easiest way to install Calico
+  is via the Tigera operator. The Tigera operator provides lifecycle management for Calico
+  exposed via the Kubernetes API, defined as a custom resource definition.
+
+
 
 

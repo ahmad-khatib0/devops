@@ -1,0 +1,16 @@
+---
+# This Ansible Playbook sets a node in the drain state but aborts the
+# operation if there are pods not managed by a ReplicationController, Job,
+# or DaemonSet. It uses a grace period of ten minutes.
+- name: k8s drain
+  hosts: all
+  vars:
+    mynode: 'k8s.ansiblepilot.com'
+    grace_period: 600
+  tasks:
+    - name: drain node
+      kubernetes.core.k8s_drain:
+        state: drain
+        name: '{{ mynode }}'
+        delete_options:
+          terminate_grace_period: '{{ grace_period }}'

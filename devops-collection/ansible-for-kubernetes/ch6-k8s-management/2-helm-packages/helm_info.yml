@@ -1,0 +1,26 @@
+---
+- name: k8s helm
+  hosts: all
+  vars:
+    chart_name: 'nginx-server'
+    myproject: 'ansible-examples'
+  tasks:
+    - name: gather chart information
+      kubernetes.core.helm_info:
+        name: '{{ chart_name }}'
+        release_namespace: '{{ myproject }}'
+#
+#
+# Report Helm Package
+# You can verify the status of the installed Helm “chart” packages using the manual helm
+# command or the Ansible kubernetes.core.helm_info module. It might be useful to the
+# release_state parameter (default to deployed and failed):
+# • all: Show all releases
+# • deployed: Show only deployed releases
+# • failed: Show only failed releases
+# • pending: Show only pending releases
+# • superseded: Show only superseded releases
+# • uninstalled: Show only uninstalled releases
+# • uninstalling: Show only releases that are currently being uninstalled
+#
+#
