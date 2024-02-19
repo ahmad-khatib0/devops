@@ -1,0 +1,31 @@
+---
+#
+# You can reduce the number of load balancers using the Kubernetes ingress object.
+# An ingress object exposes HTTP and HTTPS routes outside the cluster and routes traffic
+# to your services according to defined traffic rules. Ingress objects use ingress controllers,
+# which fulfill the ingress rules and requests (usually using a load balancer). Using the
+# ingress objects and controllers, you can transition from one load balancing per service
+# to one load balancer per ingress and route to multiple services. Traffic can be routed to
+# the proper service using path-based routing. When using Kubernetes, you have many ingress
+# controller options, for example, Envoy Controllers and NIGNX controllers. The load balancer
+# picks the proper target group based on the path. The load balancer then forwards the request
+# to one of the Kubernetes instances on the application ports. The service listens at a specific
+# port and balances the requests to one of the pods of the application or service
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: 'nginx-example'
+  namespace: 'mynamespace'
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+    - http:
+        paths:
+          - path: /webapp
+            backend:
+              service:
+                serviceName: webapp
+                servicePort: 9376

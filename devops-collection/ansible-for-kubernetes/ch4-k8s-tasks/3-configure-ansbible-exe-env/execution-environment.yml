@@ -1,0 +1,19 @@
+---
+version: 1
+dependencies:
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+additional_build_steps:
+  prepend: |
+    RUN pip3 install --upgrade pip setuptools
+  append:
+    - RUN ls -al /
+#
+#
+# The append part is an optional additional step that demonstrates that you can run
+# commands after building your Ansible Execution Environment.
+#
+# run:  $ ansible-builder build -t my_kube -v 3
+# then: $ podman build -f context/Containerfile -t my_kube context
+# then: $ ansible-runner run -p ping.yml --inventory inventory --container-image=my_kube .

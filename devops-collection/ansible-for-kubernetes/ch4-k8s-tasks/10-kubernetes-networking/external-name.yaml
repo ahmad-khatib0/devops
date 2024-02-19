@@ -1,0 +1,19 @@
+---
+#
+# The ExternalName service type is used to connect to a resource outside of the cluster.
+# For example, this could be a database or file system resource that is in the network
+# outside the cluster. The pods that require access to the external resource service require
+# access to the resource to connect to the resource service, which returns the external
+# resource endpoints. This type of service is helpful when you decide to migrate the
+# external resource to the Kubernetes cluster.
+# When the resource is deployed in the cluster, you can update the service type to
+# ClusterIP. The application can continue to use the same resource endpoint.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: 'nginx-example'
+  namespace: 'mynamespace'
+spec:
+  type: ExternalName
+  externalName: mydb.example.com # specifies where the service maps to

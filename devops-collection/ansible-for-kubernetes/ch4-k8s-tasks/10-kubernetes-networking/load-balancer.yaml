@@ -1,0 +1,28 @@
+---
+#
+# The LoadBalancer service type extends the NodePort service type by adding a load
+# balancer in front of all nodes. This means Kubernetes requests a load balancer and
+# registers all the nodes. The load balancer doesn’t detect where the pods for a specific
+# service are running. Consequently, the load balancer adds all worker nodes as backend
+# instances. The Load Balancer service type uses the classic load balancers by default. This
+# means there is a classic load balancer in front of all instances listening to your requests.
+# The load balancer routes the requests to the nodes through an exposed port. You can
+# also use the network load balancer instead of the classic load balancer.
+# The classic load balancer processes the requests one by one when they arrive from
+# the Internet. It then forwards the request to one of the Kubernetes instances on a specific
+# port. When there is a service listening to a specific port, it acts like a second-layer load
+# balancer for the backend pods that handle the requests.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: 'nginx-example'
+  namespace: 'mynamespace'
+spec:
+  type: LoadBalancer
+  selector:
+    app: 'nginx'
+  ports:
+    - name: http
+      port: 80
+      targetPort: 9376

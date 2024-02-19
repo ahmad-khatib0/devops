@@ -49,4 +49,27 @@ Operators extend Kubernetes APIs and create custom objects to customize the
  cluster according to your needs.
 
 
+Kubernetes Upgrade
+  The plan begins with upgrading the control plane nodes. You need to set the cordon
+  and drain node offline settings one by one, thus preventing scheduling and evicting any
+  workloads, upgrade the kubelet and kubectl packages, restart the kubelet service, and
+  bring the uncordon node back online. After upgrading the control plane nodes, you can upgrade 
+  worker nodes. Begin by upgrading the kubeadm tool, executing the kubeadm upgrade node command, 
+  setting the node in drain mode, upgrading kubelet and kubectl, and restarting the kubectl
+  process, then you uncordon the node.
+
+Configure an Ansible Execution Environment
+  The Ansible Execution Environment is a way to containerize the execution of the Ansible
+  invented by Red Hat. It maintains archives of the separation of the operating system
+  dependencies, Python dependencies, and Ansible collections without interfering with
+  your Linux system. It’s the evolution of Python Virtual Environment and can be executed
+  natively in a Kubernetes cluster. It supersedes manual Python Virtual Environments,
+  Ansible module dependencies, and Ansible Tower bubblewrap.
+  Ansible Execution Environment relies on the Ansible Builder, the ansible-builder
+  command, to create an Ansible Execution Environment. Ansible Builder produces a
+  directory with the build context for the container image. It contains the Containerfile,
+  along with any other files that need to be added to the image.
+  The Ansible Runner, the ansible-runner command utility, executes the Ansible
+  Playbook in an Ansible Execution Environment. The Ansible Runner enables you to run
+  the Ansible Execution Environment as a container in the current machine.
 

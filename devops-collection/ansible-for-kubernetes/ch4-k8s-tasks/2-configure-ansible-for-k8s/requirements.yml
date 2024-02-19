@@ -1,0 +1,6 @@
+---
+# first run:  pip3 install -r requirements.yml
+# then:  ansible-galaxy install -r requirements.yml
+collections:
+  - name: cloud.common
+  - name: kubernetes.core

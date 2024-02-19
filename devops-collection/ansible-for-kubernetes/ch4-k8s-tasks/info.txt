@@ -1,0 +1,111 @@
+
+Volumes persistently store the data of the pod. Volumes are available to be
+  connected for any other pod. You specify the volume in the spec area of the PodSpec. You can 
+  mount all the many network storage protocols, for example, NFS, SMB, CephFS, Lustre, GlusterFS, 
+  JuiceFS, and OpenEBS. This is supported by the Container Storage Interface (CSI) driver for 
+  Kubernetes. CSI drivers are available for popular storage devices (NetApp, Synology, HP, Cisco 
+  HyperFlex, Datatom-Infinity, Datera, Dell EMC (PowerMax, PowerScale, PowerStore, Unity, and VxFlexOS), 
+  HPE, HPE Ezmeral, Huawei Storage, IBM Block Storage, IBM Spectrum Scale, IBM Cloud Block Storage VPC,
+  Intel PMEM-CSI, HP TrueNAS, and many cloud storage services (AWS Elastic Block Storage, AWS Elastic 
+  File System, AWS FSx for Lustre, Azure Blob, Azure Disk, Azure File, cloudscale.ch, GCE Persistent 
+  Disk, Google Cloud Filestore, Google Cloud Storage, Hetzner Cloud Volumes, HyperV, oVirt, Tencent 
+  Cloud Block Storage, Tencent Cloud File Storage, Tencent Cloud Object Storage, vSphere, and so on).
+
+Kubernetes operators enable you to specify custom resource manifests for your cluster.
+
+The Controller Manager (running inside the control plane) runs all the time in the
+  Kubernetes cluster because it maintains the cluster in the desired status. Every time
+  you send a command to Kubernetes, you express an intent or a wish to the Controller
+  Manager and check if you are allowed and if there are enough resources to perform the
+  action. The Cloud Controller translates your wish into a request for each cloud provider.
+
+The scheduler specifies where to allocate resources for your Kubernetes resources. The commands are 
+  performed via restful API. The cluster can execute your container using a large variety of 
+  container runtime engines. The most commonly used are Docker and Podman, but your setup 
+  might vary according to your use cases.
+
+The Pipelines as Code model, like all the “as code” models, has a lot of benefits:
+• Version tracking: Changes are tracked and teams can use the current
+  version or roll back to previous configurations versions
+• Audit trails: Transparency is the key advantage for all the stakeholders, external auditors, 
+  and developers; it shows every change made to the code and by whom.
+• Ease of collaboration: The code is the source of truth, all the stakeholders can 
+  suggest changes, improvements, updates, or deletes.
+• Knowledge sharing: Stakeholders share best practices, using templates and popular 
+  design patterns, and share code snippets so teams can learn from each other.
+
+
+Configure a Python Virtual Environment
+  A Python Virtual Environment is a tool to keep your application environment separate
+  from the system-wide environment. Ansible, like all Python applications, requires some
+  Python libraries as dependencies. Maintaining up-to-date all the Python dependencies
+  of Ansible and of the Ansible collection without interfering with your Linux system can
+  be challenging without a Python Virtual Environment.
+
+When the complexity of the Python Virtual Environment grows too much, it can
+  become challenging to manage the Python library dependencies and Ansible module
+  dependencies. You can use the Ansible Execution Environment instead.
+
+Kubernetes Networking
+Kubernetes uses five techniques to track pod status and direct traffic to the appropriate pods:
+–– ClusterIP: Accessible only internally within the cluster.
+–– NodePort: Exposes a static port (the NodePort) on each node’s IP that can be accessed 
+   from outside the cluster by the address NodeIP:NodePort. The NodePort service connects 
+   to a ClusterIP service that is created automatically for your NodePort.
+–– LoadBalancer: Exposes a load balancer externally. The LoadBalancer service 
+   connects to the NodePort and ClusterIP, automatically created.
+–– Ingress: Reduces the amount of load balancer for HTTP and HTTPS defining traffic routes.
+–– ExternalName: Maps to a DNS name. It returns a CNAME record with its value.
+
+The simplest network configuration is the ClusterIP service type. This is accessible
+  from within the cluster only. A ClusterIP service IP address is assigned from the cluster
+  range. The ClusterIP service routes the traffic to the nodes. Behind the scene, each
+  node runs a kube-proxy container for this task. The kube-proxy container creates the
+  appropriate IPtables firewall rules to redirect the ClusterIP traffic to the appropriate Pod
+  IP address. This type of service is used by frontend pods to redirect traffic to the backend
+  pods or to act like load balancers.
+
+Since Kubernetes version 1.21, PodDisruptionBudget (PDB) is a way to limit the
+  number of concurrent disruptions that your application experiences, thus allowing for
+  high availability. Meanwhile, it allows the cluster administrator to manage the nodes of
+  the cluster by manually draining a node or preventing an upgrade from taking too many
+  copies of the application offline. PDB allows you to specify and overprovision in order
+  to guarantee the high availability of your service. PDB is different from auto-scaling
+  because it overprovisions the application on purpose. For full disclosure, if there is a failure 
+  in the production infrastructure and you need to have a Disaster Recovery (DR) infrastructure.
+
+
+Auto-scaling
+  For the Amazon Web Services (AWS) provider, you just need to download and install the 
+  cluster-autoscaler-autodiscover.yaml YAML manifest file
+  After a successful download, you can apply it to your Kubernetes cluster:
+$ kubectl apply -f cluster-autoscaler-autodiscover.yaml
+  You can also tune some parameters in the kube-system namespace:
+$ kubectl -n kube-system edit deployment.apps/cluster-autoscaler  
+  Set the appropriate Kubernetes version to the Cluster Autoscaler image tag with the
+  following command. Replace 1.21 with your Kubernetes version value.
+$ kubectl set image deployment cluster-autoscaler -n kube-system \
+  cluster-autoscaler=k8s.gcr.io/autoscaling/cluster-autoscaler:v1.21
+  
+Pods status pile up in a Pending status and they transition to Ready when they can handle the traffic.
+The Vertical Pod Autoscaler has three working modes:
+  • Off: Recommended only for simulations
+  • Initial: Initialization only
+  • Auto: Performing the action on your cluster
+It’s always a good practice to start with the Off mode and increase the more you have
+data about your traffic and usage. The wrong combination of horizontal and vertical
+Autoscaler can be difficult to troubleshoot and not obtain the desired result.
+
+NOTE: Using the latest tag is discouraged because it fails when rolling an update from 
+  image:latest to a new image:latest, even when the image tag has been updated. The latest 
+  tag is identical from the Kubernetes point of view to the current value.
+
+Namespace Resources
+  Assigning resources per pod is very granular but might be daunting. A more durable approach is 
+  to define resource needs at a namespace level. After creating a namespace, you can add a ResourceQuotas 
+  Kubernetes object that defines the CPU and memory limits and requests for each namespace. A more 
+  powerful Kubernetes object is LimitRange. Unlike the ResourceQuotas Kubernetes object, which
+  looks at the namespace as a whole, a LimitRange Kubernetes object applies to an individual pod.
+
+
+  

@@ -35,3 +35,65 @@ $ pip install ansible-runner
 
 $ ansible-runner run -p ping.yml --inventory inventory --container-­image=my_ee .
 
+
+# obtain a valid Kubernetes authentication token
+$ kubectrl config set-credentials developer/foo.example.com –-username=developer --password=developer
+• set-credentials developer/foo.example.com Creates a new credential named developer/foo.example.com 
+  (I prefer to use the same cluster name, but you can specify any name)
+
+# configure the cluster connection server:
+$ k config set-cluster foo.example.com –-insecure-skip-tls -­verify=true –-server=https://foo.example.com
+• set-cluster foo.example.com: Creates a new cluster named foo.example.com (you can specify any name)
+• –-insecure-skip-tls-verify=true: Skips TLS certificates validation 
+• –-server=https://foo.example.com: Specifies the cluster URI
+
+# Then you can join in a context the cluster and credentials information:
+$ kubectl config set-context default/foo.example.com/developer \
+    –-user=developer/foo.example.com –-namespace=default –-cluster=foo.example.com
+• set-context default/foo.example.com/developer: Creates a new context named 
+    default/foo.example.com/developer (you can specify any name)
+• –-user=developer/foo.example.com: Skips TLS certificates validation
+• –-cluster=foo.example.com: Specifies the cluster configuration name
+
+$ kubectl config use-context default/foo.example.com/developer
+
+
+# creating virtual environment
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ pip3 install --upgrade pip setuptools
+# then you can install e.g
+$ pip3 install PyYAML jsonpatch kubernetes # or for ansible: 
+$ ansible-galaxy collection install cloud.common
+$ ansible-galaxy collection install kubernetes.core 
+
+#  You can save all the Python libraries and their dependencies using the pip3 freeze
+   command and save the result to requirements.txt. Sharing this file with someone else
+   or another system will result in the same configuration of this virtual environment.
+$ pip3 freeze > requirements.txt
+
+# You can deactivate your virtual environment at any time and return to your system console. You 
+  should activate the virtual environment every time you want to use it. The virtual environment 
+  preserves all installed libraries and collections.
+$ deactivate
+
+
+# change the number of replicas from the current number to three of your nginx deployment:
+$ kubectl scale deployment nginx --replicas=3
+
+# scale down 
+$ kubectl scale deployment nginx --replicas=1
+
+
+# initialize a rolling update process to deploy the image nginx with tag 1.23 (e.g from 1.22)
+$ kubectl set image deployments/nginx=nginx:1.23
+
+# verify the status of the rolling update: 
+$ kubectl rollout status deployment nginx
+
+# rollback to the previous image if needed
+$ kubectl rollout undo deployments nginx
+
+# see logs for the rolling 
+$ kubectl rollout history deployment nginx
+

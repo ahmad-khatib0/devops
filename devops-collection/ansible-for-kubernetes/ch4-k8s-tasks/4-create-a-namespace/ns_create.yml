@@ -1,0 +1,17 @@
+---
+# automate the creation of the ansible-examples namespace in Kubernetes
+# ansible-playbook -i inventory ns_create.yml
+- name: k8s ns
+  hosts: all
+  vars:
+    myproject: 'ansible-examples'
+  tasks:
+    - name: namespace present
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ myproject }}'
+        state: present
+#
+# the state parameter determines if an object should be created (the - present option),
+# updated (the - patched option), or deleted (the - absent option)
