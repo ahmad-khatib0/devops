@@ -1,0 +1,8 @@
+---
+# $ ansible-playbook -i inventory.k8s.yml ping.yml
+- name: test
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: test connection
+      ansible.builtin.ping:

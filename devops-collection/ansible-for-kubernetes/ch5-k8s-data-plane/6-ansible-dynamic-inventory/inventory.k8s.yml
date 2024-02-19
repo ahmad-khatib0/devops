@@ -1,0 +1,7 @@
+---
+# The Ansible plugin kubernetes.core.k8s searches for all files with the
+# .k8s.yml or .k8s.yaml suffixes in the current working directory,
+plugin: kubernetes.core.k8s
+connections:
+  - namespaces:
+      - ansible-examples

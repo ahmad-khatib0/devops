@@ -73,3 +73,103 @@ Configure an Ansible Execution Environment
   Playbook in an Ansible Execution Environment. The Ansible Runner enables you to run
   the Ansible Execution Environment as a container in the current machine.
 
+
+The following stages apply to the SDLC methodology:
+  1. Requirements analysis: Identify the problems and use cases.
+  2. Planning: Define the costs and resources needed.
+  3. Architecture design: Determine the design specification requirements.
+  4. Software development: Build the software.
+  5. Testing: Test for defects and deficiencies and verify the meeting of the specifications.
+  6. Deployment: Launch the product to the customer and get feedback.
+
+
+The twelve-factor application
+  1. Codebase: Create one codebase tracked in revision control, many deploys.
+  2. Dependencies: Explicitly declare and isolate dependencies.
+  3. Config: Store the config in the environment.
+  4. Backing services: Treat backing services as attached resources.
+  5. Build, release, run: Strictly separate build and run stages.
+  6. Processes: Execute the app as one or more stateless processes.
+  7. Port binding: Export services via port binding.
+  8. Concurrency: Scale out via the process model.
+  9. Disposability: Maximize robustness with fast startup and graceful shutdown processes.
+  10. Dev/prod parity: Keep development, staging, and production as similar as possible.
+  11. Logs: Treat logs as event streams.
+  12. Admin processes: Run admin/management tasks as one-off processes.
+  
+
+You can configure RBAC to ensure that only authorized users can access the resources in the 
+  namespace. Once this is done, the Pod Security Standards will be applied at the Namespace Level. 
+  Since Kubernetes version 1.23, Pod Security Admission (PSA) has been enabled in Kubernetes per cluster 
+  and namespace lever by default. It enables you to use these built-in Pod Security Standards modes:
+    • enforce (baseline)
+    • audit (restricted)
+    • warn (restricted)
+  Using Kubernetes labels of the built-in Pod Security Admission, it is possible to enable pod security 
+  standards at the namespace level. You can use the following label to set the pod security standard policy:
+      pod-security.kubernetes.io/<MODE>: <LEVEL>
+    • MODE sets the pod security standard modes: enforce, audit, warn
+    • LEVEL sets the pod security standard levels: privileged, baseline, or restricted
+
+Kubernetes has supported AppArmor since version 1.4. At the moment of writing this book, Kubernetes’ 
+  annotation is the way to use the feature. When promoted to General Availability (GA), each 
+  annotation will be a Kubernetes Object field. AppArmor is used to restrict a container’s access 
+  to resources; you need to create an AppArmor profile for the container. This profile will define 
+  the security rules for the containers, such as which files and directories it can access, which 
+  system calls it can make, and which other containers or processes it can interact with. Additionally, 
+  you need to configure the container runtime to ensure that the AppArmor profile is applied when the 
+  container is started. Kubernetes-supported container runtimes that support AppArmor technology
+  are Docker, CRI-O, and containerd. Once this is done, the container will be restricted to the access 
+  rules defined in the AppArmor profile. 
+# AppArmor profiles are specified per pod by adding the following annotation:
+$ container.apparmor.security.beta.kubernetes.io/<container_name>:<profile_ref>
+  You can deploy an application protected with AppArmor using the kubectl or Ansible 
+  kubernetes.core.k8s module. There is no native Kubernetes way to load AppArmor profiles onto nodes. 
+  However, you can use Ansible as an initialization script to enable it.
+
+Security Pod Syscalls (seccomp)
+  A system call, or syscall, is a direct request from your application to the operating system
+  where it is executed. The typical use case is accessing hardware resources, launching threads, 
+  communicating with other processes, and interacting with internal kernel services. You can use 
+  the Linux secure computing mode, called seccomp, to enable a "secure" state one-way transition, 
+  where it is possible to use only exit, sigreturn, read, and write on an already-open file 
+  descriptor system call. Of course, you can restrict the syscalls of the container creating a 
+  seccomp profile for the container. A profile defines a sandbox of the privileges of a process, 
+  restricting the call from the userspace to the kernel. This profile will define the syscalls that the 
+  container can make, as well as the parameters and arguments that can be used when making the syscalls.
+
+Ansible Dynamic Inventory
+  Ansible Dynamic Inventory enables you to generate Ansible Inventories automatically. The information 
+  is read from external sources such as cloud providers, CMDBs, and inventory management systems. 
+  This allows users to deploy infrastructure and applications dynamically and automate them quickly.
+  The inventory is stored in a YAML file, which is then used by Ansible to determine which hosts to 
+  target for tasks. Ansible Dynamic Inventory can be used for several different use cases, such 
+  as dynamic scaling, provisioning, and application deployment. Ansible can also use multiple 
+  inventory sources at the same time. You can mix and match dynamic and statically managed 
+  inventory sources in the same Ansible run.
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                               │
+│ The default behavior for Ansible to connect to any target hosts is to execute the             │
+│ authentication phase and then copy a file generated by every single task of your              │
+│ Ansible Playbook. Ansible connects to remote servers and executes code with the same          │
+│ username. You can specify the connection username with the ansible_user variable              │
+│ on the inventory. You can change the running user by specifying remote_user in the            │
+│ playbook or globally in the ansible.cfg file. After a successful connection, Ansible          │
+│ tries to create a temporary directory in the home of the user of the connection, where        │
+│ it copies the task files if they doesn’t already exist. If Ansible is unable to create the    │
+│ temporary directory, if that user does not have a home directory, or if their home            │
+│ directory permissions do not allow them to write access, you can customize the path of        │
+│ the temporary directory via the ansible.cfg file. For example, you can use the following      │
+│ path in the /tmp directory:      remote_tmp = /tmp/.ansible-${USER}/tmp                       │
+│ Ansible pipelining executes the Ansible modules on the target directly without the prior file │
+│ transfer, consequently reducing the network operations. Another pleasant side-effect is the   │
+│ increase in performance when enabled. By default, Ansible pipelining is disabled. You can     │
+│ enable it using the ANSIBLE_PIPELINING=True environment variable or setting the               │
+│ pipelining=true key in the [connection] and [defaults] sections of the ansible.cfg file.      │
+│                                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+

@@ -97,3 +97,19 @@ $ kubectl rollout undo deployments nginx
 # see logs for the rolling 
 $ kubectl rollout history deployment nginx
 
+# The following command enables the “warn” pod security standard on the baseline
+  each time you try to retrieve the “latest” tag:
+$ kubectl label --overwrite ns example pod-security.kubernetes.io/warn=baseline \
+  pod-security.kubernetes.io/warn-version=latest
+# From now on, whenever you try to retrieve a “latest” tag for a pod, you will receive a warning 
+   on output that warns you about the policy violation: violate PodSecurity "restricted:latest"
+
+# list all the containers in the namespace ansible-examples (in ./ch5-k8s-data-plane/6-ansible-dynamic-inventory/inventory.k8s.yml)
+$ ansible-inventory -i inventory.k8s.yml --list
+
+
+
+
+
+
+
