@@ -1,0 +1,14 @@
+---
+# To implement such a k8s deployment pipeline in practice, there are many products on the
+# market.For GKE users, one option is Cloud Build. You can set up a trigger so that when
+# your configuration repository is pushed, it will run “kubectl apply -f .”.
+steps:
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: Deploy
+    args:
+      - 'apply'
+      - '-f'
+      - '$FOLDER'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=us-west1'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster'

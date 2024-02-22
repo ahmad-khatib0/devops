@@ -530,4 +530,37 @@ Background Processing Summary
 • Liveness checks are still relevant for Pods that process background tasks (to detect
   stuck/hung processes), and can be configured using an exec liveness check
 
+Namespaces as their name suggests provide name uniqueness within a single logical space. So you 
+  can setup a “production” namespace and a “staging” namespace, and have the deployment object 
+  “foo-deployment” and “foo-service” in each of them. This avoids the need to excessively modify 
+  your configuration for the different environments, like creating “foo-staging-deployment” and 
+  “foo-staging-service”, and provides some protection against accidental changes as by default, 
+  kubectl commands only apply to the namespace that’s currently active.
+
+The kube-system namespace is where the system pods go, best not to touch this one unless you 
+  know what you’re doing. default is the default user namespace, but I recommend creating your
+  own dedicated ones, one for each application environment.
+
+Storing Secrets Options and GitOps
+SEPARATE REPOSITORY
+  A simple option is to have a separate configuration repository for your secrets with fewer users
+  granted access than your regular repos. You still have all the benefits of configuration as code
+  (code reviews, rollback, etc), but can limit the audience. If you operate a repository with
+  granular access control, you could place the secrets in an access-controlled folder of that repo.
+  One logical place for this repository to be located would be together with your production
+  resources at your cloud provider, with the same access control as your production
+  environment. Since anyone with access to your production environment has the secrets
+  anyway, this model doesn’t provide any additional access if someone compromises the account.
+
+SEALED SECRETS
+  The Sealed Secrets 5 project has an interesting approach; it encodes all of your secrets with a
+  master secret. While you still end up with the same problem of where to store the master
+  secret, it means that the encoded secrets can be included in the main configuration repository
+  with all the benefits that this entails, like rollback.
+
+SECRETS SERVICE
+  Another option is to run a separate service that can inject secrets into your cluster. Vault by
+  HashiCorp 6 is a very popular implementation of this concept, and is available as open source
+  if you wish to run it yourself.
+
   

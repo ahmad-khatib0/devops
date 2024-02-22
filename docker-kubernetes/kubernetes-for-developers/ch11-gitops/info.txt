@@ -1,0 +1,32 @@
+
+/_debug #A
+/_cluster #B
+/staging #C
+/production #C
+
+#A A directory for any debug scripts you wish to store for all developers
+
+#B The cluster configuration, for example the namespace configuration files. 
+   These are only used during cluster creation
+   
+#C The environment configuration folders
+   
+
+
+$ kubectl create secret generic secret-files \ 
+  --from-file=example.key=./example.key --dry-run=client -o yaml
+# this command will automate generating 
+  
+apiVersion: v1
+kind: Secret
+data:
+  example.key: LS0tLS1CRUdJTiBSU0EgU...SBLRVktLS0tLQo=
+metadata:
+  creationTimestamp: null
+  name: secret-files
+
+The --dry-run=client -o yaml part means that you won’t actually create the secret on the server, 
+  and instead will output it as YAML (for you to place in a configuration file, to be later applied 
+  to the server with kubectl apply -f filename.yaml). Omitting the dry-run, would create the secret 
+  directly on the cluster (the imperative style of creating Kubernetes objects).
+
