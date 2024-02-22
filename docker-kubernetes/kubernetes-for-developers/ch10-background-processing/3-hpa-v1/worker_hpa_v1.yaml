@@ -1,0 +1,25 @@
+---
+#
+# NOTE:
+# HPA uses Absolute CPU utilization numbers
+# Note that this utilization target isn’t expressed as a percentage of the Pod’s total requested
+# CPU, but rather an absolute number in CPU units. Since our Pod deployment (as revised in 10.1.2)
+# requests 250mCPU (i.e. 25% of a core), a 20% target in the HPA means that a scale up will occur
+# when the average Pod is consuming greater than 20% of a core (200mCPU). In relative terms, this
+# works out to 80% of its total requested capacity—being 20% of a core actual usage divided by 25%
+# of a core requested, but don’t make the mistake of specifying that relative percentage
+# as your targetCPUUtilizationPercentage.
+#
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pi-worker-autoscaler
+spec:
+  minReplicas: 2
+  maxReplicas: 10
+  # aiming for each Pod to be using less than 20% of a CPU.
+  targetCPUUtilizationPercentage: 20
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pi-worker

@@ -1,0 +1,24 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jobworker
+spec:
+  backoffLimit: 2
+  parallelism: 2
+  template:
+    metadata:
+      labels:
+        pod: pi
+    spec:
+      containers:
+        - name: pi-container
+          image: docker.io/wdenniss/pi_worker:3
+          env:
+            - name: REDIS_HOST
+              value: redis-0.redis-service
+            - name: PYTHONUNBUFFERED
+              value: '1'
+            - name: COMPLETE_WHEN_EMPTY
+              value: '1'
+      restartPolicy: OnFailure

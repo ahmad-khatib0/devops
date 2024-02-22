@@ -1,0 +1,27 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: addwork
+
+# CronJob will spawn a new Job on a schedule (which in turn, spawns a new Pod). You can
+# inspect these historic jobs, as they remain with the “Complete” status. The
+# successfulJobsHistoryLimit and failedJobsHistoryLimit options in the CronJobSpec 4
+# can be can be used to govern how many of those historic Jobs will be kept.
+spec:
+  schedule: '*/5 * * * *'
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          containers:
+            - name: pi-container
+              image: docker.io/wdenniss/pi_worker:2
+              command: ['python3', 'add_tasks.py']
+              env:
+                - name: REDIS_HOST
+                  value: redis-0.redis-service
+                - name: PYTHONUNBUFFERED
+                  value: '1'
+          restartPolicy: Never

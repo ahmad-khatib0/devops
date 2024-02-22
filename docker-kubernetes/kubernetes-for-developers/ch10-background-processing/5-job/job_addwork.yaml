@@ -1,0 +1,24 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: addwork
+
+# how many times to try and run the Job. This encompasses both crashes, but also node failures.
+# For example, if you set this value to 6, and the Job crashes twice on a node, then that node is
+# removed, the Job controller will reschedule the Pod elsewhere and try it 4 more times. Some practitioners
+# like to use Never when debugging as it’s easier to see all the failed Pods and query their logs.
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      containers:
+        - name: pi-container
+          image: docker.io/wdenniss/pi_worker:2
+          command: ['python3', 'add_tasks.py']
+          env:
+            - name: REDIS_HOST
+              value: redis-0.redis-service
+            - name: PYTHONUNBUFFERED
+              value: '1'
+      restartPolicy: Never

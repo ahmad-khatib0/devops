@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pi-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      pod: pi
+  template:
+    metadata:
+      labels:
+        pod: pi
+    spec:
+      containers:
+        - name: pi-container
+          image: docker.io/wdenniss/pi_worker:2
+          env:
+            # The Kubernetes service host name of the master Redis pod
+            - name: REDIS_HOST
+              value: redis-0.redis-service
+            # Env variable to instruct Python to output all print statements immediately
+            - name: PYTHONUNBUFFERED
+              value: '1'
+          resources:
+            requests:
+              cpu: 250m
+              memory: 250Mi
+      terminationGracePeriodSeconds: 120

@@ -503,4 +503,31 @@ One thing to be very aware of is that commonly by default, volumes that Kubernet
   if they do wish to delete them, but avoiding accidental delete). But, deleting the PersistantVolumeClaim 
   objects will delete the underlying disk resources and it’s not that hard to do (e.g. by passing --all to 
   the relevant kubectl delete command).
+
+You may be wondering why a separate construct is needed in Kubernetes to run something
+  once, since stand-alone Pods could do that as well. While it’s true that you can schedule a Pod
+  to perform a task and shutdown once its complete, there is no controller to ensure that the
+  task actually completes. For example, if the Pod was evicted due to a maintenance event before
+  it had a chance to complete. Job adds some useful constructs around the Pod to ensure that
+  the task will complete (by rescheduling it if it failed or was evicted), as well as the potential to
+  track multiple completions and parallelism.
+  
+If you use exec to perform maintenance tasks, then your task is sharing the resources with the Pod
+  which isn’t great—the pod may not have enough resources to handle both, and you are impacting the 
+  performance. By moving tasks to a Job, they get their own Pod, with their own resource allocation.
+
+Background Processing Summary
+• Deployments can be used to build a continuously running job queue, using a queue
+  data structure like that offered by Redis for coordination.
+• The background processing that many websites run to offload heavy requests would
+  typically be run as a Deployment
+• Kubernetes also has a dedicated Job object for running tasks
+• Jobs can be used for one-off tasks, such as a manual maintenance task
+• CronJob can be used to schedule Jobs to run, for example a daily cleanup task
+• The Job object also supports batch jobs through the completions and parallel configuration
+• Unlike a Deployment-based background queue, Job can be used to schedule work on a
+  static queue, avoiding the need for a queue data structure
+• Liveness checks are still relevant for Pods that process background tasks (to detect
+  stuck/hung processes), and can be configured using an exec liveness check
+
   

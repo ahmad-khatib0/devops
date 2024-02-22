@@ -1,0 +1,36 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: echo
+
+# Indexed are. Usable when you know ahead of time how many tasks to process, and the task list
+# is one that is easily indexed. One example is rendering a movie. You know the number of frames
+# (queue length) and can easily pass each instantiation the frame number (i.e. index into the queue)
+# of the frame to render.
+#
+# Kubernetes will run the Job the total number of times (completions) you specify, creating
+# a Pod for each task. Each time it runs, it will give the Job the next index (supplied in the
+# environment variable $JOB_COMPLETION_INDEX). If your work is naturally indexed, for example
+# rendering frames in an animated movie, this works great! You can easily instruct Kubernetes
+# to run the job 30,000 times (render 30,000 frames), and it will give each pod the frame
+# number. Another obvious approach is to give each job the full list of work using some data
+# structure (e.g. an array of tasks encoded in YAML or just plain text, one per line), and
+# Kubernetes supplies the index. The Job can then lookup the task in the list using the index.
+spec:
+  completions: 5 # the number of times to run the job (upper bound of the index)
+  parallelism: 3 #  number of worker pods to run in parallel
+  completionMode: Indexed # Run in indexed mode, passing in JOB_COMPLETION_INDEX
+  template:
+    metadata:
+      labels:
+        pod: framerender
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: 'worker'
+          image: 'docker.io/library/busybox'
+          command: ['echo', 'render frame: $(JOB_COMPLETION_INDEX)']
+          # Your application can either use this environment variable directly, or you can use an
+          # init container to take the index and perform any configuration steps needed for the
+          # main container to perform the work, for example by building a script that will be run.
