@@ -1,0 +1,34 @@
+---
+# Here is a ClusterRole to provide the additional permissions needed to
+# create StorageClass and PriorityClass objects:
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: developer-cluster-access
+rules:
+  - apiGroups: # A
+      - scheduling.k8s.io
+    resources:
+      - priorityclasses
+    verbs: ['*']
+  - apiGroups: # B
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs: ['*']
+  - apiGroups: # c
+      - ''
+    resources:
+      - persistentvolumes
+      - namespaces
+    verbs: ['get', 'list']
+#
+#
+#
+# A Grant developer access to modify all PriorityClasses in the cluster
+# B Grant developer access to modify all StorageClasses in the cluster
+# C Grant developer read-only access to view and list PersistentVolumes and Namespaces
+# And the ClusterRoleBinding which looks very similar to the RoleBinding used earlier:
+#
+#
+#

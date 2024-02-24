@@ -1,0 +1,23 @@
+---
+#
+# PDBs allow you to inform Kubernetes how many pods, or what percentage of your pods you are
+# willing to have unavailable, for your workload to still function as you designed it.
+#
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: timeserver-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      pod: timeserver-pod
+#
+#
+# Deploying this into your cluster will ensure that at no time during disruptions will more than
+# 1 of your Pods be unavailable. An alternative configuration uses minAvailable to set how
+# many replicas you need. I prefer maxUnavailable, as it works better with scaling (if you use
+# minAvailable, you may need to scale that value along with your replica count to retain the
+# desired minimum availability, which is just extra work).
+#
+#

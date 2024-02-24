@@ -1,0 +1,59 @@
+---
+#
+#
+# create a Role which gives the developer access to do pretty much everything within their
+# namespace, except to modify the namespace itself and remove the Pod Security annotation,
+# the following is a Role that can achieve that:
+#
+# This Role grants access to the team1 namespace, and allows the user to modify Pods, Services,
+# Secrets and ConfigMaps within the core API grouping, and all resources in the apps,
+# autoscaling, batch, networking.k8s.io and policy groupings. This particular set of permissions
+# will let the developer deploy nearly every YAML file, including Deployments,
+# StatefulSets Services, Ingress, HPA Autoscaling, Jobs and more. Importantly, the
+# “namespaces” resource is not listed in the core API group (the empty string group), so the
+# user won’t be able to modify the namespace.
+#
+#
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-access
+  namespace: team1
+rules:
+  - apiGroups:
+      - '' # A
+    resources:
+      - namespaces # B
+    verbs: ['get'] # B
+  - apiGroups: # C
+      - ''
+    resources: # C
+      - events
+      - pods
+      - pods/log
+      - pods/portforward
+      - services
+      - secrets
+      - configmaps
+      - persistentvolumeclaims
+    verbs: ['*']
+  - apiGroups:
+      - apps # D
+      - autoscaling # E
+      - batch # F
+      - networking.k8s.io # G
+      - policy # H
+    resources: ['*']
+    verbs: ['*']
+#
+#
+# A The empty string here indicates the core API group
+# B Allow developers to view the namespace resource, but not edit it
+# C Grant developers full access on core workload types
+# D ‘apps’ includes resources like Deployment
+# E ‘autoscaling’ includes resources like the HorizontalPodAutoscaler
+# F ‘batch’ includes the Job workloads
+# G ‘networking.k8s.io’ is needed so developers can configure Ingress
+# H ‘policy’ is required for configuring PodDisruptionBudgets
+#
+#

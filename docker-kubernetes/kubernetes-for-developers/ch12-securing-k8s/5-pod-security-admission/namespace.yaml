@@ -1,0 +1,35 @@
+---
+#
+#
+# These two labels set the policy we want to enforce, and the version of the policy that will
+# be enforced. While you can skip the version label, there is a good reason not to as the definition
+# of what the policy actually enforces may evolve as new security risks are uncovered. If we
+# don’t reference the version, then we’ll get whatever the current policy is, which could break
+# existing workloads as that policy is updated. Ideally you would test the newer policy versions
+# in a staging namespace or cluster to validate them first, before updating the enforce-version
+# in your production environment.
+#
+# $ kubectl create -f namespace.yaml
+# $ kubectl config set-context --current --namespace=team1
+#
+# so then Now if we try to deploy a Pod that doesn’t set runAsNonRoot the pods will be rejected.
+#
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.28
+#
+#
+# NOTE: Debugging Pod Admission Rejects for Deployments
+# Unfortunately, if you create a Deployment that violates these constraints, you won’t see an error
+# printed on the console like for my example when I tried to create the Pod directly. This is an
+# unfortunate fact of Kubernetes’ implementation of Deployment. Creating the Deployment object itself
+# succeeds, so you don’t see an error on the console. However, when the Deployment then goes to create
+# it’s Pods, they will fail. Also, since the Deployment actually creates an object called a ReplicaSet
+# under the hood to manage Pods of a particular version of the deployment, you won’t even find this
+# error if you describe the Deployment object, but rather need to inspect its ReplicaSet.
+#
+#

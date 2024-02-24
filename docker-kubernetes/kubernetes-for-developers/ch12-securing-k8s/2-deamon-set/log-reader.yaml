@@ -1,0 +1,43 @@
+---
+#
+# Typically, application developers will not be creating DaemonSets directly, but rather be
+# using off the shelf ones from vendors. By way of example though, here is a simple DaemonSet
+# that reads logs from the node into standard output (stdout).
+#
+# This is just a trivial example. In practice, you will likely encounter DaemonSets
+# when deploying logging, monitoring, and security solutions from vendors.
+#
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: logreader
+spec:
+  selector:
+    matchLabels:
+      pod: logreader-pod
+  template:
+    metadata:
+      labels:
+        pod: logreader-pod
+    spec:
+      containers:
+        - image: ubuntu
+          command:
+            - bash
+            - '-c'
+            - |
+              tail -f /var/log/containers/*_kube-system_*.log
+          name: logreader-container
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+              ephemeral-storage: 100Mi
+          volumeMounts:
+            - name: logpath
+              mountPath: /var/log
+              readOnly: true
+      volumes:
+        - hostPath:
+            path: /var/log
+          name: logpath
