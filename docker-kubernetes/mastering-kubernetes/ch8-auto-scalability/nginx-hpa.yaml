@@ -1,0 +1,32 @@
+---
+# Creating a horizontal pod autoscaler
+# To declare a horizontal pod autoscaler, we need a workload resource (Deployment or StatefulSet),
+# and a HorizontalPodAutoscaler resource.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx
+spec:
+  maxReplicas: 4
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 90
+# helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+# helm upgrade --install metrics-server metrics-server/metrics-server --namespace monitoring --create-namespace
+# this repo is required because The HPA requires a metrics server to measure the CPU percentage
+#
+# Unfortunately, the metrics-server can’t run on a KinD cluster out of the box due to certificate issues.
+# This is easy to fix with the following command:
+# k patch -n monitoring deployment metrics-server --type=json \
+# -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"-- kubelet-insecure-tls"}]'
+#
+# kubectl wait deployment metrics-server -n monitoring --for=condition=Available

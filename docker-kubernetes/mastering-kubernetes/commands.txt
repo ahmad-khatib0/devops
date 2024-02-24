@@ -211,6 +211,59 @@ $ k get jobs
 
 $ k get pod hue-scheduler -o json | jq .spec.containers
 
+$ k rollout status deployment/nginx-deployment
+$ k get deployment nginx -o yaml | grep strategy -A 4
+
+# dispaly resources usage
+$ k top po
+
+# creating autoscaling pods using kubectl
+$ k autoscale deployment bash-loop --min=4 --max=6 --cpu-percent=50
+
+
+$ k set image deployment/hue-reminders hue-reminders=g1g1/hue-reminders:3.0
+$ k rollout history deployment hue-reminders
+
+# Kubectl also offers a convenient imperative command that can achieve the same result:
+$ kubectl scale deployment YOUR_DEPLOYMENT –replicas=6
+
+# You can watch the status of the deployment with the following:
+$ kubectl get pods -w
+# To watch all resources using a single command (which kubectl can’t do by itself), 
+  the Linux watch command is convenient:
+$ watch -d kubectl get deploy,hpa,pods 
+
+# get the forwarding-rule info (if you are using matrics with GKE for example)
+$ kubectl get ingress -o =jsonpath="{.items[0].metadata.annotations['ingress\.kubernetes\.io\/forwarding-rule']}"
+
+$ kubectl rollout restart deployment DEPLOYMENT_NAME
+
+$ minikube create --nodes 3
+
+# In this example, spot=true is the name we gave to the taint, and is used later when
+# marking Pods as able to tolerate this taint
+$ kubectl taint nodes NODE_NAME spot=true:NoSchedule
+$ kubectl taint nodes NODE_NAME spot-
+
+# In GKE Standard, you can taint node pools when you create them. For example, you if you’re 
+# creating a spot node pool, you can configure all the nodes to be tainted as follows
+$ gcloud container node-pools create NODE_POOL_NAME --cluster CLUSTER_NAME --spot --node-taints spot=true:NoSchedule
+
+$ kubectl taint nodes minikube-m02 group=1:NoSchedule #C
+$ kubectl label node minikube-m02 group=1 #C
+$ kubectl taint nodes minikube-m03 group=2:NoSchedule #D
+$ kubectl label node minikube-m03 group=2 #D
+
+#C taint and label the m02 node for group 1
+#D taint and label the m03 node for group 2
+
+
+$ kubectl patch storageclass standard-rwo -p 
+  '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+
+# get quota
+$ k get quota
+
 
 
 

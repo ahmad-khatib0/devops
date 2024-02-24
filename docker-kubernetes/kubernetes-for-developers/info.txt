@@ -563,4 +563,87 @@ SECRETS SERVICE
   HashiCorp 6 is a very popular implementation of this concept, and is available as open source
   if you wish to run it yourself.
 
+
+#
+#
+# INSTALLING POD SECURITY ADMISSION
+# First, verify if the pod-security-webhook is installed on your cluster. If it shows up in the list
+# of ValidatingWebhookConfigurations, then you don’t need to install it.
+# $ kubectl get ValidatingWebhookConfiguration | grep pod-security-webhook.kubernetes.io
+#
+# If you need to install it, then you can in the following way:
+# $ git clone https://github.com/kubernetes/pod-security-admission.git
+# $ cd pod-security-admission/webhook
+# $ make certs
+# $ kubectl apply -k .
+#
+#
   
+
+POD SECURITY POLICIES
+Pod Security defines 6 three security policy levels that apply at a namespace level. These are:
+
+# Privileged – Pods have unrestricted administrative access, and can gain root access to nodes.
+
+# Baseline – Pods cannot elevate privileges to gain administrative access, while still
+  retaining most functionality.
+  
+# Restricted – Implements current best practices for hardening (i.e. defense in depth), 
+  adding additional layers of protection over the baseline profile, including restricting 
+  running as the root user.
+
+# Basically: privileged should be used only for system workloads. Baseline offers a good
+  balance of security, and compatibility, while restricted offers additional defense in depth at a
+  cost of some compatibility (such as needing to ensure all containers can run as non-root
+
+RBAC is configured through two configuration types at a namespace level: Role, and RoleBinding. 
+  Role is where you define a particular role for a namespace, like the “developer” role. RoleBinding 
+  is where you assign this role to subjects in your cluster, i.e. your developer identities. There 
+  are also cluster-level versions of these being ClusterRole and ClusterRoleBinding which behave 
+  identically to their namespace level counterparts, except that they grant access at a cluster level.
+
+Let’s say you have a Pod that belongs to a Deployment in the cluster which needs to access
+  the Kubernetes API, like perhaps it’s monitoring the pod status of another deployment. To give
+  this machine user access, you can create a Kubernetes “ServiceAccount”, and then reference
+  this in the subject of your RBAC binding instead of a user.
+  You may see some documentation that sets up “ServiceAccounts” for human users, where
+  the user then downloads the certs of the service account to interact with Kubernetes. While
+  this is one way to configure your developers and bypasses the need to setup identify
+  federation, it is not recommended as it sits outside of your identity system. For example, if
+  say the developer resigned and their account was suspended in the identity system, the tokens
+  they downloaded for the ServiceAccount would continue to be valid. It’s better to properly
+  configure identity federation and only use “User” subjects for human users, so that if the user
+  is suspended their Kubernetes access will also be revoked. Once again, managed platforms
+  like Google Cloud make this integration easy, for other platforms you may need to do a bit of
+  setup to get it working.
+
+
+Security Summary
+• Kubernetes is a large and complex system with a huge surface area
+
+• It’s important to keep your cluster and its nodes up to date to mitigate 
+  against security vulnerabilities
+
+• Docker base images also introduce their own attack surface area, requiring monitoring
+  and updating of deployed containers
+
+• Using the smallest possible base image can help to reduce this surface area, decreasing
+  the frequency of application updates to mitigate security vulnerabilities
+
+• DaemonSets are another workload type, along with Deployment, StatefulSet and Job,
+  commonly used to configure logging, monitoring, and security software in the cluster
+
+• The Pod Security Context is how Pods are configured to have elevated, or restricted permissions
+
+• Admission Controllers can be used to make changes to Kubernetes objects as they are
+  created, and also enforce requirements including around the Pod Security Context
+
+• Kubernetes ships with an Admission Controller named Pod Security Admission to enable
+  to you to enforce security profiles like baseline, for mitigating most known attacks and
+  restricted to enforce security best practices on pods
+
+• RBAC is a role-based permission system that allows users with the cluster administrator role 
+  to grant fine-grained access to developers in the system, for example restricting them to a 
+  given namespace, and preventing them from altering admission controller rules (like Pod Security)
+
+

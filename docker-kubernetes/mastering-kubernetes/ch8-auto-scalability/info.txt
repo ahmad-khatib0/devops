@@ -1,0 +1,63 @@
+Rolling updates
+  Rolling updates are updates where you gradually update components from the current version to the
+  next. This means that your cluster will run current and new components at the same time.
+it has the following capabilities built-in:
+  • Running server-side (it keeps going if your machine disconnects)
+  • Versioning
+  • Multiple concurrent rollouts
+  • Updating deployments
+  • Aggregating status across all pods
+  • Rollbacks
+  • Canary deployments
+  • Multiple upgrade strategies (rolling upgrade is the default)
+ ▲                                                                                                          ▲
+ █                                                                                                          █
+ █ For example, suppose service A depends on service B. Service B now has a breaking change. The v1 pods of █
+ █ service A can’t interoperate with the pods from service B v2. It is also undesirable from a reliability  █
+ █ and change management point of view to make the v2 pods of service B support the old and new APIs.       █
+ █ In this case, the solution may be to introduce an adapter service that implements the v1 API of the B    █
+ █ service. This service will sit between A and B and will translate requests and responses across versions.█
+ █                                                                                                          █
+ ▼                                                                                                          ▼
+
+
+With a blue-green
+  release, you prepare a full copy of your production environment with the new version. Now you have
+  two copies, old (blue) and new (green). It doesn’t matter which one is blue and which one is green.
+  The important thing is that you have two fully independent production environments. Currently, blue
+  is active and services all requests. You can run all your tests on green. Once you’re happy, you flip the
+  switch and green becomes active. If something goes wrong, rolling back is just as easy; just switch
+  back from green to blue.
+
+Canary deployments
+  The basic idea is to test the service in production but in a limited capacity. This way, if something is
+  wrong with the new version, only a small fraction of your users or a small fraction of requests will be
+  impacted. This can be implemented very easily in Kubernetes at the pod level. If a service is backed up 
+  by 10 pods and you deploy the new version to one pod, then only 10% of the requests will be routed by the 
+  service load balancer to the canary pod, while 90% of the requests are still serviced by the current version.
+
+
+Custom metrics 
+  The horizontal pod custom metrics helps autoscale your pods based on multiple custom metrics..
+  Using the horizontal pod autoscaler with custom metrics requires some configuration when launch-
+  ing your cluster. First, you need to enable the API aggregation layer. Then you need to register your
+  resource metrics API and your custom metrics API. This is not trivial. Enter Keda. ⬇️⬇️⬇️⬇️
+
+Keda
+  Keda stands for Kubernetes Event-Driven Autoscaling. It is an impressive project that packages ev-
+  erything you need to implement custom metrics for horizontal pod autoscaling. Typically, you would
+  want to scale Deployments, StatefulSets, or Jobs, but Keda can also scale CRDs as long as they have a
+  /scale subresource. Keda is deployed as an operator that watches several custom resources:
+      • • scaledobjects.keda.sh
+      • • scaledjobs.keda.sh
+      • • triggerauthentications.keda.sh
+      • • clustertriggerauthentications.keda.sh
+
+
+Handling scarce resources with limits and quotas: 
+  For example, a very extreme yet simple scenario is that a daemon set runs a pod on every node that 
+  requires 50% of the available memory. Now, Kubernetes can’t schedule any other pod that needs more than 
+  50% memory because the daemon set’s pod gets priority. Even if you provision new nodes, the daemon set 
+  will immediately commandeer half of the memory
+
+

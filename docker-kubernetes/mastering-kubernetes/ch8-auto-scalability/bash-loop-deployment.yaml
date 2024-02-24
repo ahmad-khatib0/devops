@@ -1,0 +1,41 @@
+---
+# a deployment that makes sure there are three replicas of a simple
+# pod and that just runs an infinite bash loop, apply it then:
+# k autoscale deployment bash-loop --min=4 --max=6 --cpu-percent=50
+#
+# Originally (this file) the deployment was set to have three replicas, but the autoscaler
+# has a minimum of four pods. What’s the effect on the deployment? Now the desired number of
+# replicas is four. If the average CPU utilization goes above 50%, then it will climb to five
+# or even six, but never below four:
+#
+# When we delete the horizontal pod autoscaler (that was create using the above autoscale command),
+# the deployment retains the last desired number of replicas (4, in this case). Nobody remembers
+# that the deployment was created initially with three replicas
+#
+# apply this: $ k autoscale deployment bash-loop --min=2 --max=6 --cpu-percent=50
+# Well, the deployment still maintains its four replicas, which is within the range (WHICH MEANS 4)
+#
+# However, the actual CPU utilization is just 2%. The deployment will eventually be scaled down to two
+# replicas, but because the horizontal pod autoscaler doesn’t scale down immediately, we have to wait
+# a few minutes (5 minutes by default)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bash-loop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: bash-loop
+  template:
+    metadata:
+      labels:
+        name: bash-loop
+    spec:
+      containers:
+        - name: bash-loop
+          image: g1g1/py-kube:0.3
+          resources:
+            requests:
+              cpu: 100m
+          command: ['/bin/bash', '-c', 'while true; do sleep 10; done']
