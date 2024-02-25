@@ -1,0 +1,149 @@
+
+Understanding stretched Kubernetes clusters
+  A stretched cluster (AKA wide cluster) is a single Kubernetes cluster where the control plane 
+  nodes and the work nodes are provisioned across multiple geographical availability zones or 
+  regions. Cloud providers offer this model for HA-managed Kubernetes clusters.
+
+Cluster API architecture
+  The Cluster API has a very clean and extensible architecture. The primary components are:
+• • The management cluster
+• • The work cluster
+• • The bootstrap provider
+• • The infrastructure provider
+• • The control plane
+• • Custom resources
+
+Management cluster
+  The management cluster is a Kubernetes cluster that is responsible for managing other 
+  Kubernetes clusters (work clusters). It runs the Cluster API control plane and providers,
+  and it hosts the Cluster API custom resources that represent the other clusters.
+
+Work cluster
+  A work cluster is just a regular Kubernetes cluster. These are the clusters that developers use to deploy 
+  their workloads. The work clusters don’t need to be aware that they are managed by the Cluster API
+
+Bootstrap provider
+  When CAPI creates a new Kubernetes cluster, it needs certificates before it can create the work 
+  cluster’s control plane and, finally, the worker nodes. This is the job of the bootstrap provider.
+  It ensures all the requirements are met and eventually joins the worker nodes to the control plane.
+
+Infrastructure provider
+  The infrastructure provider is a pluggable component that allows CAPI to work in different 
+  infrastructure environments, such as cloud providers or bare-metal infrastructure providers. 
+  The infrastructure provider implements a set of interfaces as defined by CAPI to provide access 
+  to compute and network resources.
+
+Control plane
+  The control plane of a Kubernetes cluster consists of the API server, the etcd stat store, the 
+  scheduler, and the controllers that run the control loops to reconcile the resources in the cluster.
+  The control plane of the work clusters can be provisioned in various ways. CAPI supports the following modes:
+• Machine-based – the control plane components are deployed as static pods on dedicated machines
+• Pod-based – the control plane components are deployed via Deployments and StatefulSet,
+  and the API server is exposed as a Service
+• External – the control plane is provisioned and managed by an external provider(typically, a cloud provider)
+
+Custom resources
+  The custom resources represent the Kubernetes clusters and machines managed by CAPI as well as
+  additional auxiliary resources. There are a lot of custom resources, and some of them are still 
+  considered experimental. The primary CRDs are:
+  • Cluster
+  • ControlPlane (represents control plane machines)
+  • MachineSet (represents worker machines)
+  • MachineDeployment
+  • Machine
+  • MachineHealthCheck
+
+
+Karmada
+  Karmada is a CNCF sandbox project that focuses on deploying and running workloads across 
+  multiple Kubernetes clusters. Its claim to fame is that you don’t need to make changes to 
+  your application configuration. While CAPI was focused on the lifecycle management of clusters,
+
+Karmada concepts:
+ResourceTemplate
+  The resource template looks just like a regular Kubernetes resource such as Deployment or 
+  StatefulSet, but it doesn’t actually get deployed to the Karmada control plane. It only serves 
+  as a blueprint that will eventually be deployed to member clusters.
+
+PropagationPolicy
+  The propagation policy determines where a resource template should be deployed
+
+OverridePolicy
+  Propagation policies operate across multiple clusters, but sometimes, there are exceptions. The 
+  override policy lets you apply fine-grained rules to override existing propagation policies.
+
+
+Clusternet
+  Clusternet It is centered around the idea of managing multiple Kubernetes clusters as 
+  “visiting the internet” (hence the name “Clusternet”). It supports cloud-based, on-prem, 
+  edge, and hybrid clusters. The core features of Clusternet are:
+    • Kubernetes multi-cluster management and governance
+    • Application coordination
+    • A CLI via the kubectl plugin
+    • Programmatic access via a wrapper to the Kubernetes Client-Go library
+
+Clusterpedia
+  Clusterpedia is a CNCF sandbox project. Its central metaphor is Wikipedia for Kubernetes 
+  clusters. It has a lot of capabilities around multi-cluster search, filtering, field selection,
+  and sorting. This is unusual because it is a read-only project. It doesn’t offer to help with 
+  managing the clusters or deploying workloads. It is focused on observing your clust
+
+Open Cluster Management (OCM)
+  it is a CNCF sandbox project for multi-cluster management, as well as multi-cluster scheduling and 
+  workload placement. Its claim to fame is closely following many Kubernetes concepts, extensibility 
+  via addons, and strong integration with other open source projects, such as:
+• Submariner
+• Clusternet (that we covered earlier)
+• KubeVela
+
+Virtual Kubelet
+  Virtual Kubelet is a fascinating project. It impersonates a kubelet to connect Kubernetes to 
+  other APIs such as AWS Fargate or Azure ACI. The Virtual Kubelet looks like a node to the 
+  Kubernetes cluster, but the compute resources backing it up are abstracted away. The Virtual 
+  Kubelet looks like just another node to the Kubernetes cluster
+    The features of the Virtual Kubelet are:
+    • Creating, updating, and deleting pods
+    • Accessing container logs and metrics
+    • Getting a pod, pods, and pod status
+    • Managing capacity
+    • Accessing node addresses, node capacity, and node daemon endpoints
+    • Choosing the operating system
+    • Supporting your own virtual network
+
+Tensile-kube
+  Tensile-kube is a sub-project of the Virtual Kubelet organization on GitHub.
+  Tensile-kube brings the following to the table:
+  • Automatic discovery of cluster resources
+  • Async notification of pod modifications
+  • Full access to pod logs and kubectl exec
+  • Global scheduling of pods
+  • Re-scheduling of pods using descheduler
+  • PV/PVC
+  • Service
+
+Admiralty
+  Admiralty is an open source project backed by a commercial company. Admiralty takes the Virtual
+  Kubelet concept and builds a sophisticated solution for multi-cluster orchestration and scheduling.
+  Target clusters are represented as virtual nodes in the source cluster. It has a pretty complicated
+  architecture that involves three levels of scheduling. Whenever a pod is created on a proxy, pods are
+  created on the source cluster, candidate pods are created on each target cluster, and eventually, one
+  of the candidate pods is selected and becomes a delegate pod, which is a real pod that actually runs
+  its containers. This is all supported by custom multi-cluster schedulers built on top of the Kubernetes
+  scheduling framework.
+
+Liqo
+  Liqo is an open source project based on the liquid computing concept. Let your tasks and data float
+  around and find the best place to run. Its scope is very impressive, as it targets not only the compute
+  aspect of running pods across multiple clusters but also provides network fabric and storage fabric.
+  These aspects of connecting clusters and managing data across clusters are often harder problems to
+  solve than just running workloads.
+
+Introducing the Gardener project
+  The Gardener project is an open source project developed by SAP. It lets you manage thousands 
+  (yes, thousands!) of Kubernetes clusters efficiently and economically. Gardener solves a very 
+  complex problem, and the solution is elegant but not simple. Gardener is the only project that 
+  addresses both the cluster lifecycle and application lifecycle.
+
+
+
+
