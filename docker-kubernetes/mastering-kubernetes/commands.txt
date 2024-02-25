@@ -264,6 +264,82 @@ $ kubectl patch storageclass standard-rwo -p
 # get quota
 $ k get quota
 
+# get the status of an installed chart 
+$ helm status -n monitoring prometheus | grep STATUS
+$ helm list -n monitoring
+
+# Helm stores the release information in a secret:
+$ kubectl describe secret sh.helm.release.v1.prometheus.v1 -n monitoring
+
+ind all the Helm releases across all namespaces
+$ helm list -A
+
+# n list all the secrets that have the owner=helm label:
+$ kubectl get secret -A -l owner=helm
+
+# extract the release of an installed helm chart 
+$ kubectl get secret sh.helm.release.v1.prometheus.v1 -n monitoring -o jsonpath=
+  '{. data.release}' | base64 --decode | base64 --decode | gunzip > prometheus.v1.json
+
+# extracting just the manifests using the following command:
+$ kubectl get secret sh.helm.release.v1.prometheus.v1 -n monitoring -o jsonpath= 
+  '{.data.release}' | base64 --decode | base64 --decode | gunzip | jq .manifest -r
+
+# Customizing a chart (use this To learn about possible customizations)
+$ helm show values prometheus-community/prometheus | wc -l
+$ helm show values prometheus-community/prometheus | head -n 20
+
+# If you want to customize any part of the Prometheus installation, then save the values to a file, 
+  make any modifications you like, and then install Prometheus using the custom values file:
+$ helm install prometheus prometheus-community/prometheus --create-namespace -n monitoring -f custom-values.yaml
+
+# check the current values of our prometheus installation: 
+$ helm get values prometheus -n monitoring
 
 
+# Upgrading and rolling back a release by disable the alert manager by upgrading and passing a new value: 
+$ helm upgrade --set alertmanager.enabled=false prometheus prometheus-community/prometheus -n monitoring
+$ k get deployment -n monitoring            # check if it was removed
+$ helm get values prometheus -n monitoring  # check the custom values (will show: enabled: false)
+
+# if we want to reuse the alertmanager again, first show the installation history:
+$ helm history prometheus -n monitoring
+
+# Let’s roll back to revision 1               # (or whatever you want)
+$ helm rollback prometheus 1 -n monitoring
+$ helm history prometheus -n monitoring       # re-check
+
+# Deleting a release
+$ helm list -n monitoring        # first see releases
+$ helm uninstall prometheus -n monitoring
+$ helm list -n monitoring        # check it was uninstalled (notice the monitoring ns remained)
+
+
+# create your ownn chart 
+$ helm create cool-chart
+
+# Once you have edited your chart, you can package it into a tar.gz archive:
+$ helm package cool-chart
+$ helm lint cool-chart
+
+# update dependencies 
+$ helm dep up cool-chart
+
+# set tags and condition values from the command line too when installing a chart
+  (this setting tags process will deside wither to enable a chart on not)
+$ helm install --set subchart2.enabled=false
+
+# use the helm template command to see the result of a helm template:
+$ helm template food food-chart
+
+# Another good way of debugging is to run install with the --dry-run flag. 
+  It provides additional information:
+$ helm install food food-chart --dry-run -n monitoring
+
+# You can also override values on the command line:
+$ helm template food food-chart --set favorite.drink=water
+
+# install a locally created chart
+$ helm install food food-chart -n monitoring
+$ helm list -n monitoring           # check
 

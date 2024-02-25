@@ -499,3 +499,9 @@ Lightweight VMs
   . .   SmartOS
 
 
+Installing packages
+  When you install a pkg, Helm creates a release that you can use to keep track of the installation 
+  progress, Helm doesn’t wait for the installation to complete because it may take a while. The helm 
+  status command displays the latest information on a release in the same format as the output of 
+  the initial helm install command.
+

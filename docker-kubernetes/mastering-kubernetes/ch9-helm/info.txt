@@ -1,0 +1,130 @@
+
+The Chart.yaml file
+The Chart.yaml file is the main file of a Helm chart. It requires a name and version fields:
+• apiVersion: The API version of the chart.
+• name: The name of the chart, which should match the directory name.
+• version: The version of the chart using the SemVer 2 format.
+
+Additionally, there are several optional fields that can be included in the Chart.yaml file:
+• kubeVersion: A range of compatible Kubernetes versions specified in SemVer format.
+• description: A brief description of the project in a single sentence.
+• keywords: A list of keywords associated with the project.
+• home: The URL of the project’s homepage.
+• sources: A list of URLs to the project’s source code.
+• dependencies: A list of dependencies for the chart, including the name, version, repository, condition, tags, and alias.
+• maintainers: A list of maintainers for the chart, including the name, email, and URL.
+• icon: The URL to an SVG or PNG image that can be used as an icon.
+• appVersion: The version of the application contained within the chart. It does not have to follow SemVer.
+• deprecated: A boolean value indicating whether the chart is deprecated.
+• annotations: Additional key-value pairs that provide extra information.
+
+
+The workflow for deprecating charts typically involves the following steps:
+1- Update the Chart.yaml file: Modify the Chart.yaml file of the chart to indicate that it 
+   is deprecated. This can be done by adding a deprecated field and setting it to true. Additionally, 
+   it is common practice to bump the version of the chart to indicate that a new version with 
+   deprecation information has been released.
+
+2- Release the new version: Package and release the updated chart with the deprecation 
+   information to the chart repository. This ensures that users are aware of the deprecation 
+   when they try to install or upgrade the chart.
+   
+3- Communicate the deprecation: It is important to communicate the deprecation to users and
+   provide information on alternative options or recommended migration paths. This can be done
+   through documentation, release notes, or other channels to ensure that users are informed
+   about the deprecation and can plan accordingly.
+   
+4- Remove the chart from the source repository: Once the deprecated chart has been released
+   and communicated to users, it is recommended to remove the chart from the source repository,
+   such as a Git repository, to avoid confusion and ensure that users are directed to the latest
+   version in the chart repository.
+
+
+Chart metadata files:
+The README.md file is particularly crucial and should contain the following details:
+1- Application or service description: Provide a clear and concise description of the application
+   or service that the chart represents. This description should help users understand the purpose
+   and functionality of the chart.
+   
+2- Prerequisites and requirements: Specify any prerequisites or requirements that need to be
+   met before using the chart. This could include specific versions of Kubernetes, required 
+   dependencies, or other conditions that must be satisfied.
+
+3- YAML options and default values: Document the available options that users can configure in
+   the chart’s YAML files. Describe each option, its purpose, accepted values or format, and the
+   default values. This information empowers users to customize the chart according to their needs.
+
+4- Installation and configuration instructions: Provide clear instructions on how to install and
+   configure the chart. This may involve specifying the command-line options or Helm commands
+   to deploy the chart and any additional steps or considerations during the configuration process.
+
+5- Additional information: Include any other relevant information that may assist users during
+   the installation or configuration of the chart. This could involve best practices, troubleshooting
+   tips, or known limitations.
+
+If the chart contains a template or NOTES.txt file, then the file will be displayed, 
+  printed out after installation and when viewing the release status, or upgraded.
+
+
+Utilizing additional subfields of the dependencies field
+  Each entry in the requirements.yaml file’s requirements entry may include optional fields such as
+  tags and condition. These fields can be used to dynamically control the loading of charts 
+  (if not specified all charts will be loaded). If tags or condition fields are present, Helm will 
+  evaluate them and determine if the target chart should be loaded or not.
+
+• The condition field in chart dependencies holds one or more comma-delimited YAML paths.
+  These paths refer to values in the top parent’s values file. If a path exists and evaluates to a
+  Boolean value, it determines whether the chart will be enabled or disabled. If multiple paths
+  are provided, only the first valid path encountered is evaluated. If no paths exist, the condition
+  has no effect, and the chart will be loaded regardless.
+  
+• The tags field allows you to associate labels with the chart. It is a YAML list where you can
+  specify one or more tags. In the top parent’s values file, you can enable or disable all charts
+  with specific tags by specifying the tag and a corresponding Boolean value. This provides a
+  convenient way to manage and control charts based on their associated tags.
+
+
+The resolution of tags and conditions is as follows:
+. Conditions that are set in values override tags. The first condition path that exists per chart
+  takes effect, and other conditions are ignored.
+. If any of the tags associated with a chart are set to true in the top parent’s values, 
+  the chart is considered enabled.
+. The tags and condition values must be set at the top level of the values file. Nested tags tables 
+  or tags within global configurations are not currently supported. This means that the tags should 
+  be directly under the top parent’s values and not nested within other structures.
+
+Writing template files
+  Template files are just text files that follow the Go template language rules. They can 
+  generate Kubernetes configuration files as well as any other file. 
+
+
+Embedding built-in objects
+  Helm provides some built-in objects you can use in your templates. In the Prometheus chart 
+  template: Release.Name, Release.Service, Chart.Name, and Chart.Version are examples of Helm
+  predefined values. Other objects are:
+• • Values
+• • Chart
+• • Template
+• • Files
+• • Capabilities
+  The Values object contains all the values defined in the values file or on the command line. The Chart
+  object is the content of Chart.yaml. The Template object contains information about the current
+  template. Files and Capabilities are map-like objects that allow access via various functions to the
+  non-specialized files and general information about the Kubernetes cluster.
+  Note that unknown fields in Chart.yaml are ignored by the template engine and cannot be used to
+  pass arbitrary structured data to templates.
+
+
+Helm alternatives
+
+Kustomize
+  Kustomize is an alternative to YAML templating by using the concept of overlays on 
+  top of raw YAML files. It was added to kubectl in Kubernetes 1.14.
+
+Cue
+  Cue is a very interesting project. Its data validation language and inference were strongly inspired 
+  by logic programming. It is not a general-purpose programming language. It is focused on data validation, 
+  data templating, configuration, querying, and code generation, but has some scripting too. The main 
+  concept of Cue is the unification of types and data. That gives Cue a lot of expressive power and
+  obviates the need for constructs like enums and generics.
+
