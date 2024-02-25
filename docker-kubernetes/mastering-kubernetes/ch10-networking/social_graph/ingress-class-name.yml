@@ -1,0 +1,15 @@
+---
+# The ingressClassname specifies an IngressClass resource, which contains additional information
+# about the ingress. If it’s omitted, a default ingress class must be defined.
+#
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+  name: cool-ingress
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: true
+
+spec:
+  controller: k8s.io/ingress-nginx

@@ -1,0 +1,59 @@
+---
+#
+# Here is how to set up a DNS for two pods called py-kube1 and py-kube2 with hostnames of trouble1
+# and trouble2, as well as a subdomain called maker, which matches the headless service:
+#
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: maker
+spec:
+  selector:
+    app: py-kube
+  clusterIP: None # headless service
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: py-kube1
+  labels:
+    app: py-kube
+spec:
+  hostname: trouble
+  subdomain: maker
+  containers:
+    - image: g1g1/py-kube:0.3
+      command:
+        - sleep
+        - '9999'
+      name: trouble
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: py-kube2
+  labels:
+    app: py-kube
+spec:
+  hostname: trouble2
+  subdomain: maker
+  containers:
+    - image: g1g1/py-kube:0.3
+      command:
+        - sleep
+        - '9999'
+      name: trouble
+#
+#
+# Now, we can check the hostnames and the DNS resolution inside the pod. First, we will connect to
+# py-kube2 and verify that its hostname is trouble2 and the fully qualified domain name (FQDN) is
+# trouble2.maker.default.svc.cluster.local.
+#
+# $ k exec -it py-kube2 -- bash
+# $ hostname --fqdn                                     # trouble2.maker.default.svc.cluster.local
+# $ dig +short trouble.maker.default.svc.cluster.local  # 10.244.0.9
+#
+# # confirm that the IPs 10.244.0.10 and 10.244.0.9 actually belong to the py-kube1 and py-kube2 pods:
+# $ k get po -o wide
+#

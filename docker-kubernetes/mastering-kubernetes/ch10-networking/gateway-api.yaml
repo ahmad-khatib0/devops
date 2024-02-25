@@ -1,0 +1,42 @@
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: cool-gateway
+  namespace: ns1
+
+spec:
+  gatewayClassName: cool-gateway-class
+  listeners:
+    - name: cool-service
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+      kinds:
+        - kind: HTTPRoute
+      namespaces:
+      from: Selector
+      selector:
+        matchLabels:
+          # This label is added automatically as of K8s 1.22 to all namespaces
+          kubernetes.io/metadata.name: ns2
+
+#
+#
+---
+# a route that attaches to this gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: cool-route
+  namespace: ns2
+
+spec:
+  parentRefs:
+    - kind: Gateway
+      name: cool-gateway
+      namespace: ns1
+  rules:
+    - backendRefs:
+        - name: cool-service
+          port: 8080

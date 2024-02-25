@@ -343,3 +343,22 @@ $ helm template food food-chart --set favorite.drink=water
 $ helm install food food-chart -n monitoring
 $ helm list -n monitoring           # check
 
+# the internal DNS server ( which each /etc/resolv.conf file in each pod point to this dns service )
+$ k describe svc -n kube-system kube-dns
+
+# then Note that selector: k8s-app=kube-dns. Let’s find the pods that back this service:
+$ k get po -n kube-system -l k8s-app=kube-dns
+
+# you will see that the service is called kube-dns, but the pods have a prefix of coredns 
+  (e.g coredns-64897985d-n4x5b). Interesting. Let’s check the image the deployment uses:
+$ k get deploy coredns -n kube-system -o jsonpath='{.spec.template.spec.containers[0]}' | jq .image
+  >>> "registry.k8s.io/coredns/coredns:v1.10.1"
+
+# The reason for this mismatch is that, initially, the default Kubernetes DNS server was 
+  called kube-dns. Then, CoreDNS replaced it as the mainstream DNS server due to its 
+  simplified architecture and better performance.
+
+
+
+
+

@@ -1,0 +1,236 @@
+
+The pod’s internal IP address is the same as its external IP address that other pods see (within 
+  the cluster network; not exposed to the outside world). That means that standard naming and 
+  discovery mechanisms such as a Domain Name System (DNS) work out of the box.
+
+Cloud provider load balancers are not Kubernetes-aware, so they can’t direct traffic to a particular 
+  service directly to a node that runs a pod that can process the request. Instead, the public load 
+  balancer just directs traffic to any node in the cluster and the kube-proxy on that node will 
+  redirect it again to an appropriate pod if the current node doesn’t run the necessary pod.
+
+In Kubernetes, the main addressable resources are pods and services. Each pod and service has a
+  unique internal (private) IP address within the cluster. The kubelet configures the pods with a 
+  resolve.conf file that points them to the internal DNS server. Here is what it looks like:
+$ k run -it --image g1g1/py-kube:0.3 -- bash
+$ cat /etc/resolv.conf
+ #  search      default.svc.cluster.local svc.cluster.local cluster.local
+ #  nameserver  10.96.0.10
+ #  options     ndots:5
+
+The nameserver IP address 10.96.0.10 is the address of the kube-dns service:
+$ k get svc -n kube-system
+
+
+Maximum transmission unit
+  The maximum transmission unit (MTU) determines how big packets can be. On Ethernet networks, for 
+  example, the MTU is 1,500 bytes. The bigger the MTU, the better the ratio between payload and headers,
+  which is a good thing. But the downside is that minimum latency is reduced because you have to wait 
+  for the entire packet to arrive and, furthermore, in case of failure, you have to retransmit
+  the entire big packet.
+
+Kubenet
+  Back to Kubernetes. Kubenet is a network plugin. It’s very rudimentary: it establishes a Linux bridge
+  named cbr0 and creates a veth interface for each pod. This is commonly used by cloud providers to
+  configure routing rules for communication between nodes, or in single-node environments. The veth
+  pair connects each pod to its host node using an IP address from the host’s IP address’ range.
+
+Requirements
+• • The Kubenet plugin has the following requirements:
+• • The standard CNI bridge, lo, and host-local plugins must be installed at version 0.2.0 or higher
+• • The kubelet must be executed with the --network-plugin=kubenet flag
+• • The kubelet must be executed with the --non-masquerade-cidr=<clusterCidr> flag
+• • The kubelet must be run with --pod-cidr or the kube-controller-manager must be run with
+    --allocate-node-cidrs=true --cluster-cidr=<cidr>
+
+Setting the MTU
+  The MTU is critical for network performance. Kubernetes network plugins such as Kubenet make
+  their best efforts to deduce the optimal MTU, but sometimes they need help. If an existing network
+  interface (for example, the docker0 bridge) sets a small MTU, then Kubenet will reuse it. Another ex-
+  ample is IPsec, which requires lowering the MTU due to the extra overhead from IPsec encapsulation,
+  but the Kubenet network plugin doesn’t take it into consideration. The solution is to avoid relying on
+  the automatic calculation of the MTU and just tell the kubelet what MTU should be used for network
+  plugins via the --network-plugin-mtu command-line switch that is provided to all network plugins.
+  However, at the moment, only the Kubenet network plugin accounts for this command-line switch. The 
+  Kubenet network plugin is mostly around for backward compatibility reasons. The CNI is the primary 
+  network interface that all modern network solution providers implement to integrate with Kubernetes.
+
+The CNI
+  The CNI is a specification as well as a set of libraries for writing network plugins to configure 
+  network interfaces in Linux containers. The specification actually evolved from the rkt network 
+  proposal. CNI is an established industry standard now even beyond Kubernetes. Some of the 
+  organizations that use CNI are:
+  Kubernetes, OpenShift, Mesos, Kurma, Cloud Foundry, Nuage, IBM, AWS EKS and ECS, Lyft
+
+The CNI team maintains some core plugins, but there are a lot of third-party plugins too:
+. . Project Calico: A layer 3 virtual network for Kubernetes
+. . Weave: A virtual network to connect multiple Docker containers across multiple hosts
+. . Contiv networking: Policy-based networking
+. . Cilium: ePBF for containers
+. . Flannel: Layer 3 network fabric for Kubernetes
+. . Infoblox: Enterprise-grade IP address management
+. . Silk: A CNI plugin for Cloud Foundry
+• • OVN-kubernetes: A CNI plugin based on OVS and Open Virtual Networking (OVN)
+• • DANM: Nokia’s solution for Telco workloads on Kubernetes
+
+In the context of CNI, an application container is a network-addressable entity (has its own IP address). 
+  For Docker, each container has its own IP address. For Kubernetes, each pod has its own IP address 
+  and the pod is considered the CNI container, and the containers within the pod are invisible to CNI.
+
+
+The CNI plugin:
+•  CNI_COMMAND:     Specifies the desired operation, such as ADD, DEL, or VERSION.
+•  CNI_CONTAINERID: Represents the ID of the container.
+•  CNI_NETNS:       Points to the path of the network namespace file.
+•  CNI_IFNAME:      Specifies the name of the interface to be set up. The CNI plugin should use this
+                    name or return an error.
+•  CNI_ARGS:        Contains additional arguments passed in by the user during invocation. It consists 
+                    of alphanumeric key-value pairs separated by semicolons, such as FOO=BAR;ABC=123.
+•  CNI_PATH:        Indicates a list of paths to search for CNI plugin executables. The paths are 
+                    separated by an OS-specific list separator, such as “:" on Linux and “;" on Windows.
+
+
+Kubernetes and eBPF ( extended Berkeley Packet Filter ) : 
+  It is a technology that allows running sandboxed programs safely in the Linux kernel without 
+  compromising the system’s security or requiring you to make changes to the kernel itself or even
+  kernel modules. These programs execute in response to events. This is a big deal for software-defined
+  networking, observability, and security. Brendan Gregg calls it the Linux super-power. The original 
+  BPF technology could be attached only to sockets for packet filtering (hence the name Berkeley 
+  Packet Filter). With ePBF, you can attach to additional objects, such as:
+• • Kprobes
+• • Tracepoints
+• • Network schedulers or qdiscs for classification or action
+• • XDP
+
+Traditional Kubernetes routing is done by the kube-proxy. It is a user space process that runs on
+  every node. It’s responsible for setting up iptable rules and does UDP, TCP, and STCP forwarding as
+  well as load balancing (based on Kubernetes services). At large scale, kube-proxy becomes a liability.
+  The iptable rules are processed sequentially and the frequent user space to kernel space transitions
+  are unnecessary overhead. It is possible to completely remove kube-proxy and replace it with an
+  eBPF-based approach that performs the same function much more efficiently.
+
+The Calico project
+  Calico is a versatile virtual networking and network security solution for containers. Calico 
+  can integrate with all the primary container orchestration frameworks and runtimes:
+  • Kubernetes (CNI plugin)
+  • Mesos (CNI plugin)
+  • Docker (libnetwork plugin)
+  • OpenStack (Neutron plugin)
+
+Weave Net
+  Weave Net is all about ease of use and zero configuration. It uses VXLAN encapsulation under the hood
+  and micro DNS on each node. As a developer, you operate at a higher abstraction level. You name your
+  containers and Weave Net lets you connect to them and use standard ports for services. That helps
+  migrate existing applications into containerized applications and microservices. Weave Net has a CNI
+  plugin for interfacing with Kubernetes (and Mesos). On Kubernetes 1.4 and higher, you can integrate
+  Weave Net with Kubernetes by running a single command that deploys a Daemonset
+$ kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+
+Efficient IP allocation and routing: 
+  Cilium allows a flat Layer 3 network that covers multiple clusters and connects all application 
+  containers. Host scope allocators can allocate IP addresses without coordination with other hosts. 
+  Cilium supports multiple networking models:
+
+• Overlay: This model utilizes encapsulation-based virtual networks that span across all hosts.
+  It supports encapsulation formats like VXLAN and Geneve, as well as other formats supported
+  by Linux. Overlay mode works with almost any network infrastructure as long as the hosts
+  have IP connectivity. It provides a flexible and scalable solution.
+• Native routing: In this model, Kubernetes leverages the regular routing table of the Linux host.
+  The network infrastructure must be capable of routing the IP addresses used by the application
+  containers. Native Routing mode is considered more advanced and requires knowledge of the
+  underlying networking infrastructure. It works well with native IPv6 networks, cloud network
+  routers, or when using custom routing daemons.
+
+Load balancing
+  Cilium offers distributed load balancing for traffic between application containers and external ser-
+  vices as an alternative to kube-proxy. This load balancing functionality is implemented using efficient
+  hashtables in eBPF, providing a scalable approach compared to the traditional iptables method. With
+  Cilium, you can achieve high-performance load balancing while ensuring efficient utilization of net-
+  work resources.
+
+Finding the load balancer IP addresses
+  The load balancer will have two IP addresses of interest. The internal IP address can be used inside
+  the cluster to access the service. Clients outside the cluster will use the external IP address. It’s 
+  a good practice to create a DNS entry for the external IP address. It is particularly important if 
+  you want to use TLS/SSL, which requires stable hostnames. To get both addresses, use the kubectl 
+  describe service command. The IP field denotes the internal IP address and the LoadBalancer 
+  Ingress field denotes the external IP address:
+$ kubectl describe services example-service
+
+
+
+Preserving client IP addresses
+  Sometimes, the service may be interested in the source IP address of the clients. Up until Kubernetes
+  1.5, this information wasn’t available. In Kubernetes 1.7, the capability to preserve the original
+  client IP was added to the API. Specifying original client IP address preservation You need to
+  configure the following two fields of the service spec:
+
+• service.spec.externalTrafficPolicy: This field determines whether the service should route external 
+  traffic to a node-local endpoint or a cluster-wide endpoint, which is the default. The Cluster 
+  option doesn’t reveal the client source IP and might add a hop to a different node, but spreads 
+  the load well. The Local option keeps the client source IP and doesn’t add an extra hop as long 
+  as the service type is LoadBalancer or NodePort. Its downside is it might not balance the load 
+  very well.
+  
+• service.spec.healthCheckNodePort: This field is optional. If used, then the service health
+  check will use this port number. The default is the allocated node port. It has an effect on
+  services of the LoadBalancer type whose externalTrafficPolicy is set to Local.
+
+Understanding even external load balancing
+  External load balancers operate at the node level; while they direct traffic to a particular pod, 
+  the load distribution is done at the node level. That means that if your service has four pods, 
+  and three of them are on node A and the last one is on node B, then an external load balancer is 
+  likely to divide the load evenly between node A and node B .!
+
+Service load balancers
+  Service load balancing is designed for funneling internal traffic within the Kubernetes cluster and 
+  not for external load balancing. This is done by using a service type of clusterIP. It is possible 
+  to expose a service load balancer directly via a pre-allocated port by using a service type of 
+  NodePort and using it as an external load balancer, but it requires curating all Node ports across 
+  the cluster to avoid conflicts and might not be appropriate for production. Desirable features such 
+  as SSL termination and HTTP caching will not be readily available
+
+
+Ingress
+  Ingress in Kubernetes is, at its core, a set of rules that allow inbound HTTP/S traffic to 
+  reach cluster services. In addition, some ingress controllers support the following:
+• Connection algorithms
+• Request limits
+• URL rewrites and redirects
+• TCP/UDP load balancing
+• SSL termination
+• Access control and authorization
+
+
+Utilizing the NodePort
+  Each service will be allocated a dedicated port from a predefined range. This usually is a high 
+  range such as 30,000 and above to avoid clashing with other applications using ports that are not 
+  well known. HAProxy will run outside the cluster in this case and it will be configured with the 
+  correct port for each service. Then, it can just forward any traffic to any nodes and Kubernetes 
+  via the internal service, and the load balancer will route it to a proper pod (double load balancing). 
+
+Kubernetes Gateway API
+  Kubernetes Gateway API is a set of resources that model service networking in Kubernetes. You can
+  think of it as the evolution of the ingress API. While there are no intentions to remove the ingress 
+  API, its limitations couldn’t be addressed by improving it, so the Gateway API project was born.
+  Where the ingress API consists of a single Ingress resource and an optional IngressClass, Gateway
+  API is more granular and breaks the definition of traffic management and routing into different re-
+  sources. Gateway API defines the following resources:
+      • GatewayClass
+      • Gateway
+      • HTTPRoute
+      • TLSRoute
+      • TCPRoute
+      • UDPRoute
+
+
+Reminder of what a CNI plugin is: 
+. A CNI plugin is an executable
+. It is responsible for connecting new containers to the network, assigning unique 
+  IP addresses to CNI containers, and taking care of routing
+. A container is a network namespace (in Kubernetes, a pod is a CNI container)
+. Network definitions are managed as JSON files, but are streamed to the plugin 
+  via standard input (no files are being read by the plugin)
+. Auxiliary information can be provided via environment variables
+
+
