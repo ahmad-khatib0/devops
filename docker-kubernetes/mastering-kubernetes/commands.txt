@@ -359,6 +359,13 @@ $ k get deploy coredns -n kube-system -o jsonpath='{.spec.template.spec.containe
   simplified architecture and better performance.
 
 
+# If a deployment or replica set creates multiple copies of the same pod, you can 
+  query the logs of all pods in a single call by using a shared label:
+$ k logs -l <label>
+
+
+# see the node status and if it’s ready using this command:
+$ k describe no kind-control-plane | grep Conditions -A 6
 
 
 

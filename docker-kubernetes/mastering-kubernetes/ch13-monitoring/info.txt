@@ -1,0 +1,116 @@
+Understanding observability
+  Observability is a big word. What does it mean in practice? There are different definitions out there
+  and big debates about how monitoring and observability are similar and different. I take the stance that
+  observability is the property of the system that defines what we can tell about the state and behavior
+  of the system right now and historically. In particular, we are interested in the health of the system
+  and its components. Monitoring is the collection of tools, processes, and techniques that we use to
+  increase the observability of the system.
+
+
+Here are the standard control plane components and their log location if 
+you run your own Kuber- netes control plane:
+    • API server: /var/log/kube-apiserver.log
+    • Scheduler: /var/log/kube-scheduler.log
+    • Controller manager: /var/log/kube-controller-manager.log
+The worker node components and their log locations are:
+    • Kubelet: /var/log/kubelet.log
+    • Kube proxy: /var/log/kube-proxy.log
+
+Note that on a systemd-based system, you’ll need to use journalctl to view the worker node logs.
+
+
+Direct logging to a remote logging service
+  In this approach, there is no log agent. It is the responsibility of each application container 
+  to send logs to the remote logging service. This is typically done through a client library. 
+  It is a high-touch approach and applications need to be aware of the logging target as well as 
+  be configured with proper credentials.
+
+Node agent
+  The node agent approach is best when you control the worker nodes, and you want to abstract away
+  the act of log aggregation from your applications. Each application container can simply write to
+  standard output and standard error and the agent running on each node will intercept the logs and
+  deliver them to the remote logging service.
+
+Sidecar container
+  you can attach a sidecar container that will collect the logs and deliver them to the central 
+  logging service. It is not as efficient as the node agent approach because each container will
+  need its own logging sidecar container, but it can be done at the deployment stage without 
+  requiring code changes and application knowledge.
+
+One of the most popular DIY centralized logging solutions is ELK, where E stands for 
+  ElasticSearch, L stands for LogStash, and K stands for Kibana. On Kubernetes, EFK 
+  (where Fluentd replaces LogStash) is very common.
+
+
+*******************************************************
+Monitoring with the Metrics Server
+The Kubernetes Metrics Server implements the Kubernetes Metrics API. You can deploy it with Helm:
+  $ helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+  $ helm upgrade --install metrics-server metrics-server/metrics-server
+
+After a few minutes to let the metrics server collect some data, you can query it using 
+  these commands for node metrics:
+$ k get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
+
+In addition, the kubectl top command gets its information from the metrics server:
+  $ k top nodes
+We can also get metrics for pods:
+  $ k top pods -A
+
+  
+*******************************************************
+Monitoring with the Prometheus
+
+$ git clone https://github.com/prometheus-operator/kube-prometheus.git
+$ kubectl create -f manifests/setup
+$ kubectl create -f manifests       # install the manifests
+
+$ k get deployments -n monitoring   # check
+$ k get statefulsets -n monitoring  # check
+$ k get daemonsets -n monitoring    # check
+$ k get services -n monitoring
+$ k get prometheusrules -n monitoring
+
+# interacting with Prometheus
+$ k port-forward -n monitoring statefulset/prometheus-k8s 9090
+# To access Grafana, type the following commands:
+$ k port-forward -n monitoring deploy/grafana 3000
+
+Utilizing the node exporter
+  The most relevant metrics on Kubernetes are the metrics exposed by the kube-state-metrics and node 
+  exporters. kube-state-metrics collects node information from the Kubernetes API server, but this 
+  information is pretty limited. Prometheus comes with its own node exporter, which collects tons of
+  low-level information about the nodes. Remember that Prometheus may be the de-facto standard metrics 
+  platform on Kubernetes, but it is not Kubernetes-specific. For other systems that use Prometheus, 
+  the node exporter is super important. On Kubernetes, if you manage your own nodes, this information 
+  can be invaluable too.
+
+Here is the NodeFilesystemAlmostOutOfSpace alert that checks if available disk space for the file 
+  system on the node is less than a threshold for 30 minutes. If you notice, there are two almost 
+  identical alerts. When the available space drops below 5%, a warning alert is triggered. However,
+  if the space drops below 3%, then a critical alert is triggered. Note the runbook_url field, which 
+  points to a page that explains more about the alert and how to mitigate the problem:
+  
+$ k get prometheusrules node-exporter-rules -n monitoring -o yaml | grep NodeFilesystemAlmostOutOfSpace -A 14
+*******************************************************
+
+
+OpenTelemetry tracing concepts
+The two main concepts are Span and Trace.
+  A Span is the basic unit of work or operation. It has a name, start time, and duration. Spans can be
+  nested if one operation starts another operation. Spans propagate with a unique ID and context. The
+  Trace is an acyclic graph of Spans that originated from the same request and shares the same context.
+  A Trace represents the execution path of a request throughout the system.
+  
+  
+there might be problems that the kubelet can’t detect. Some of the problems are:
+  • Bad CPU
+  • Bad memory
+  • Bad disk
+  • Kernel deadlock
+  • Corrupt filesystem
+  • Problems with the container runtime (e.g., Docker daemon)
+
+
+
+
