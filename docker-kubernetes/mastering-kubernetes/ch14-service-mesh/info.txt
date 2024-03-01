@@ -1,0 +1,73 @@
+
+The service mesh doesn’t touch your application. It injects a sidecar proxy container into each 
+  pod and uses a service mesh controller. The proxies intercept all communication between the pods 
+  and, in collaboration with the mesh controller, can take care of all the cross-cutting concerns.
+
+Here are some attributes of the proxy injection approach:
+  • The application is unaware of the service mesh
+  • You can turn the mesh on or off per pod and update the mesh independently
+  • No need to deploy an agent on each node
+  • Different pods on the same node can have different sidecars (or versions)
+  • Each pod has its own copy of the proxy
+
+In the service mesh world, there is a control plane, which is typically a set of controllers on 
+  Kubernetes, and there is a data plane, which is made up of the proxies that connect all the 
+  services in the mesh. The data plane consists of all the sidecar containers (or node agents) 
+  that intercept the com- munication between services in the mesh. The control plane is responsible 
+  for managing the proxies and configuring what actually happens when any traffic between services 
+  or a service and the outside world is intercepted.
+
+
+*******************************************************
+Envoy
+  Envoy (https://www.envoyproxy.io) is yet another CNCF graduated project. It is a very versatile and
+  high-performance L7 proxy. It provides many service mesh capabilities; however, it is considered
+  pretty low-level and difficult to configure. It is also not Kubernetes-specific. Some of the Kubernetes
+  service meshes use Envoy as the underlying data plane and provide a Kubernetes-native control plane
+  to configure and interact with it. If you want to use Envoy directly on Kubernetes, then the recom-
+  mendation is to use other open source projects like Ambassador and Gloo as an ingress controller
+  and/or API gateway.
+  
+Linkerd 2
+  Linkerd 2 (https://linkerd.io ) is a Kubernetes-specific service as well as a CNCF incubating project. 
+  It is developed by Buoyant (https://buoyant.io). Buoyant coined the term service mesh and introduced
+  it to the world a few years ago. They started with a Scala-based service mesh for multiple platforms
+  including Kubernetes called Linkerd. But they decided to develop a better and more performant ser-
+  vice mesh targeting Kubernetes only. That’s where Linkerd 2 comes in, which is Kubernetes-specific.
+  They implemented the data plane (proxy layer) in Rust and the control plane in Go.
+  
+Kuma
+  Kuma (https://kuma.io/) is an open source service mesh powered by Envoy. It was originally de-
+  veloped by Kong, which offers an enterprise product called Kong Mesh on top of Kuma. It works on
+  Kubernetes as well as other environments. Its claims to fame is that it is super easy to configure and
+  that it allows mixing Kubernetes and VM-based systems in a single mesh.
+  
+AWS App Mesh
+  AWS, of course, has its own proprietary service mesh – AWS App Mesh (https://aws.amazon.com/
+  app-mesh). App Mesh also uses Envoy as its data plane. It can run on EC2, Fargate, ECS and EKS, and
+  plain Kubernetes. App Mesh is a bit late to the service mesh scene, so it’s not as mature as some other
+  service meshes, but it is catching up. It is based on solid Envoy, and may be the best choice due to its
+  tight integration with AWS services.
+  
+Mæsh
+  Mæsh (https://mae.sh) is developed by the makers of Træfik (https://containo.us/traefik). It
+  is interesting because it uses the node agent approach as opposed to sidecar containers. It is based
+  heavily on Traefik middleware to implement the service mesh functionality. You can configure it by
+  using annotations on your services. It may be an interesting and lightweight approach to try service
+  meshes if you utilize Traefik at the edge of your cluster.
+
+Istio
+  Istio (https://istio.io/) is the most well-known service mesh on Kubernetes. It is built on top of
+  Envoy and allows you to configure it in a Kubernetes-native way via YAML manifests. Istio was started
+  by Google, IBM, and Lyft (the Envoy developers). It’s a one-click install on Google GKE, but it is widely
+  used in the Kubernetes community in any environment. It is also the default ingress/API gateway
+  solution for Knative, which promotes its adoption even further.
+
+OSM (Open Service Mesh)
+  OSM (https://openservicemesh.io) is yet another service mesh based on Envoy. It is configurable
+  via SMI (Service Mesh Interface), which is a spec that attempts to provide a provider-agnostic 
+  set of APIs to configure service meshes. See https://smi-spec.io for more details. Both OSM and 
+  SMI are CNCF sandbox projects. OSM was developed by Microsoft and contributed to CNCF.
+
+
+
