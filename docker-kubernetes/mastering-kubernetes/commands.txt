@@ -367,5 +367,8 @@ $ k logs -l <label>
 # see the node status and if it’s ready using this command:
 $ k describe no kind-control-plane | grep Conditions -A 6
 
+# In order to work with the Kubernetes API locally 
+$ k proxy --port 8080  # see e.g http://localhost:8080/apis/batch/v1
+$ http http://localhost:8080/api/v1/services | jq '.items[].metadata.name'
 
 

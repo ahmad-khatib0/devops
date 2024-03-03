@@ -2,24 +2,21 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-
-  if Vagrant.has_plugin?("vagrant-vbguest")
-    config.vbguest.auto_update = false
-  end
+  config.vbguest.auto_update = false if Vagrant.has_plugin?('vagrant-vbguest')
 
   config.ssh.insert_key = false
   config.ssh.verify_host_key = false
   config.vm.box_check_update = false
-  config.vm.synced_folder ".""", "/vagrant", id: "vagrant-root", disabled: true
+  config.vm.synced_folder '.''', '/vagrant', id: 'vagrant-root', disabled: true
   config.vm.provision :ansible do |ansible|
-    ansible.compatibility_mode = "2.0"
-    ansible_inventory = "inventories/vagrant.ini"
-    ansible.galaxy_roles_path = "roles"
-    ansible.playbook = "vagrant-playbook.yml"
-    ansible.verbose = "v"
+    ansible.compatibility_mode = '2.0'
+    ansible_inventory = 'inventories/vagrant.ini'
+    ansible.galaxy_roles_path = 'roles'
+    ansible.playbook = 'vagrant-playbook.yml'
+    ansible.verbose = 'v'
     ansible.groups = {
-      "podman" => ["rhel8"],
-      "dockerhosts" => ["ghost"],
+      'podman' => ['rhel8'],
+      'dockerhosts' => ['ghost']
     }
   end
 
@@ -27,18 +24,17 @@ Vagrant.configure(2) do |config|
     devtop.vm.box = 'RedHat-EL8'
     devtop.vm.hostname = 'vagrant-EL8'
     devtop.vm.network 'private_network', ip: '192.168.56.8'
-    devtop.vm.synced_folder ".""", "/vagrant", id: "vagrant-root", disabled: false
+    devtop.vm.synced_folder '.''', '/vagrant', id: 'vagrant-root', disabled: false
     devtop.vm.provider :virtualbox do |virtualbox|
       virtualbox.name = 'vagrant-EL8'
       virtualbox.gui = false
-      virtualbox.customize ["modifyvm", :id,
-        "--audio", "none",
-        "--cpus", 2,
-        "--memory", 4096,
-        "--vrde", "on",
-        "--graphicscontroller", "VMSVGA",
-        "--vram", "64"
-      ]
+      virtualbox.customize ['modifyvm', :id,
+                            '--audio', 'none',
+                            '--cpus', 2,
+                            '--memory', 4096,
+                            '--vrde', 'on',
+                            '--graphicscontroller', 'VMSVGA',
+                            '--vram', '64']
     end
   end
 end

@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - geerlingguy.mysql
+    - geerlingguy.apache
+    - geerlingguy.php
+    - geerlingguy.php-mysql

@@ -105,7 +105,7 @@ BURSTABLE CLASS
   Burstable class Pods on the other hand have limits set higher than requests, and are able to “burst” temporarily 
   provided there are resources are available (i.e. from other Pods not using all of their requests, or unallocated 
   space on the node). You need to be careful with these Pods as there can be some unforeseen consequences such 
-  as accidently relying on the bursting. Say a Pod lands on an empty node and can burst to its heart’s content. 
+  as accidentally relying on the bursting. Say a Pod lands on an empty node and can burst to its heart’s content. 
   Then sometime later, it gets rescheduled onto another node with less resources, the performance will now be 
   different. So, it’s important to test burstable pods in a variety of conditions.
 
@@ -146,7 +146,7 @@ PREEMPTION
 
 Priority and preemption really come into play when you’re juggling many deployments
   and looking to save money by squeezing every ounce of compute out of your cluster by
-  overcommitting where you need a way to signal which of your Pods are more important to
+  over-committing where you need a way to signal which of your Pods are more important to
   resolve the resource contention. I wouldn’t recommend starting with this design as you’re
   just adding complexity. The simpler way to get started is to allocate enough resources to
   schedule all your workloads amply, and fine tune things later to squeeze some more

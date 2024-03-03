@@ -1,0 +1,9 @@
+Creating a pod via the Kubernetes API
+  The API can be used for creating, updating, and deleting resources too. Unlike working with kubectl,
+  the API requires specifying the manifests in JSON and not YAML syntax (although every JSON 
+  document is also valid YAML). Here is a JSON pod definition (nginx-pod.json): 
+  
+$ http POST http://localhost:8080/api/v1/namespaces/default/pods @nginx-pod.json
+$ FILTER='.items[].metadata.name,.items[].status.phase' 
+$ http http://localhost:8080/api/v1/namespaces/default/pods | jq $FILTER  # check it created
+

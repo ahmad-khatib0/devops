@@ -1,6 +1,0 @@
-environment: development
-container:
-  name: demo
-  port: 8888
-  image: ahmadkh007/demo-app
-replicas: 1

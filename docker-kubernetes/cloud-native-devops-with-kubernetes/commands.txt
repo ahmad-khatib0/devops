@@ -1,6 +1,0 @@
-
-helm init --service-account tiller
-# Helm for access to the cluster, tiler is the ServiceAccount name 
-
-kubectl get resourcequotas -n demo
-# check if a ResourceQuota is active in a particular namespace

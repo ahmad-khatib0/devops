@@ -1,0 +1,8 @@
+---
+apiVersion: awesome.corp.com/v1
+kind: Candy
+metadata:
+  name: gummy-bear
+spec:
+  flavor: delicious
+  texture: rubbery
