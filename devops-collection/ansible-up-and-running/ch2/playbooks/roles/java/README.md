@@ -31,7 +31,7 @@ None.
     - hosts: servers
       roles:
         - role: geerlingguy.java
-          become: yes
+          become: true
 
 ## Example Playbook (install OpenJDK 8)
 

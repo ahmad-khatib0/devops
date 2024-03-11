@@ -1,11 +1,11 @@
 ---
 - name: Firewall configuration.
   hosts: all
-  become: yes
+  become: true
   vars:
     firewall_allowed_tcp_ports:
-      - '22'
-      - '80'
+      - "22"
+      - "80"
   pre_tasks:
     - name: Update apt cache if needed.
       apt: update_cache=yes cache_valid_time=3600
@@ -13,7 +13,7 @@
     - geerlingguy.firewall
 - name: HAProxy Load Balancer setup.
   hosts: balancer
-  become: yes
+  become: true
   vars:
     haproxy_backend_servers:
       - name: 192.168.56.3
@@ -24,6 +24,6 @@
     - geerlingguy.haproxy
 - name: Apache webserver setup.
   hosts: app
-  become: yes
+  become: true
   roles:
     - geerlingguy.apache

@@ -1,6 +1,6 @@
 ---
 - hosts: all
-  become: yes
+  become: true
   vars_files:
     - vars.yml
   pre_tasks:
@@ -18,7 +18,7 @@
           - python3-pycurl
     - name: Add ondrej repository for later versions of PHP.
       apt_repository: repo='ppa:ondrej/php' update_cache=yes
-    - name: 'Install Apache, MySQL, PHP, and other dependencies.'
+    - name: "Install Apache, MySQL, PHP, and other dependencies."
       apt:
         state: present
         name:
@@ -45,8 +45,8 @@
           - mysql-server
     - name: Disable the firewall (since this is for local dev only).
       service: name=ufw state=stopped
-    - name: 'Start Apache, MySQL, and PHP.'
-      service: 'name={{ item }} state=started enabled=yes'
+    - name: "Start Apache, MySQL, and PHP."
+      service: "name={{ item }} state=started enabled=yes"
       with_items:
         - apache2
         - mysql
@@ -55,8 +55,8 @@
       notify: restart apache
     - name: Add Apache virtualhost for Drupal.
       template:
-        src: 'templates/drupal.test.conf.j2'
-        dest: '/etc/apache2/sites-available/{{ domain }}.test.conf'
+        src: "templates/drupal.test.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ domain }}.test.conf"
         owner: root
         group: root
         mode: 0644
@@ -73,18 +73,18 @@
       notify: restart apache
     - name: Adjust OpCache memory setting.
       lineinfile:
-        dest: '/etc/php/8.2/apache2/conf.d/10-opcache.ini'
-        regexp: '^opcache.memory_consumption'
-        line: 'opcache.memory_consumption = 96'
+        dest: "/etc/php/8.2/apache2/conf.d/10-opcache.ini"
+        regexp: "^opcache.memory_consumption"
+        line: "opcache.memory_consumption = 96"
         state: present
       notify: restart apache
     - name: Create a MySQL database for Drupal.
-      mysql_db: 'db={{ domain }} state=present'
+      mysql_db: "db={{ domain }} state=present"
     - name: Create a MySQL user for Drupal.
       mysql_user:
-        name: '{{ domain }}'
-        password: '1234'
-        priv: '{{ domain }}.*:ALL'
+        name: "{{ domain }}"
+        password: "1234"
+        priv: "{{ domain }}.*:ALL"
         host: localhost
         state: present
     - name: Download Composer installer.
@@ -102,19 +102,19 @@
 
     - name: Ensure Drupal directory exists.
       file:
-        path: '{{ drupal_core_path }}'
+        path: "{{ drupal_core_path }}"
         state: directory
         owner: www-data
         group: www-data
     - name: Check if Drupal project already exists.
       stat:
-        path: '{{ drupal_core_path }}/composer.json'
+        path: "{{ drupal_core_path }}/composer.json"
       register: drupal_composer_json
     - name: Create Drupal project.
       composer:
         command: create-project
         arguments: drupal/recommended-project "{{ drupal_core_path }}"
-        working_dir: '{{ drupal_core_path }}'
+        working_dir: "{{ drupal_core_path }}"
         no_dev: true
       become_user: www-data
       when: not drupal_composer_json.stat.exists
@@ -122,7 +122,7 @@
       composer:
         command: require
         arguments: drush/drush:11.*
-        working_dir: '{{ drupal_core_path }}'
+        working_dir: "{{ drupal_core_path }}"
       become_user: www-data
       when: not drupal_composer_json.stat.exists
     - name: Install Drupal.
