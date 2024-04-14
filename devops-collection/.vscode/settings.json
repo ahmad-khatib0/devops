@@ -1,0 +1,15 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json": [
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch10-deployments/deployments/playbooks/deploy.yml",
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch10-deployments/deployments-balancer/playbooks/deploy.yml",
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch10-deployments/deployments-rolling/playbooks/deploy.yml"
+    ],
+    "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/vars.json": [
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch10-deployments/deployments/playbooks/vars.yml",
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch9-cookbooks/gluster/playbooks/vars.yml",
+      "file:///home/ahmad-khatib/Downloads/personal/devops/projects/devops-collection/ansible-for-devops/ch10-deployments/deployments-rolling/playbooks/vars.yml"
+    ]
+  },
+  "ansible.python.interpreterPath": "/bin/python"
+}
