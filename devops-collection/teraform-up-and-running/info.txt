@@ -2,8 +2,8 @@
  █ The ~> 4.0 syntax is equivalent to >= 4.0, < 5.0. █
  ▼                                                   ▼
 
-There are four core values in the DevOps movement: culture, automation, measure‐
-  ment, and sharing (sometimes abbreviated as the acronym CAMS). 
+There are four core values in the DevOps movement: culture, automation, measurement,
+  and sharing (sometimes abbreviated as the acronym CAMS). 
 
 What Is Infrastructure as Code?:
 The idea behind infrastructure as code (IaC) is that you write and execute code to
@@ -37,22 +37,21 @@ Coding conventions
   set of conventions that makes it easier to navigate the code.
   
 Idempotence
-  Writing an ad hoc script that works once isn’t too difficult; writing an ad hoc script that works 
-  correctly even if you run it over and over again is much harder. Every time you go to create a 
-  folder in your script, you need to remember to check whether that folder already exists; every 
-  time you add a line of configuration to a file, you need to check that line doesn’t already exist; 
-  every time you want to run an app, you need to check that the app isn’t already running. Code that 
-  works correctly no matter how many times you run it is called idempotent code. To make the Bash 
-  script from the previous section idempotent, you’d need to add many lines of code, including lots 
-  of if-statements. Most Ansible functions, on the other hand, are idempotent by default. For example, 
-  the web-server.yml Ansible role will install Apache only if it isn’t installed already and
-  will try to start the Apache web server only if it isn’t running already.
+  Writing an ad hoc script that works once isn’t too difficult; writing an ad hoc script that
+  works correctly even if you run it over and over again is much harder. Every time you go
+  to create a folder in your script, you need to remember to check whether that folder already
+  exists; every time you add a line of configuration to a file, you need to check that line 
+  doesn’t already exist; every time you want to run an app, you need to check that the app 
+  isn’t already running. Code that works correctly no matter how many times you run it is 
+  called idempotent code. To make the Bash script from the previous section idempotent, 
+  you’d need to add many lines of code, including lots of if-statements. Most Ansible functions,
+  on the other hand, are idempotent by default. For example, the web-server.yml Ansible role 
+  will install Apache only if it isn’t installed already and will try to start the Apache 
+  web server only if it isn’t running already.
   
 Distribution
   Ad hoc scripts are designed to run on a single, local machine. Ansible and other configuration 
   management tools are designed specifically for managing large numbers of remote servers
-
-
 
 Server Templating Tools
   An alternative to configuration management that has been growing in popularity recently are 
@@ -61,7 +60,6 @@ Server Templating Tools
   tools is to create an image of a server that captures a fully self-contained “snapshot” of the 
   operating system (OS), the software, the files, and all other relevant details. You can then use 
   some other IaC tool to install that image on all of your servers
-
 
 On most modern operating systems, code runs in one of two “spaces”: kernel space or user space. Code running 
   in kernel space has direct, unrestricted access to all of the hardware. There are no security restrictions
@@ -106,15 +104,12 @@ Procedural code limits reusability
   because it was designed to modify a state of your infrastructure that no longer
   exists. As a result, procedural codebases tend to grow large and complicated over time.
 
-
 General-Purpose Language Versus Domain-Specific Language
   Chef and Pulumi allow you to use a general-purpose programming language (GPL) to manage infrastructure 
   as code: Chef supports Ruby; Pulumi supports a wide variety of GPLs, including JavaScript, TypeScript, 
   Python, Go, C#, Java, and others. Terraform, Puppet, Ansible, CloudFormation, and OpenStack Heat each 
   use a domain-specific language (DSL) to manage infrastructure as code: Terraform uses HCL; Puppet uses 
   Puppet Language; Ansible, CloudFormation, and OpenStack Heat use YAML (CloudFormation also supports JSON).
-
-
 
 Master Versus Masterless
   By default, Chef and Puppet require that you run a master server for storing the state of your 
@@ -146,8 +141,6 @@ Ansible, CloudFormation, Heat, Terraform, and Pulumi are all masterless by defau
   SSH, so again, you don’t need to run any extra infrastructure or manage extra authentication
   mechanisms (i.e., just use your SSH keys).
 
-
-
 Agent Versus Agentless:
   Chef and Puppet require you to install agent software (e.g., Chef Client, Puppet Agent) on each 
   server that you want to configure. The agent typically runs in the background on each server and 
@@ -170,7 +163,6 @@ Security
   you must figure out how to authenticate the agent to the server to which it’s communicating. 
   All of this increases your surface area to attackers.
 
-
 A Note on Default Virtual Private Clouds
   All of the AWS examples in this book use the Default VPC in your AWS account. A VPC, or virtual 
   private cloud, is an isolated area of your AWS account that has its own virtual network and IP
@@ -180,7 +172,6 @@ A Note on Default Virtual Private Clouds
   region (each region has its own Default VPC) or create a new Default VPC using the AWS Web
   Console. Otherwise, you’ll need to update almost every example
   to include a vpc_id or subnet_id parameter pointing to a custom VPC.
-
 
 run terraform init to tell Terraform to scan the code, figure out which providers
   you’re using, and download the code for them. By default, the provider code will
@@ -218,7 +209,6 @@ sensitive
   If you set this parameter to true on an input variable, Terraform will not log it
   when you run plan or apply. You should use this on any secrets you pass into
   your Terraform code via variables: e.g., passwords, API keys, etc. 
-
 
 In addition to input variables, Terraform also allows you to define output variables
   The CONFIG can contain the following optional parameters:
@@ -278,7 +268,6 @@ Isolation via workspaces:
 Isolation via file layout:
   Useful for production use cases for which you need strong separation between environments
 
-
 Workspaces drawbacks:
 • The state files for all of your workspaces are stored in the same backend (e.g., the same S3 bucket). 
   That means you use the same authentication and access controls for all the workspaces, which is one 
@@ -305,7 +294,6 @@ To achieve full isolation between environments, you need to do the following:
   
 • Configure a different backend for each environment, using different authentication mechanisms and access 
   controls: e.g., each environment could live in a separate AWS account with a separate S3 bucket as a backend.
-
 
 terraform typical folder structure: 
 stage
@@ -586,8 +574,4 @@ Promote artifacts across environments
 Terragrunt allows you to define all of your Terraform code exactly once in the modules repo, whereas in the live repo, 
   you will have solely terragrunt.hcl files that provide a DRY way to configure and deploy each module in each 
   environment. This will result in a live repo with far fewer files and lines of code
-
-
-
-
 

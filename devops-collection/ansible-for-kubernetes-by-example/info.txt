@@ -1,6 +1,6 @@
-Podman is an open-source alternative to Docker (its full name is the POD MANager). Its main advantage 
-  is that you don’t need a service to be running like Docker on your machine; Podman is “daemonless.” 
-  The command syntax is very similar to Docker’s. If you are concerned about security in your applications 
+Podman is an open-source alternative to Docker (its full name is the POD MANager). Its 
+  main advantage is that you don’t need a service to be running like Docker on your machine;
+  Podman is “daemonless.” The command syntax is very similar to Docker’s. If you are concerned about security in your applications 
   or planning to use Kubernetes, Podman is a better alternative
 
 
@@ -283,7 +283,4 @@ There are three architectural approaches in the cloud providers:
     • Infrastructure as a Service (IaaS)
     • Platform as a Service (PaaS)
     • Software as a Service (SaaS)
-
-
-
 

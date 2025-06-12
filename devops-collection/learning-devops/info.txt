@@ -110,8 +110,6 @@ it's possible to create several remote backend configurations with the simplifie
 ╘══════════════════════╛
  
 
-
-
 Terraform - Why a state file is required?
   Terraform has a very general design so that it can support as many different remote systems as possible. While it's 
   true that lots of remote objects have an obvious single ID which uniquely identifies them, there are some remote 
@@ -206,11 +204,6 @@ in packer variables, eg:
 the clientid will take its value from the ARM_CLIENT_ID environment variable
 
 
-
-
-
-
-
 GIT flow pattern 
 
 1- First of all, we have the master branch, which contains the code that is currently in
@@ -228,3 +221,4 @@ GIT flow pattern
 8- If a bug is detected in production, we create a hotfix/<bug name> branch;
    then, once the bug is fixed, we merge this branch into the master and develop
    branches to propagate the fix on the next branches and deployments.
+

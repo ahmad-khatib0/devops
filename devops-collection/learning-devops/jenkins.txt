@@ -314,11 +314,3 @@ SSH
   If you are working in a UNIX environment, the most convenient way to start a Jenkins
   worker is undoubtedly to use Secure Shell (SSH). Jenkins has its own built-in SSH client, 
 
-
-
-
-
-
-
-
-

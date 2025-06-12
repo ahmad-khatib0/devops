@@ -393,8 +393,6 @@ Permitted IP Addresses
   If you specify 0.0.0.0/0, any IP address may connect.
 
 
-
-
 CALLBACK PLUG-INS
 Ansible supports a feature called callback plug-ins that can perform custom actions
   in response to Ansible events, such as a play starting or a task completing on a host.
@@ -433,10 +431,6 @@ null
 
 minimal
   The minimal plug-in does very little processing of the result Ansible returns from an event
-
-
-
-
 
 
 You can think of modules as the “verbs” of the Ansible “language”—without them, the YAML would 
@@ -483,9 +477,6 @@ When Ansible runs a playbook in check mode, it will not make any changes to
   changed the host, returned successfully without making a change, or returned an error.
 
 
-
-
-
 When Ansible runs a playbook it makes many SSH connections, to do things such as
   copy over files and run modules. Each time Ansible makes a new SSH connection to a
   host, it has to pay this negotiation penalty. OpenSSH is the most common implementation 
@@ -502,8 +493,6 @@ When you enable multiplexing, here is what happens:
 • The next time you try to SSH to a host, OpenSSH will use the control socket to
   communicate with the host instead of making a new TCP connection.
 
-
-
 Ansible supports an optimization called pipelining. Pipelining, if supported by the
   connection plug-in, reduces the number of network operations required to execute
   a module on the remote server, by executing many Ansible modules without actual file 
@@ -517,7 +506,6 @@ For a long time, we had two types of management strategies for network devices:
   configs locally, make some changes by editing them, and copy the result 
   back onto the devices through the console.
 
-
 Staging
   Most organizations that develop software have a blueprint for staging. Staging means
   running separate environments for different purposes in the life cycle of software.
@@ -526,10 +514,4 @@ Staging
   eventually production. There are many ways to do this, but in general you’d like to
   find problems as early as possible. It is a good practice to use network separation and security 
   controls like firewalls, access management, and redundancy depicts such staging environments.
-
-
-
-
-
-
 
